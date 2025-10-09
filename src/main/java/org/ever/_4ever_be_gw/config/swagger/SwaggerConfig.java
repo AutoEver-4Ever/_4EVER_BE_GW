@@ -26,8 +26,8 @@ public class SwaggerConfig {
 
     private Info apiInfo() {
         return new Info()
-                .title("4Ever Payment Service API")
-                .description("4Ever 프로젝트 결제 서비스 REST API 문서입니다.")
+                .title("4Ever Gateway Service API")
+                .description("4Ever 프로젝트 게이트웨이 서비스 REST API 문서입니다.")
                 .version("1.0.0");
     }
 }
