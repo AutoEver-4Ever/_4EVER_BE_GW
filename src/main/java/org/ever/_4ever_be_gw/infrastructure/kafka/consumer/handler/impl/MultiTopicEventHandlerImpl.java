@@ -18,7 +18,7 @@ public class MultiTopicEventHandlerImpl implements MultiTopicEventHandler {
 
         // TODO: 실제 비즈니스 로직 구현
         // 1. 사용자 정보 업데이트
-        // 2. 결제 정보와 연동
+        // 2. 다른 서비스로 이벤트 라우팅
     }
 
     @Override
@@ -49,18 +49,5 @@ public class MultiTopicEventHandlerImpl implements MultiTopicEventHandler {
         // TODO: 실제 비즈니스 로직 구현
         // 1. 알림 전송 확인
         // 2. 알림 이력 저장
-    }
-
-    @Override
-    public void handlePaymentEvent(PaymentEvent event) {
-        // Payment 서비스에서 받은 이벤트 처리
-        log.debug("결제 이벤트 처리 완료 - Action: {}, OrderId: {}",
-            event.getAction(), event.getOrderId());
-
-        // TODO: 실제 비즈니스 로직 구현
-        // 1. 결제 상태에 따른 주문 상태 업데이트
-        // 2. 결제 완료 시 재고 차감 요청
-        // 3. 결제 실패/취소 시 보상 트랜잭션 처리
-        // 4. 사용자 알림 발송
     }
 }

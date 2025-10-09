@@ -11,11 +11,6 @@ import java.util.concurrent.CompletableFuture;
 public interface KafkaProducerService {
 
     /**
-     * Payment 이벤트 발행
-     */
-    CompletableFuture<SendResult<String, Object>> sendPaymentEvent(String topic, PaymentEvent event);
-
-    /**
      * User 서비스로 이벤트 발행
      */
     CompletableFuture<SendResult<String, Object>> sendUserEvent(UserEvent event);

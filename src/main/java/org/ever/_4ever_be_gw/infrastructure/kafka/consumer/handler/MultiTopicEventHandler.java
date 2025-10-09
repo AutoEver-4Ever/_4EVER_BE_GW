@@ -26,9 +26,4 @@ public interface MultiTopicEventHandler {
      * Alarm 이벤트 처리
      */
     void handleAlarmEvent(AlarmEvent event);
-
-    /**
-     * Payment 이벤트 처리
-     */
-    void handlePaymentEvent(PaymentEvent event);
 }

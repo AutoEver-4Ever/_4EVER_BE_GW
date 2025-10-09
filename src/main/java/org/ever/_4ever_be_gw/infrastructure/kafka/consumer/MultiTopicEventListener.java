@@ -26,8 +26,7 @@ public class MultiTopicEventListener {
      * 여러 토픽을 동시에 구독하는 Multi-topic Listener
      */
     @KafkaListener(
-        topics = {USER_EVENT_TOPIC, SCM_EVENT_TOPIC, BUSINESS_EVENT_TOPIC, ALARM_EVENT_TOPIC,
-                  PAYMENT_REQUEST_TOPIC, PAYMENT_COMPLETE_TOPIC, PAYMENT_CANCEL_TOPIC, PAYMENT_FAILED_TOPIC},
+        topics = {USER_EVENT_TOPIC, SCM_EVENT_TOPIC, BUSINESS_EVENT_TOPIC, ALARM_EVENT_TOPIC},
         groupId = "${spring.kafka.consumer.group-id}",
         containerFactory = "kafkaListenerContainerFactory"
     )
@@ -55,12 +54,6 @@ public class MultiTopicEventListener {
                     break;
                 case ALARM_EVENT_TOPIC:
                     handleAlarmEvent(message);
-                    break;
-                case PAYMENT_REQUEST_TOPIC:
-                case PAYMENT_COMPLETE_TOPIC:
-                case PAYMENT_CANCEL_TOPIC:
-                case PAYMENT_FAILED_TOPIC:
-                    handlePaymentEvent(message);
                     break;
                 default:
                     log.warn("알 수 없는 토픽 - Topic: {}", topic);
@@ -124,20 +117,6 @@ public class MultiTopicEventListener {
 
         } catch (Exception e) {
             log.error("알림 이벤트 파싱 실패", e);
-        }
-    }
-
-    private void handlePaymentEvent(String message) {
-        try {
-            PaymentEvent event = objectMapper.readValue(message, PaymentEvent.class);
-            log.info("결제 이벤트 처리 중 - OrderId: {}, Action: {}, Amount: {}",
-                event.getOrderId(), event.getAction(), event.getAmount());
-
-            // Payment 이벤트 처리 로직
-            multiTopicEventHandler.handlePaymentEvent(event);
-
-        } catch (Exception e) {
-            log.error("결제 이벤트 파싱 실패", e);
         }
     }
 }

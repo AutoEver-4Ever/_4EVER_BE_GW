@@ -17,17 +17,6 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(1005, HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
     UNAUTHORIZED(1006, HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
 
-    // Payment Errors (2000~2999)
-    PAYMENT_NOT_FOUND(2000, HttpStatus.NOT_FOUND, "결제 정보를 찾을 수 없습니다."),
-    PAYMENT_ALREADY_COMPLETED(2001, HttpStatus.BAD_REQUEST, "이미 완료된 결제입니다."),
-    PAYMENT_ALREADY_CANCELLED(2002, HttpStatus.BAD_REQUEST, "이미 취소된 결제입니다."),
-    PAYMENT_AMOUNT_MISMATCH(2003, HttpStatus.BAD_REQUEST, "결제 금액이 일치하지 않습니다."),
-    PAYMENT_FAILED(2004, HttpStatus.BAD_REQUEST, "결제 처리에 실패했습니다."),
-    PAYMENT_CANCEL_FAILED(2005, HttpStatus.BAD_REQUEST, "결제 취소에 실패했습니다."),
-    PAYMENT_TIMEOUT(2006, HttpStatus.REQUEST_TIMEOUT, "결제 처리 시간이 초과되었습니다."),
-    INVALID_PAYMENT_METHOD(2007, HttpStatus.BAD_REQUEST, "유효하지 않은 결제 수단입니다."),
-    INSUFFICIENT_BALANCE(2008, HttpStatus.BAD_REQUEST, "잔액이 부족합니다."),
-
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
     USER_ALREADY_EXISTS(3001, HttpStatus.CONFLICT, "이미 존재하는 사용자입니다."),

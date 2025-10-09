@@ -15,13 +15,12 @@ import org.springframework.kafka.listener.adapter.RecordFilterStrategy;
 public class KafkaFilterConfig {
 
     /**
-     * 결제 필터 - 특정 조건의 메시지만 처리
+     * 이벤트 필터 - 특정 조건의 메시지만 처리
      *
-     * 예: 금액이 일정 이상인 결제만 처리하거나,
-     *     특정 상태의 결제만 처리하고 싶을 때 사용
+     * 예: 특정 조건을 만족하는 이벤트만 처리하고 싶을 때 사용
      */
     @Bean
-    public RecordFilterStrategy<String, Object> paymentFilter() {
+    public RecordFilterStrategy<String, Object> eventFilter() {
         return new RecordFilterStrategy<String, Object>() {
             @Override
             public boolean filter(ConsumerRecord<String, Object> record) {
@@ -41,8 +40,8 @@ public class KafkaFilterConfig {
                 }
 
                 // 예시 3: 비즈니스 로직 기반 필터링
-                // PaymentEvent event = (PaymentEvent) record.value();
-                // if (event.getAmount().compareTo(BigDecimal.valueOf(100)) < 0) {
+                // BaseEvent event = (BaseEvent) record.value();
+                // if (event.getEventType().equals("IGNORE")) {
                 //     return true;
                 // }
 
@@ -55,12 +54,12 @@ public class KafkaFilterConfig {
      * 다른 필터 예시
      */
     // @Bean
-    // public RecordFilterStrategy<String, Object> highValuePaymentFilter() {
+    // public RecordFilterStrategy<String, Object> customEventFilter() {
     //     return record -> {
-    //         // 고액 결제만 처리하는 필터
-    //         if (record.value() instanceof PaymentEvent) {
-    //             PaymentEvent event = (PaymentEvent) record.value();
-    //             return event.getAmount().compareTo(BigDecimal.valueOf(1000000)) < 0;
+    //         // 특정 조건의 이벤트만 처리하는 필터
+    //         if (record.value() instanceof ScmEvent) {
+    //             ScmEvent event = (ScmEvent) record.value();
+    //             return event.getAction().equals("IGNORE");
     //         }
     //         return false;
     //     };

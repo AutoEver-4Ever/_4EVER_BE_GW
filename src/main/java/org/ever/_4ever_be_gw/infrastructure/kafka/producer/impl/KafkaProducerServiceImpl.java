@@ -20,11 +20,6 @@ public class KafkaProducerServiceImpl implements KafkaProducerService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Override
-    public CompletableFuture<SendResult<String, Object>> sendPaymentEvent(String topic, PaymentEvent event) {
-        return sendEvent(topic, event.getOrderId(), event);
-    }
-
-    @Override
     public CompletableFuture<SendResult<String, Object>> sendUserEvent(UserEvent event) {
         return sendEvent(USER_EVENT_TOPIC, event.getUserId(), event);
     }
