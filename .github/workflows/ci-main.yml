@@ -95,7 +95,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: hojipkim/everp_payment:test
+          tags: hojipkim/everp_gateway:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

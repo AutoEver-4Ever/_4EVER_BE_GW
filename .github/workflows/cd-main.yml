@@ -52,8 +52,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            hojipkim/everp_payment:latest
-            hojipkim/everp_payment:${{ steps.commit.outputs.short_sha }}
+            hojipkim/everp_gateway:latest
+            hojipkim/everp_gateway:${{ steps.commit.outputs.short_sha }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -66,7 +66,7 @@ jobs:
           echo "========================================="
           echo "Docker 이미지 배포 완료"
           echo "========================================="
-          echo "이미지: hojipkim/everp_payment"
+          echo "이미지: hojipkim/everp_gateway"
           echo "태그 1: latest"
           echo "태그 2: ${{ steps.commit.outputs.short_sha }}"
           echo "커밋: ${{ github.sha }}"
@@ -143,7 +143,7 @@ jobs:
                 "fields": [
                   {
                     "type": "mrkdwn",
-                    "text": "*Docker 이미지:*\n`hojipkim/everp_payment`"
+                    "text": "*Docker 이미지:*\n`hojipkim/everp_gateway`"
                   },
                   {
                     "type": "mrkdwn",
@@ -175,7 +175,7 @@ jobs:
                       "type": "plain_text",
                       "text": "Docker Hub 보기"
                     },
-                    "url": "https://hub.docker.com/r/hojipkim/everp_payment"
+                    "url": "https://hub.docker.com/r/hojipkim/everp_gateway"
                   }
                 ]
               }

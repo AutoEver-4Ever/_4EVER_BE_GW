@@ -85,7 +85,7 @@ jobs:
           context: .
           file: ./Dockerfile-dev
           push: false
-          tags: payment-service:dev-${{ github.sha }}
+          tags: gateway-service:dev-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -95,7 +95,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: payment-service:prod-${{ github.sha }}
+          tags: gateway-service:prod-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
