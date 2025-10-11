@@ -1,0 +1,99 @@
+package org.ever._4ever_be_gw.domain.mm;
+
+import org.ever._4ever_be_gw.domain.mm.controller.MmController;
+import org.ever._4ever_be_gw.domain.mm.service.MmStatisticsService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(controllers = MmController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@TestPropertySource(properties = {
+        "spring.mvc.servlet.path=/api"
+})
+@Import(MmPurchaseTest.MockConfig.class)
+class MmPurchaseTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private MmStatisticsService mmStatisticsService;
+
+    @BeforeEach
+    void resetMocks() {
+        Mockito.reset(mmStatisticsService);
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class MockConfig {
+        @Bean
+        MmStatisticsService mmStatisticsService() {
+            return Mockito.mock(MmStatisticsService.class);
+        }
+    }
+
+    @Test
+    @DisplayName("구매요청 목록 기본 페이지 성공")
+    void getPurchaseRequisitions_success() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions").servletPath("/api")
+                        .queryParam("page", "0")
+                        .queryParam("size", "20")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("구매요청서 목록입니다."))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.page.number").value(0))
+                .andExpect(jsonPath("$.data.page.size").value(20));
+    }
+
+    @Test
+    @DisplayName("검증 실패 시 422와 errors 배열")
+    void getPurchaseRequisitions_validationErrors() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions").servletPath("/api")
+                        .queryParam("createdFrom", "2024-13-01")
+                        .queryParam("createdTo", "2024-01-32")
+                        .queryParam("size", "500")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(422))
+                .andExpect(jsonPath("$.message").value("요청 파라미터 검증에 실패했습니다."))
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors[0].field").value("createdFrom"))
+                .andExpect(jsonPath("$.errors[0].reason").value("INVALID_DATE"))
+                .andExpect(jsonPath("$.errors[1].field").value("createdTo"))
+                .andExpect(jsonPath("$.errors[1].reason").value("INVALID_DATE"))
+                .andExpect(jsonPath("$.errors[2].field").value("size"))
+                .andExpect(jsonPath("$.errors[2].reason").value("MAX_200"));
+    }
+
+    @Test
+    @DisplayName("권한 제한 범위 조회시 403")
+    void getPurchaseRequisitions_forbidden() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions").servletPath("/api")
+                        .queryParam("createdFrom", "2023-12-31")
+                        .queryParam("createdTo", "2024-01-31")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("해당 범위의 데이터를 조회할 권한이 없습니다."));
+    }
+}
+
