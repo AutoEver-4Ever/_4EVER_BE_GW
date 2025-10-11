@@ -16,6 +16,18 @@ public enum ErrorCode {
     ACCESS_DENIED(1004, HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     INTERNAL_SERVER_ERROR(1005, HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
     UNAUTHORIZED(1006, HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
+    INVALID_PERIODS(1007, HttpStatus.BAD_REQUEST, "요청 파라미터 'periods' 값이 올바르지 않습니다."),
+    VALIDATION_FAILED(1008, HttpStatus.UNPROCESSABLE_ENTITY, "요청 파라미터 검증에 실패했습니다."),
+    FORBIDDEN_RANGE(1009, HttpStatus.FORBIDDEN, "해당 범위의 데이터를 조회할 권한이 없습니다."),
+    PERIOD_CALCULATION_FAILED(1010, HttpStatus.UNPROCESSABLE_ENTITY, "요청을 처리할 수 없습니다. 기간 계산 중 오류가 발생했습니다."),
+    FORBIDDEN_PURCHASE_ACCESS(1011, HttpStatus.FORBIDDEN, "해당 구매요청서를 조회할 권한이 없습니다."),
+    PURCHASE_REQUEST_NOT_FOUND(1012, HttpStatus.NOT_FOUND, "해당 구매요청서를 찾을 수 없습니다."),
+    FORBIDDEN_DATA_ACCESS(1013, HttpStatus.FORBIDDEN, "해당 데이터를 조회할 권한이 없습니다."),
+    UNKNOWN_PROCESSING_ERROR(1014, HttpStatus.INTERNAL_SERVER_ERROR, "요청 처리 중 알 수 없는 오류가 발생했습니다."),
+    VENDOR_FORBIDDEN(1016, HttpStatus.FORBIDDEN, "공급업체 조회 권한이 없습니다."),
+    VENDOR_NOT_FOUND(1017, HttpStatus.NOT_FOUND, "해당 공급업체를 찾을 수 없습니다."),
+    VENDOR_PROCESSING_ERROR(1018, HttpStatus.INTERNAL_SERVER_ERROR, "공급업체 조회 처리 중 오류가 발생했습니다."),
+    PURCHASE_ORDER_NOT_FOUND(1015, HttpStatus.NOT_FOUND, "해당 발주서를 찾을 수 없습니다."),
 
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),

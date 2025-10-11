@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,14 +41,43 @@ public class GlobalExceptionHandler {
             errorDetails.put("detail", e.getDetail());
         }
 
+        String msg = errorCode.getMessage();
+        if (e.getDetail() != null && !e.getDetail().isBlank()) {
+            if (errorCode == ErrorCode.PURCHASE_REQUEST_NOT_FOUND || errorCode == ErrorCode.PURCHASE_ORDER_NOT_FOUND) {
+                // 메시지 끝의 마침표를 제거하고 콜론으로 상세를 이어 붙임
+                if (msg.endsWith(".")) {
+                    msg = msg.substring(0, msg.length() - 1);
+                }
+                msg = msg + ": " + e.getDetail();
+            }
+            // 그 외 코드에 대해서는 메시지를 변경하지 않고 detail은 errors에 포함
+        }
+
         ApiResponse<Object> response = ApiResponse.fail(
-            errorCode.getMessage(),
+            msg,
             errorCode.getHttpStatus(),
             errorDetails
         );
 
         return new ResponseEntity<>(response, errorCode.getHttpStatus());
     }
+
+    /**
+     * 도메인 검증 실패 (ValidationException)
+     */
+    @ExceptionHandler(ValidationException.class)
+    protected ResponseEntity<ApiResponse<Object>> handleValidationException(ValidationException e) {
+        log.error("도메인 검증 실패: {}", e.getMessage(), e);
+
+        ApiResponse<Object> response = ApiResponse.fail(
+                e.getErrorCode().getMessage(),
+                e.getErrorCode().getHttpStatus(),
+                e.getErrors()
+        );
+        return new ResponseEntity<>(response, e.getErrorCode().getHttpStatus());
+    }
+
+    // PeriodCalculationException은 사용하지 않고 BusinessException(ErrorCode.PERIOD_CALCULATION_FAILED)로 통합 처리합니다.
 
     /**
      * @Valid 검증 실패 (MethodArgumentNotValidException)
@@ -208,6 +239,26 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 정적 리소스 404 (Resource chain)
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    protected ResponseEntity<ApiResponse<Object>> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.error("정적 리소스를 찾을 수 없음: {}", e.getMessage());
+
+        Map<String, Object> errorDetails = new HashMap<>();
+        errorDetails.put("code", 404);
+        errorDetails.put("resourcePath", e.getResourcePath());
+
+        ApiResponse<Object> response = ApiResponse.fail(
+                "요청한 리소스를 찾을 수 없습니다.",
+                HttpStatus.NOT_FOUND,
+                errorDetails
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    /**
      * 모든 예외 처리 (Exception)
      */
     @ExceptionHandler(Exception.class)
@@ -219,7 +270,7 @@ public class GlobalExceptionHandler {
         errorDetails.put("detail", e.getMessage());
 
         ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.INTERNAL_SERVER_ERROR.getMessage(),
+            "서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
             HttpStatus.INTERNAL_SERVER_ERROR,
             errorDetails
         );

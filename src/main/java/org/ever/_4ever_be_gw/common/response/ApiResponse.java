@@ -17,6 +17,7 @@ public class ApiResponse<T> {
     private final boolean success;
     private final String message;
     private final T data;
+    private final Object errors;
 
     /**
      * 성공 응답
@@ -26,31 +27,22 @@ public class ApiResponse<T> {
             status.value(),
             true,
             message,
-            data
-        );
-    }
-
-    /**
-     * 실패 응답
-     */
-    public static <T> ApiResponse<T> fail(String message, HttpStatus status) {
-        return new ApiResponse<>(
-            status.value(),
-            false,
-            message,
+            data,
             null
         );
     }
 
     /**
-     * 실패 응답 - 데이터 포함 (에러 상세 정보)
+     * 실패 응답 (단일 메서드)
+     * errors에 검증/에러 상세를 담고, data는 항상 null로 유지합니다.
      */
-    public static <T> ApiResponse<T> fail(String message, HttpStatus status, T data) {
+    public static <T> ApiResponse<T> fail(String message, HttpStatus status, Object errors) {
         return new ApiResponse<>(
-            status.value(),
-            false,
-            message,
-            data
+                status.value(),
+                false,
+                message,
+                null,
+                errors
         );
     }
 }

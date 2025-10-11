@@ -15,12 +15,18 @@ public class SwaggerConfig {
     @Value("${server.port}")
     private String serverPort;
 
+    @Value("${spring.mvc.servlet.path:}")
+    private String servletPath;
+
     @Bean
     public OpenAPI openAPI() {
+        String basePath = (servletPath == null || servletPath.isBlank()) ? "" : servletPath.trim();
         return new OpenAPI()
                 .info(apiInfo())
                 .servers(List.of(
-                        new Server().url("http://localhost:" + serverPort).description("Local Server")
+                        new Server()
+                                .url("http://localhost:" + serverPort + basePath)
+                                .description("Local Server")
                 ));
     }
 
