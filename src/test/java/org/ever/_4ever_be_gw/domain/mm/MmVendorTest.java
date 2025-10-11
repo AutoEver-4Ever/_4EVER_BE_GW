@@ -94,4 +94,55 @@ class MmVendorTest {
                 .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.message").value("공급업체 조회 권한이 없습니다."));
     }
+
+    @Test
+    @DisplayName("공급업체 상세 조회 성공(1~10)")
+    void getVendorDetail_success() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/vendors/{vendorId}", 1L)
+                        .servletPath("/api")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("공급업체 상세 정보를 조회했습니다."))
+                .andExpect(jsonPath("$.data.vendorId").value(1))
+                .andExpect(jsonPath("$.data.companyName").exists())
+                .andExpect(jsonPath("$.data.materials").isArray());
+    }
+
+    @Test
+    @DisplayName("공급업체 상세 권한 없음 403(모킹)")
+    void getVendorDetail_forbidden() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/vendors/{vendorId}", 403001L)
+                        .servletPath("/api")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("공급업체 조회 권한이 없습니다."));
+    }
+
+    @Test
+    @DisplayName("공급업체 상세 미존재 404")
+    void getVendorDetail_notFound() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/vendors/{vendorId}", 11L)
+                        .servletPath("/api")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("해당 공급업체를 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("공급업체 상세 서버 오류 500(모킹)")
+    void getVendorDetail_serverError() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/vendors/{vendorId}", 500001L)
+                        .servletPath("/api")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.message").value("공급업체 조회 처리 중 오류가 발생했습니다."));
+    }
 }

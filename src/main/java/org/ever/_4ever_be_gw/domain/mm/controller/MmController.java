@@ -773,4 +773,87 @@ public class MmController {
                 data, "공급업체 목록을 조회했습니다.", HttpStatus.OK
         ));
     }
+
+    // ---------------- Vendor Detail ----------------
+    @GetMapping("/vendors/{vendorId}")
+    @Operation(
+            summary = "공급업체 상세 조회",
+            description = "공급업체 상세 정보를 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"vendorId\": 1,\n    \"companyName\": \"한국철강\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"contact@koreasteel.com\",\n    \"category\": \"원자재\",\n    \"leadTimeDays\": 3,\n    \"leadTimeLabel\": \"3일 소요\",\n    \"statusCode\": \"ACTIVE\",\n    \"statusLabel\": \"활성\",\n    \"materials\": [\"철강재\", \"스테인리스\", \"알루미늄\"],\n    \"createdAt\": \"2025-10-07T00:00:00Z\",\n    \"updatedAt\": \"2025-10-07T00:00:00Z\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"인증이 필요합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"공급업체 조회 권한이 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "리소스 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"해당 공급업체를 찾을 수 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"공급업체 조회 처리 중 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Object>> getVendorDetail(
+            @Parameter(description = "공급업체 ID", example = "1")
+            @PathVariable("vendorId") Long vendorId
+    ) {
+        // 모킹 트리거들
+        if (vendorId != null && vendorId == 403001L) {
+            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
+                    org.ever._4ever_be_gw.common.exception.ErrorCode.VENDOR_FORBIDDEN);
+        }
+        if (vendorId != null && vendorId == 500001L) {
+            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
+                    org.ever._4ever_be_gw.common.exception.ErrorCode.VENDOR_PROCESSING_ERROR);
+        }
+        if (vendorId == null || vendorId < 1 || vendorId > 10) {
+            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
+                    org.ever._4ever_be_gw.common.exception.ErrorCode.VENDOR_NOT_FOUND);
+        }
+
+        int idx = (int)((vendorId - 1) % 10);
+        String[] names = {"한국철강","대한전자부품","글로벌화학","한빛소재","에이치금속","태성테크","광명산업","한성전자","그린케미칼","아주금속"};
+        String[] categories = {"원자재","부품","원자재","부품","원자재","부품","원자재","부품","원자재","원자재"};
+        int[] leadDays = {3,1,5,2,4,7,6,2,9,10};
+        String[] statusCode = {"ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE"};
+        String[] statusLabel = {"활성","활성","비활성","활성","활성","비활성","활성","활성","비활성","활성"};
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("vendorId", vendorId);
+        data.put("companyName", names[idx]);
+        data.put("contactPhone", "02-1234-5678");
+        data.put("contactEmail", "contact@koreasteel.com");
+        data.put("category", categories[idx]);
+        data.put("leadTimeDays", leadDays[idx]);
+        data.put("leadTimeLabel", leadDays[idx] + "일 소요");
+        data.put("statusCode", statusCode[idx]);
+        data.put("statusLabel", statusLabel[idx]);
+        data.put("materials", java.util.List.of("철강재", "스테인리스", "알루미늄"));
+        // 간단한 시계열 생성
+        data.put("createdAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
+        data.put("updatedAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
+
+        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
+                data, "공급업체 상세 정보를 조회했습니다.", HttpStatus.OK
+        ));
+    }
 }
