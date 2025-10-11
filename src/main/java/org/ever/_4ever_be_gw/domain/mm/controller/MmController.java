@@ -73,7 +73,7 @@ public class MmController {
             }
     )
     public ResponseEntity<ApiResponse<Map<String, PeriodMetrics>>> getStatistics(
-            @Parameter(name = "periods", description = "조회 기간 목록(콤마 구분). 예: week,month,quarter,year", example = "week,month,quarter,year")
+            @Parameter(name = "periods", description = "조회 기간 목록(콤마 구분)")
             @RequestParam(name = "periods", required = false) String periods
     ) {
         // 파라미터 파싱 및 유효성 검증
@@ -132,18 +132,18 @@ public class MmController {
             }
     )
     public ResponseEntity<ApiResponse<Object>> getPurchaseRequisitions(
-            @Parameter(description = "상태 필터 예: PENDING, APPROVED")
+            @Parameter(description = "상태 필터: PENDING, APPROVED")
             @RequestParam(name = "status", required = false) String status,
-            @Parameter(description = "생성일 시작(YYYY-MM-DD)", example = "2024-01-01")
+            @Parameter(description = "생성일 시작(YYYY-MM-DD)")
             @RequestParam(name = "createdFrom", required = false) String createdFrom,
-            @Parameter(description = "생성일 종료(YYYY-MM-DD)", example = "2024-01-31")
+            @Parameter(description = "생성일 종료(YYYY-MM-DD)")
             @RequestParam(name = "createdTo", required = false) String createdTo,
-            @Parameter(description = "정렬 필드,정렬방향", example = "createdAt,desc")
-            @RequestParam(name = "sort", required = false, defaultValue = "createdAt,desc") String sort,
-            @Parameter(description = "페이지 번호(0-base)", example = "0")
-            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
-            @Parameter(description = "페이지 크기(최대 200)", example = "20")
-            @RequestParam(name = "size", required = false, defaultValue = "20") Integer size
+            @Parameter(description = "정렬 필드,정렬방향")
+            @RequestParam(name = "sort", required = false) String sort,
+            @Parameter(description = "페이지 번호(0-base)")
+            @RequestParam(name = "page", required = false) Integer page,
+            @Parameter(description = "페이지 크기(최대 200)")
+            @RequestParam(name = "size", required = false) Integer size
     ) {
         // 422 검증
         List<Map<String, String>> errors = new java.util.ArrayList<>();
@@ -166,48 +166,56 @@ public class MmController {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
+        // 기본값 처리
+        String effectiveSort = (sort == null || sort.isBlank()) ? "createdAt,desc" : sort;
+        int p = (page == null || page < 0) ? 0 : page;
+        int s = (size == null || size < 1) ? 20 : size;
+
         // 403 샘플 조건: 과거 특정 기준 이전 조회는 금지 (모킹)
         if (fromDate != null && fromDate.isBefore(java.time.LocalDate.of(2024, 1, 1))) {
             throw new BusinessException(ErrorCode.FORBIDDEN_RANGE);
         }
 
-        // 성공 응답 (목업)
+        // 성공 응답 (목업) - 10개
         java.util.List<Map<String, Object>> content = new java.util.ArrayList<>();
-        content.add(new java.util.LinkedHashMap<>() {{
-            put("id", 102345L);
-            put("prNumber", "100002345");
-            put("requesterId", 123L);
-            put("requesterName", "홍길동");
-            put("departmentId", 12L);
-            put("departmentName", "영업1팀");
-            put("origin", "MRP");
-            put("originRefId", "MRP-2025-10-01-00123");
-            put("createdAt", java.time.Instant.parse("2025-10-05T12:30:45Z"));
-            put("createdBy", 123L);
-            put("itemCount", 2);
-            put("hasPreferredVendor", true);
-        }});
-        content.add(new java.util.LinkedHashMap<>() {{
-            put("id", 102346L);
-            put("prNumber", "100002346");
-            put("requesterId", 124L);
-            put("requesterName", "김민수");
-            put("departmentId", 12L);
-            put("departmentName", "영업1팀");
-            put("origin", "MANUAL");
-            put("originRefId", null);
-            put("createdAt", java.time.Instant.parse("2025-10-05T12:35:02Z"));
-            put("createdBy", 124L);
-            put("itemCount", 1);
-            put("hasPreferredVendor", false);
-        }});
+        for (int i = 0; i < 10; i++) {
+            final long id = 102345L + i;
+            final long requesterId = 123L + (i % 5);
+            final String requesterName = switch (i % 5) {
+                case 0 -> "홍길동";
+                case 1 -> "김민수";
+                case 2 -> "이영희";
+                case 3 -> "박철수";
+                default -> "최수민";
+            };
+            final String origin = (i % 2 == 0) ? "MRP" : "MANUAL";
+            final String originRef = (i % 2 == 0) ? String.format("MRP-2025-10-01-%05d", 123 + i) : null;
+            final int itemCount = 1 + (i % 3);
+            final boolean hasPreferred = (i % 2 == 0);
+            final java.time.Instant createdAt = java.time.Instant.parse("2025-10-05T12:30:45Z").plusSeconds(60L * i);
+
+            Map<String, Object> row = new java.util.LinkedHashMap<>();
+            row.put("id", id);
+            row.put("prNumber", String.format("%09d", 100002345 + i));
+            row.put("requesterId", requesterId);
+            row.put("requesterName", requesterName);
+            row.put("departmentId", 12L);
+            row.put("departmentName", "영업1팀");
+            row.put("origin", origin);
+            row.put("originRefId", originRef);
+            row.put("createdAt", createdAt);
+            row.put("createdBy", requesterId);
+            row.put("itemCount", itemCount);
+            row.put("hasPreferredVendor", hasPreferred);
+            content.add(row);
+        }
 
         Map<String, Object> pageMeta = new LinkedHashMap<>();
-        pageMeta.put("number", page);
-        pageMeta.put("size", size);
+        pageMeta.put("number", p);
+        pageMeta.put("size", s);
         pageMeta.put("totalElements", 257);
         pageMeta.put("totalPages", 13);
-        pageMeta.put("hasNext", (page + 1) < 13);
+        pageMeta.put("hasNext", (p + 1) < 13);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("content", content);
@@ -318,7 +326,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 목록 조회에 성공했습니다.\",\n  \"data\": [\n    {\n      \"id\": 1001,\n      \"poNumber\": \"PO-2024-001\",\n      \"supplierName\": \"대한철강\",\n      \"itemsSummary\": \"강판 500kg, 알루미늄 300kg\",\n      \"totalAmount\": 5000000,\n      \"orderDate\": \"2024-01-18\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"priority\": null,\n      \"status\": \"승인됨\"\n    }\n  ]\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"total\": 10,\n    \"page\": 1,\n    \"size\": 10,\n    \"totalPages\": 1,\n    \"hasNext\": false,\n    \"hasPrev\": false,\n    \"orders\": [\n      {\n        \"id\": 1001,\n        \"poNumber\": \"PO-2024-001\",\n        \"supplierName\": \"대한철강\",\n        \"itemsSummary\": \"강판 500kg, 알루미늄 300kg\",\n        \"totalAmount\": 5000000,\n        \"orderDate\": \"2024-01-18\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"priority\": null,\n        \"status\": \"승인됨\"\n      }\n    ]\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -349,16 +357,16 @@ public class MmController {
     public ResponseEntity<ApiResponse<Object>> getPurchaseOrders(
             @Parameter(description = "상태 필터: APPROVED,PENDING,DELIVERED")
             @RequestParam(name = "status", required = false) String status,
-            @Parameter(description = "주문일 시작(YYYY-MM-DD)", example = "2024-01-01")
+            @Parameter(description = "주문일 시작(YYYY-MM-DD)")
             @RequestParam(name = "orderDateFrom", required = false) String orderDateFrom,
-            @Parameter(description = "주문일 종료(YYYY-MM-DD)", example = "2024-01-31")
+            @Parameter(description = "주문일 종료(YYYY-MM-DD)")
             @RequestParam(name = "orderDateTo", required = false) String orderDateTo,
-            @Parameter(description = "정렬 필드,정렬방향", example = "orderDate,desc")
-            @RequestParam(name = "sort", required = false, defaultValue = "orderDate,desc") String sort,
-            @Parameter(description = "페이지 번호(1-base)", example = "1")
-            @RequestParam(name = "page", required = false, defaultValue = "1") Integer page,
-            @Parameter(description = "페이지 크기", example = "10")
-            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
+            @Parameter(description = "정렬 필드,정렬방향")
+            @RequestParam(name = "sort", required = false) String sort,
+            @Parameter(description = "페이지 번호(1-base)")
+            @RequestParam(name = "page", required = false) Integer page,
+            @Parameter(description = "페이지 크기")
+            @RequestParam(name = "size", required = false) Integer size
     ) {
         // 422 검증
         List<Map<String, String>> errors = new java.util.ArrayList<>();
@@ -384,13 +392,18 @@ public class MmController {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
+        // 빈 파라미터 기본값 처리 (Swagger Try-out 시 쿼리 비움)
+        String effectiveSort = (sort == null || sort.isBlank()) ? "orderDate,desc" : sort;
+        int p = (page == null || page < 1) ? 1 : page;
+        int s = (size == null || size < 1) ? 10 : size;
+
         // 403 모킹: 너무 이른 기간 접근 제한
         if (from != null && from.isBefore(java.time.LocalDate.of(2024, 1, 1))) {
             throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
         }
 
         // 500 모킹 트리거: sort=error,500 등
-        if ("error".equalsIgnoreCase(sort) || "500".equalsIgnoreCase(sort)) {
+        if ("error".equalsIgnoreCase(effectiveSort) || "500".equalsIgnoreCase(effectiveSort)) {
             throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
         }
 
@@ -422,9 +435,25 @@ public class MmController {
             list.add(row);
         }
 
-        return ResponseEntity.ok(ApiResponse.<Object>success(
-                list, "발주서 목록 조회에 성공했습니다.", HttpStatus.OK
-        ));
+        // 페이지네이션 메타 생성 (1-base)
+        int total = list.size();
+        int totalPages = (int) Math.ceil((double) total / Math.max(1, s));
+        boolean hasNext = p < totalPages;
+        boolean hasPrev = p > 1;
+        int fromIdx = Math.min((p - 1) * s, total);
+        int toIdx = Math.min(fromIdx + s, total);
+        java.util.List<Map<String, Object>> pageOrders = list.subList(fromIdx, toIdx);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("total", total);
+        data.put("page", p);
+        data.put("size", s);
+        data.put("totalPages", totalPages);
+        data.put("hasNext", hasNext);
+        data.put("hasPrev", hasPrev);
+        data.put("orders", pageOrders);
+
+        return ResponseEntity.ok(ApiResponse.<Object>success(data, "발주서 목록 조회에 성공했습니다.", HttpStatus.OK));
     }
 
     // ---------------- Purchase Order Detail ----------------
@@ -533,7 +562,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 목록을 조회했습니다.\",\n  \"data\": {\n    \"total\": 5,\n    \"page\": 1,\n    \"size\": 10,\n    \"vendors\": [\n      {\n        \"vendorId\": 1,\n        \"companyName\": \"한국철강\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@koreasteel.com\",\n        \"category\": \"원자재\",\n        \"leadTimeDays\": 3,\n        \"leadTimeLabel\": \"3일\",\n        \"statusCode\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"actions\": [\"view\"],\n        \"createdAt\": \"2025-10-07T00:00:00Z\",\n        \"updatedAt\": \"2025-10-07T00:00:00Z\"\n      }\n    ]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 목록을 조회했습니다.\",\n  \"data\": {\n    \"total\": 10,\n    \"page\": 1,\n    \"size\": 10,\n    \"totalPages\": 1,\n    \"hasNext\": false,\n    \"hasPrev\": false,\n    \"vendors\": [\n      {\n        \"vendorId\": 1,\n        \"companyName\": \"한국철강\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@koreasteel.com\",\n        \"category\": \"원자재\",\n        \"leadTimeDays\": 3,\n        \"leadTimeLabel\": \"3일\",\n        \"statusCode\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"actions\": [\"view\"],\n        \"createdAt\": \"2025-10-07T00:00:00Z\",\n        \"updatedAt\": \"2025-10-07T00:00:00Z\"\n      }\n    ]\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",

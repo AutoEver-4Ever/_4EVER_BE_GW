@@ -97,7 +97,7 @@ class MmPurchaseTest {
     }
 
     @Test
-    @DisplayName("발주서 목록 조회 성공(10건)")
+    @DisplayName("발주서 목록 조회 성공(페이지네이션 메타 포함)")
     void getPurchaseOrders_success() throws Exception {
         mockMvc.perform(get("/api/scm-pp/mm/purchase-orders")
                         .servletPath("/api")
@@ -109,9 +109,13 @@ class MmPurchaseTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("발주서 목록 조회에 성공했습니다."))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data[0].id").value(1001))
-                .andExpect(jsonPath("$.data[9].id").value(1010));
+                .andExpect(jsonPath("$.data.total").value(10))
+                .andExpect(jsonPath("$.data.totalPages").value(1))
+                .andExpect(jsonPath("$.data.hasNext").value(false))
+                .andExpect(jsonPath("$.data.hasPrev").value(false))
+                .andExpect(jsonPath("$.data.orders").isArray())
+                .andExpect(jsonPath("$.data.orders[0].id").value(1001))
+                .andExpect(jsonPath("$.data.orders[9].id").value(1010));
     }
 
     @Test
