@@ -317,4 +317,126 @@ public class MmController {
                 data, "구매요청서 상세입니다.", HttpStatus.OK
         ));
     }
+
+    // ---------------- Purchase Orders List ----------------
+    @GetMapping("/purchase-orders")
+    @Operation(
+            summary = "발주서 목록 조회",
+            description = "발주서를 조건에 따라 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 목록 조회에 성공했습니다.\",\n  \"data\": [\n    {\n      \"id\": 1001,\n      \"poNumber\": \"PO-2024-001\",\n      \"supplierName\": \"대한철강\",\n      \"itemsSummary\": \"강판 500kg, 알루미늄 300kg\",\n      \"totalAmount\": 5000000,\n      \"orderDate\": \"2024-01-18\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"priority\": null,\n      \"status\": \"승인됨\"\n    }\n  ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"인증이 필요합니다.\",\n  \"errors\": { \"code\": 1006 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"해당 데이터를 조회할 권한이 없습니다.\",\n  \"errors\": { \"code\": 1013 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [ { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: APPROVED, PENDING, DELIVERED\" } ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\",\n  \"errors\": { \"code\": 1014 }\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Object>> getPurchaseOrders(
+            @Parameter(description = "상태 필터: APPROVED,PENDING,DELIVERED")
+            @RequestParam(name = "status", required = false) String status,
+            @Parameter(description = "주문일 시작(YYYY-MM-DD)", example = "2024-01-01")
+            @RequestParam(name = "orderDateFrom", required = false) String orderDateFrom,
+            @Parameter(description = "주문일 종료(YYYY-MM-DD)", example = "2024-01-31")
+            @RequestParam(name = "orderDateTo", required = false) String orderDateTo,
+            @Parameter(description = "정렬 필드,정렬방향", example = "orderDate,desc")
+            @RequestParam(name = "sort", required = false, defaultValue = "orderDate,desc") String sort,
+            @Parameter(description = "페이지 번호(1-base)", example = "1")
+            @RequestParam(name = "page", required = false, defaultValue = "1") Integer page,
+            @Parameter(description = "페이지 크기", example = "10")
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
+    ) {
+        // 422 검증
+        List<Map<String, String>> errors = new java.util.ArrayList<>();
+        java.time.LocalDate from = null;
+        java.time.LocalDate to = null;
+        if (status != null) {
+            var allowed = java.util.Set.of("APPROVED", "PENDING", "DELIVERED");
+            if (!allowed.contains(status)) {
+                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: APPROVED, PENDING, DELIVERED"));
+            }
+        }
+        if (orderDateFrom != null) {
+            try { from = java.time.LocalDate.parse(orderDateFrom); } catch (Exception e) {
+                errors.add(Map.of("field", "orderDateFrom", "reason", "INVALID_DATE"));
+            }
+        }
+        if (orderDateTo != null) {
+            try { to = java.time.LocalDate.parse(orderDateTo); } catch (Exception e) {
+                errors.add(Map.of("field", "orderDateTo", "reason", "INVALID_DATE"));
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new org.ever._4ever_be_gw.common.exception.ValidationException(
+                    org.ever._4ever_be_gw.common.exception.ErrorCode.VALIDATION_FAILED, errors);
+        }
+
+        // 403 모킹: 너무 이른 기간 접근 제한
+        if (from != null && from.isBefore(java.time.LocalDate.of(2024, 1, 1))) {
+            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
+                    org.ever._4ever_be_gw.common.exception.ErrorCode.FORBIDDEN_DATA_ACCESS);
+        }
+
+        // 500 모킹 트리거: sort=error,500 등
+        if ("error".equalsIgnoreCase(sort) || "500".equalsIgnoreCase(sort)) {
+            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
+                    org.ever._4ever_be_gw.common.exception.ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+
+        // 성공: 10개 목업 생성
+        java.util.List<Map<String, Object>> list = new java.util.ArrayList<>();
+        String[][] base = new String[][]{
+                {"PO-2024-001","대한철강","강판 500kg, 알루미늄 300kg","2024-01-18","2024-01-25","승인됨"},
+                {"PO-2024-002","한국알루미늄","알루미늄 시트 200매","2024-01-17","2024-01-24","대기중"},
+                {"PO-2024-003","포스코","고강도 스틸 1톤","2024-01-16","2024-01-23","반려"},
+                {"PO-2024-004","효성중공업","볼트 1000개","2024-01-15","2024-01-22","승인됨"},
+                {"PO-2024-005","현대제철","스테인리스 파이프 200개","2024-01-14","2024-01-21","대기중"},
+                {"PO-2024-006","두산중공업","알루미늄 판재 100매","2024-01-13","2024-01-20","승인됨"},
+                {"PO-2024-007","세아베스틸","스틸 코일 3톤","2024-01-12","2024-01-19","반려"},
+                {"PO-2024-008","KG동부제철","강철 빔 50개","2024-01-11","2024-01-18","대기중"},
+                {"PO-2024-009","동국제강","철판 2톤","2024-01-10","2024-01-17","승인됨"},
+                {"PO-2024-010","티엠씨메탈","알루미늄 봉 100개","2024-01-09","2024-01-16","대기중"}
+        };
+        for (int i = 0; i < 10; i++) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", 1001 + i);
+            row.put("poNumber", base[i][0]);
+            row.put("supplierName", base[i][1]);
+            row.put("itemsSummary", base[i][2]);
+            row.put("totalAmount", 5_000_000 - (i * 120_000));
+            row.put("orderDate", base[i][3]);
+            row.put("deliveryDate", base[i][4]);
+            row.put("priority", (i == 2 ? 1 : null));
+            row.put("status", base[i][5]);
+            list.add(row);
+        }
+
+        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
+                list, "발주서 목록 조회에 성공했습니다.", HttpStatus.OK
+        ));
+    }
 }

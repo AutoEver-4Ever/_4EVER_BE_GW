@@ -42,7 +42,14 @@ public class GlobalExceptionHandler {
 
         String msg = errorCode.getMessage();
         if (e.getDetail() != null && !e.getDetail().isBlank()) {
-            msg = msg.endsWith(".") ? msg + " " + e.getDetail() : msg + ": " + e.getDetail();
+            if (errorCode == ErrorCode.PURCHASE_REQUEST_NOT_FOUND) {
+                // 메시지 끝의 마침표를 제거하고 콜론으로 상세를 이어 붙임
+                if (msg.endsWith(".")) {
+                    msg = msg.substring(0, msg.length() - 1);
+                }
+                msg = msg + ": " + e.getDetail();
+            }
+            // 그 외 코드에 대해서는 메시지를 변경하지 않고 detail은 errors에 포함
         }
 
         ApiResponse<Object> response = ApiResponse.fail(

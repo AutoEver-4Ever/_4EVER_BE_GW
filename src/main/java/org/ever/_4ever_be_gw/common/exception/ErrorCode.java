@@ -22,6 +22,8 @@ public enum ErrorCode {
     PERIOD_CALCULATION_FAILED(1010, HttpStatus.UNPROCESSABLE_ENTITY, "요청을 처리할 수 없습니다. 기간 계산 중 오류가 발생했습니다."),
     FORBIDDEN_PURCHASE_ACCESS(1011, HttpStatus.FORBIDDEN, "해당 구매요청서를 조회할 권한이 없습니다."),
     PURCHASE_REQUEST_NOT_FOUND(1012, HttpStatus.NOT_FOUND, "해당 구매요청서를 찾을 수 없습니다."),
+    FORBIDDEN_DATA_ACCESS(1013, HttpStatus.FORBIDDEN, "해당 데이터를 조회할 권한이 없습니다."),
+    UNKNOWN_PROCESSING_ERROR(1014, HttpStatus.INTERNAL_SERVER_ERROR, "요청 처리 중 알 수 없는 오류가 발생했습니다."),
 
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
@@ -43,10 +45,7 @@ public enum ErrorCode {
     // Business Logic Errors (6000~6999)
     BUSINESS_LOGIC_ERROR(6000, HttpStatus.BAD_REQUEST, "비즈니스 로직 처리 중 오류가 발생했습니다."),
     DUPLICATE_REQUEST(6001, HttpStatus.CONFLICT, "중복된 요청입니다."),
-    INVALID_STATE_TRANSITION(6002, HttpStatus.BAD_REQUEST, "유효하지 않은 상태 전환입니다."),
-
-    // MM Domain Specific Errors
-    PERIOD_CALCULATION_ERROR(6003, HttpStatus.UNPROCESSABLE_ENTITY, "요청을 처리할 수 없습니다. 기간 계산 중 오류가 발생했습니다.");
+    INVALID_STATE_TRANSITION(6002, HttpStatus.BAD_REQUEST, "유효하지 않은 상태 전환입니다.");
 
     private final int code;
     private final HttpStatus httpStatus;
