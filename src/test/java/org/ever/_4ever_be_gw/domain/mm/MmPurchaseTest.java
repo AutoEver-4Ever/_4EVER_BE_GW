@@ -97,6 +97,93 @@ class MmPurchaseTest {
     }
 
     @Test
+    @DisplayName("발주서 목록 조회 성공(10건)")
+    void getPurchaseOrders_success() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-orders")
+                        .servletPath("/api")
+                        .queryParam("page", "1")
+                        .queryParam("size", "10")
+                        .queryParam("sort", "orderDate,desc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("발주서 목록 조회에 성공했습니다."))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].id").value(1001))
+                .andExpect(jsonPath("$.data[9].id").value(1010));
+    }
+
+    @Test
+    @DisplayName("발주서 목록 검증 실패 422(status 허용값 오류)")
+    void getPurchaseOrders_validationError_status() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-orders")
+                        .servletPath("/api")
+                        .queryParam("status", "INVALID")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(422))
+                .andExpect(jsonPath("$.message").value("요청 파라미터 검증에 실패했습니다."))
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors[0].field").value("status"))
+                .andExpect(jsonPath("$.errors[0].reason").value("ALLOWED_VALUES: APPROVED, PENDING, DELIVERED"));
+    }
+
+    @Test
+    @DisplayName("발주서 목록 권한 없음 403")
+    void getPurchaseOrders_forbidden() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-orders")
+                        .servletPath("/api")
+                        .queryParam("orderDateFrom", "2023-12-31")
+                        .queryParam("orderDateTo", "2024-01-31")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("해당 데이터를 조회할 권한이 없습니다."));
+    }
+
+    @Test
+    @DisplayName("발주서 목록 서버 오류 500(모킹 트리거)")
+    void getPurchaseOrders_serverError() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-orders")
+                        .servletPath("/api")
+                        .queryParam("sort", "error")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.message").value("요청 처리 중 알 수 없는 오류가 발생했습니다."));
+    }
+
+    @Test
+    @DisplayName("발주서 상세 조회 성공(1~10)")
+    void getPurchaseOrderDetail_success() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-orders/{purchaseId}", 1L)
+                        .servletPath("/api")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("발주서 상세 정보 조회에 성공했습니다."))
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.poNumber").exists())
+                .andExpect(jsonPath("$.data.items").isArray());
+    }
+
+    @Test
+    @DisplayName("발주서 상세 미존재 404(범위 밖)")
+    void getPurchaseOrderDetail_notFound() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-orders/{purchaseId}", 11L)
+                        .servletPath("/api")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("해당 발주서를 찾을 수 없습니다: poId=11"));
+    }
+    @Test
     @DisplayName("구매요청 상세 조회 성공(1~10)")
     void getPurchaseRequisitionDetail_success() throws Exception {
         mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions/{purchaseId}", 1L)
