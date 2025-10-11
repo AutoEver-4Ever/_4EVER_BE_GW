@@ -606,9 +606,9 @@ public class MmController {
                     org.ever._4ever_be_gw.common.exception.ErrorCode.VENDOR_FORBIDDEN);
         }
 
-        // 성공 목업 5개
-        java.util.List<Map<String, Object>> vendors = new java.util.ArrayList<>();
-        vendors.add(new LinkedHashMap<>() {{
+        // 성공 목업 10개 (기본 5 + 추가 5)
+        java.util.List<Map<String, Object>> allVendors = new java.util.ArrayList<>();
+        allVendors.add(new LinkedHashMap<>() {{
             put("vendorId", 1);
             put("companyName", "한국철강");
             put("contactPhone", "02-1234-5678");
@@ -622,7 +622,7 @@ public class MmController {
             put("createdAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
             put("updatedAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
         }});
-        vendors.add(new LinkedHashMap<>() {{
+        allVendors.add(new LinkedHashMap<>() {{
             put("vendorId", 2);
             put("companyName", "대한전자부품");
             put("contactPhone", "031-987-6543");
@@ -636,7 +636,7 @@ public class MmController {
             put("createdAt", java.time.Instant.parse("2025-09-15T00:00:00Z"));
             put("updatedAt", java.time.Instant.parse("2025-09-20T00:00:00Z"));
         }});
-        vendors.add(new LinkedHashMap<>() {{
+        allVendors.add(new LinkedHashMap<>() {{
             put("vendorId", 3);
             put("companyName", "글로벌화학");
             put("contactPhone", "051-555-0123");
@@ -650,7 +650,7 @@ public class MmController {
             put("createdAt", java.time.Instant.parse("2025-08-02T00:00:00Z"));
             put("updatedAt", java.time.Instant.parse("2025-09-01T00:00:00Z"));
         }});
-        vendors.add(new LinkedHashMap<>() {{
+        allVendors.add(new LinkedHashMap<>() {{
             put("vendorId", 4);
             put("companyName", "한빛소재");
             put("contactPhone", "02-3456-7890");
@@ -664,7 +664,7 @@ public class MmController {
             put("createdAt", java.time.Instant.parse("2025-07-10T00:00:00Z"));
             put("updatedAt", java.time.Instant.parse("2025-07-20T00:00:00Z"));
         }});
-        vendors.add(new LinkedHashMap<>() {{
+        allVendors.add(new LinkedHashMap<>() {{
             put("vendorId", 5);
             put("companyName", "에이치금속");
             put("contactPhone", "032-222-3333");
@@ -678,15 +678,92 @@ public class MmController {
             put("createdAt", java.time.Instant.parse("2025-06-01T00:00:00Z"));
             put("updatedAt", java.time.Instant.parse("2025-06-05T00:00:00Z"));
         }});
+        allVendors.add(new LinkedHashMap<>() {{
+            put("vendorId", 6);
+            put("companyName", "태성테크");
+            put("contactPhone", "02-7777-8888");
+            put("contactEmail", "sales@taesung.com");
+            put("category", "부품");
+            put("leadTimeDays", 7);
+            put("leadTimeLabel", "7일");
+            put("statusCode", "INACTIVE");
+            put("statusLabel", "비활성");
+            put("actions", java.util.List.of("view"));
+            put("createdAt", java.time.Instant.parse("2025-05-10T00:00:00Z"));
+            put("updatedAt", java.time.Instant.parse("2025-05-12T00:00:00Z"));
+        }});
+        allVendors.add(new LinkedHashMap<>() {{
+            put("vendorId", 7);
+            put("companyName", "광명산업");
+            put("contactPhone", "031-3333-4444");
+            put("contactEmail", "contact@kwangmyung.co.kr");
+            put("category", "원자재");
+            put("leadTimeDays", 6);
+            put("leadTimeLabel", "6일");
+            put("statusCode", "ACTIVE");
+            put("statusLabel", "활성");
+            put("actions", java.util.List.of("view"));
+            put("createdAt", java.time.Instant.parse("2025-04-01T00:00:00Z"));
+            put("updatedAt", java.time.Instant.parse("2025-04-03T00:00:00Z"));
+        }});
+        allVendors.add(new LinkedHashMap<>() {{
+            put("vendorId", 8);
+            put("companyName", "한성전자");
+            put("contactPhone", "02-2222-1111");
+            put("contactEmail", "info@hanseong.com");
+            put("category", "부품");
+            put("leadTimeDays", 2);
+            put("leadTimeLabel", "2일");
+            put("statusCode", "ACTIVE");
+            put("statusLabel", "활성");
+            put("actions", java.util.List.of("view"));
+            put("createdAt", java.time.Instant.parse("2025-03-01T00:00:00Z"));
+            put("updatedAt", java.time.Instant.parse("2025-03-08T00:00:00Z"));
+        }});
+        allVendors.add(new LinkedHashMap<>() {{
+            put("vendorId", 9);
+            put("companyName", "그린케미칼");
+            put("contactPhone", "051-777-0000");
+            put("contactEmail", "sales@greenchem.co.kr");
+            put("category", "원자재");
+            put("leadTimeDays", 9);
+            put("leadTimeLabel", "9일");
+            put("statusCode", "INACTIVE");
+            put("statusLabel", "비활성");
+            put("actions", java.util.List.of("view"));
+            put("createdAt", java.time.Instant.parse("2025-02-11T00:00:00Z"));
+            put("updatedAt", java.time.Instant.parse("2025-02-15T00:00:00Z"));
+        }});
+        allVendors.add(new LinkedHashMap<>() {{
+            put("vendorId", 10);
+            put("companyName", "아주금속");
+            put("contactPhone", "032-101-2020");
+            put("contactEmail", "contact@ajumetal.co.kr");
+            put("category", "원자재");
+            put("leadTimeDays", 10);
+            put("leadTimeLabel", "10일");
+            put("statusCode", "ACTIVE");
+            put("statusLabel", "활성");
+            put("actions", java.util.List.of("view"));
+            put("createdAt", java.time.Instant.parse("2025-01-20T00:00:00Z"));
+            put("updatedAt", java.time.Instant.parse("2025-01-25T00:00:00Z"));
+        }});
+
+        // 페이지네이션 슬라이싱 (1-base page)
+        int p = (page == null || page < 1) ? 1 : page;
+        int s = (size == null || size < 1) ? 10 : size;
+        int fromIdx = Math.min((p - 1) * s, allVendors.size());
+        int toIdx = Math.min(fromIdx + s, allVendors.size());
+        java.util.List<Map<String, Object>> vendors = allVendors.subList(fromIdx, toIdx);
 
         Map<String, Object> data = new LinkedHashMap<>();
-        int total = vendors.size();
-        int totalPages = (int) Math.ceil((double) total / Math.max(1, size));
-        boolean hasNext = page < totalPages;
-        boolean hasPrev = page > 1;
+        int total = allVendors.size();
+        int totalPages = (int) Math.ceil((double) total / Math.max(1, s));
+        boolean hasNext = p < totalPages;
+        boolean hasPrev = p > 1;
         data.put("total", total);
-        data.put("page", page);
-        data.put("size", size);
+        data.put("page", p);
+        data.put("size", s);
         data.put("totalPages", totalPages);
         data.put("hasNext", hasNext);
         data.put("hasPrev", hasPrev);
