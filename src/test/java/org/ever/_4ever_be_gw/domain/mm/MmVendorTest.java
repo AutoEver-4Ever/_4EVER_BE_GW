@@ -58,7 +58,7 @@ class MmVendorTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("공급업체 목록을 조회했습니다."))
-                .andExpect(jsonPath("$.data.total").value(5))
+                .andExpect(jsonPath("$.data.total").value(10))
                 .andExpect(jsonPath("$.data.vendors").isArray())
                 .andExpect(jsonPath("$.data.vendors[0].vendorId").value(1))
                 .andExpect(jsonPath("$.data.totalPages").value(1))
