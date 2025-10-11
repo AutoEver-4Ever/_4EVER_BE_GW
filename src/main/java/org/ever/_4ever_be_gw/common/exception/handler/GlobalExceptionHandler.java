@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -47,6 +48,23 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, errorCode.getHttpStatus());
     }
+
+    /**
+     * 도메인 검증 실패 (ValidationException)
+     */
+    @ExceptionHandler(ValidationException.class)
+    protected ResponseEntity<ApiResponse<Object>> handleValidationException(ValidationException e) {
+        log.error("도메인 검증 실패: {}", e.getMessage(), e);
+
+        ApiResponse<Object> response = ApiResponse.fail(
+                e.getErrorCode().getMessage(),
+                e.getErrorCode().getHttpStatus(),
+                e.getErrors()
+        );
+        return new ResponseEntity<>(response, e.getErrorCode().getHttpStatus());
+    }
+
+    // PeriodCalculationException은 사용하지 않고 BusinessException(ErrorCode.PERIOD_CALCULATION_FAILED)로 통합 처리합니다.
 
     /**
      * @Valid 검증 실패 (MethodArgumentNotValidException)
@@ -219,7 +237,7 @@ public class GlobalExceptionHandler {
         errorDetails.put("detail", e.getMessage());
 
         ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.INTERNAL_SERVER_ERROR.getMessage(),
+            "서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
             HttpStatus.INTERNAL_SERVER_ERROR,
             errorDetails
         );

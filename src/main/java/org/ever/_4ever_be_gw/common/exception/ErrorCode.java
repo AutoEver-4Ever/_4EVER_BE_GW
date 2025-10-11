@@ -16,6 +16,10 @@ public enum ErrorCode {
     ACCESS_DENIED(1004, HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     INTERNAL_SERVER_ERROR(1005, HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
     UNAUTHORIZED(1006, HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
+    INVALID_PERIODS(1007, HttpStatus.BAD_REQUEST, "요청 파라미터 'periods' 값이 올바르지 않습니다."),
+    VALIDATION_FAILED(1008, HttpStatus.UNPROCESSABLE_ENTITY, "요청 파라미터 검증에 실패했습니다."),
+    FORBIDDEN_RANGE(1009, HttpStatus.FORBIDDEN, "해당 범위의 데이터를 조회할 권한이 없습니다."),
+    PERIOD_CALCULATION_FAILED(1010, HttpStatus.UNPROCESSABLE_ENTITY, "요청을 처리할 수 없습니다. 기간 계산 중 오류가 발생했습니다."),
 
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
