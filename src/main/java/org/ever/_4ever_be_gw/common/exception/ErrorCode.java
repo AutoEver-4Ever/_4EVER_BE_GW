@@ -24,6 +24,7 @@ public enum ErrorCode {
     PURCHASE_REQUEST_NOT_FOUND(1012, HttpStatus.NOT_FOUND, "해당 구매요청서를 찾을 수 없습니다."),
     FORBIDDEN_DATA_ACCESS(1013, HttpStatus.FORBIDDEN, "해당 데이터를 조회할 권한이 없습니다."),
     UNKNOWN_PROCESSING_ERROR(1014, HttpStatus.INTERNAL_SERVER_ERROR, "요청 처리 중 알 수 없는 오류가 발생했습니다."),
+    VENDOR_FORBIDDEN(1016, HttpStatus.FORBIDDEN, "공급업체 조회 권한이 없습니다."),
     PURCHASE_ORDER_NOT_FOUND(1015, HttpStatus.NOT_FOUND, "해당 발주서를 찾을 수 없습니다."),
 
     // User Errors (3000~3999)

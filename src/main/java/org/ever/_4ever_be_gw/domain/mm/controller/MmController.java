@@ -538,4 +538,162 @@ public class MmController {
                 data, "발주서 상세 정보 조회에 성공했습니다.", HttpStatus.OK
         ));
     }
+
+    // ---------------- Vendors List ----------------
+    @GetMapping("/vendors")
+    @Operation(
+            summary = "공급업체 목록 조회",
+            description = "공급업체 목록을 조건에 따라 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 목록을 조회했습니다.\",\n  \"data\": {\n    \"total\": 5,\n    \"page\": 1,\n    \"size\": 10,\n    \"vendors\": [\n      {\n        \"vendorId\": 1,\n        \"companyName\": \"한국철강\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@koreasteel.com\",\n        \"category\": \"원자재\",\n        \"leadTimeDays\": 3,\n        \"leadTimeLabel\": \"3일\",\n        \"statusCode\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"actions\": [\"view\"],\n        \"createdAt\": \"2025-10-07T00:00:00Z\",\n        \"updatedAt\": \"2025-10-07T00:00:00Z\"\n      }\n    ]\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"인증이 필요합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"공급업체 조회 권한이 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: ACTIVE, INACTIVE\" },\n    { \"field\": \"page\", \"reason\": \"MIN_1\" },\n    { \"field\": \"size\", \"reason\": \"MAX_200\" }\n  ]\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Object>> getVendors(
+            @Parameter(description = "상태 필터: ACTIVE, INACTIVE")
+            @RequestParam(name = "status", required = false) String status,
+            @Parameter(description = "카테고리 필터", example = "부품")
+            @RequestParam(name = "category", required = false) String category,
+            @Parameter(description = "페이지(1-base)", example = "1")
+            @RequestParam(name = "page", required = false, defaultValue = "1") Integer page,
+            @Parameter(description = "페이지 크기(최대 200)", example = "10")
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
+    ) {
+        // 검증
+        List<Map<String, String>> errors = new java.util.ArrayList<>();
+        if (status != null) {
+            var allowed = java.util.Set.of("ACTIVE", "INACTIVE");
+            if (!allowed.contains(status)) {
+                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ACTIVE, INACTIVE"));
+            }
+        }
+        if (page != null && page < 1) {
+            errors.add(Map.of("field", "page", "reason", "MIN_1"));
+        }
+        if (size != null && size > 200) {
+            errors.add(Map.of("field", "size", "reason", "MAX_200"));
+        }
+        if (!errors.isEmpty()) {
+            throw new org.ever._4ever_be_gw.common.exception.ValidationException(
+                    org.ever._4ever_be_gw.common.exception.ErrorCode.VALIDATION_FAILED, errors);
+        }
+
+        // 403 모킹 트리거: category=금지
+        if ("금지".equals(category)) {
+            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
+                    org.ever._4ever_be_gw.common.exception.ErrorCode.VENDOR_FORBIDDEN);
+        }
+
+        // 성공 목업 5개
+        java.util.List<Map<String, Object>> vendors = new java.util.ArrayList<>();
+        vendors.add(new LinkedHashMap<>() {{
+            put("vendorId", 1);
+            put("companyName", "한국철강");
+            put("contactPhone", "02-1234-5678");
+            put("contactEmail", "contact@koreasteel.com");
+            put("category", "원자재");
+            put("leadTimeDays", 3);
+            put("leadTimeLabel", "3일");
+            put("statusCode", "ACTIVE");
+            put("statusLabel", "활성");
+            put("actions", java.util.List.of("view"));
+            put("createdAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
+            put("updatedAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
+        }});
+        vendors.add(new LinkedHashMap<>() {{
+            put("vendorId", 2);
+            put("companyName", "대한전자부품");
+            put("contactPhone", "031-987-6543");
+            put("contactEmail", "sales@dahanelec.com");
+            put("category", "부품");
+            put("leadTimeDays", 1);
+            put("leadTimeLabel", "1일");
+            put("statusCode", "ACTIVE");
+            put("statusLabel", "활성");
+            put("actions", java.util.List.of("view"));
+            put("createdAt", java.time.Instant.parse("2025-09-15T00:00:00Z"));
+            put("updatedAt", java.time.Instant.parse("2025-09-20T00:00:00Z"));
+        }});
+        vendors.add(new LinkedHashMap<>() {{
+            put("vendorId", 3);
+            put("companyName", "글로벌화학");
+            put("contactPhone", "051-555-0123");
+            put("contactEmail", "info@globalchem.co.kr");
+            put("category", "원자재");
+            put("leadTimeDays", 5);
+            put("leadTimeLabel", "5일");
+            put("statusCode", "INACTIVE");
+            put("statusLabel", "비활성");
+            put("actions", java.util.List.of("view"));
+            put("createdAt", java.time.Instant.parse("2025-08-02T00:00:00Z"));
+            put("updatedAt", java.time.Instant.parse("2025-09-01T00:00:00Z"));
+        }});
+        vendors.add(new LinkedHashMap<>() {{
+            put("vendorId", 4);
+            put("companyName", "한빛소재");
+            put("contactPhone", "02-3456-7890");
+            put("contactEmail", "info@hanbits.com");
+            put("category", "부품");
+            put("leadTimeDays", 2);
+            put("leadTimeLabel", "2일");
+            put("statusCode", "ACTIVE");
+            put("statusLabel", "활성");
+            put("actions", java.util.List.of("view"));
+            put("createdAt", java.time.Instant.parse("2025-07-10T00:00:00Z"));
+            put("updatedAt", java.time.Instant.parse("2025-07-20T00:00:00Z"));
+        }});
+        vendors.add(new LinkedHashMap<>() {{
+            put("vendorId", 5);
+            put("companyName", "에이치금속");
+            put("contactPhone", "032-222-3333");
+            put("contactEmail", "contact@hmetal.co.kr");
+            put("category", "원자재");
+            put("leadTimeDays", 4);
+            put("leadTimeLabel", "4일");
+            put("statusCode", "ACTIVE");
+            put("statusLabel", "활성");
+            put("actions", java.util.List.of("view"));
+            put("createdAt", java.time.Instant.parse("2025-06-01T00:00:00Z"));
+            put("updatedAt", java.time.Instant.parse("2025-06-05T00:00:00Z"));
+        }});
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        int total = vendors.size();
+        int totalPages = (int) Math.ceil((double) total / Math.max(1, size));
+        boolean hasNext = page < totalPages;
+        boolean hasPrev = page > 1;
+        data.put("total", total);
+        data.put("page", page);
+        data.put("size", size);
+        data.put("totalPages", totalPages);
+        data.put("hasNext", hasNext);
+        data.put("hasPrev", hasPrev);
+        data.put("vendors", vendors);
+
+        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
+                data, "공급업체 목록을 조회했습니다.", HttpStatus.OK
+        ));
+    }
 }
