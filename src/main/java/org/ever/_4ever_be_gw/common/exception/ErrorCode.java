@@ -20,6 +20,8 @@ public enum ErrorCode {
     VALIDATION_FAILED(1008, HttpStatus.UNPROCESSABLE_ENTITY, "요청 파라미터 검증에 실패했습니다."),
     FORBIDDEN_RANGE(1009, HttpStatus.FORBIDDEN, "해당 범위의 데이터를 조회할 권한이 없습니다."),
     PERIOD_CALCULATION_FAILED(1010, HttpStatus.UNPROCESSABLE_ENTITY, "요청을 처리할 수 없습니다. 기간 계산 중 오류가 발생했습니다."),
+    FORBIDDEN_PURCHASE_ACCESS(1011, HttpStatus.FORBIDDEN, "해당 구매요청서를 조회할 권한이 없습니다."),
+    PURCHASE_REQUEST_NOT_FOUND(1012, HttpStatus.NOT_FOUND, "해당 구매요청서를 찾을 수 없습니다."),
 
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),

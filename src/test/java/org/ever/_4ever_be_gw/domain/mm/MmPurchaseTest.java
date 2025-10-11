@@ -95,5 +95,44 @@ class MmPurchaseTest {
                 .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.message").value("해당 범위의 데이터를 조회할 권한이 없습니다."));
     }
-}
 
+    @Test
+    @DisplayName("구매요청 상세 조회 성공(1~10)")
+    void getPurchaseRequisitionDetail_success() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions/{purchaseId}", 1L)
+                        .servletPath("/api")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("구매요청서 상세입니다."))
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.prNumber").value("PR-2024-001"))
+                .andExpect(jsonPath("$.data.items").isArray())
+                .andExpect(jsonPath("$.data.totalAmount").value(2550000));
+    }
+
+    @Test
+    @DisplayName("구매요청 상세 권한 없음 403")
+    void getPurchaseRequisitionDetail_forbidden() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions/{purchaseId}", 403001L)
+                        .servletPath("/api")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("해당 구매요청서를 조회할 권한이 없습니다."));
+    }
+
+    @Test
+    @DisplayName("구매요청 상세 미존재 404(범위 밖)")
+    void getPurchaseRequisitionDetail_notFound() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions/{purchaseId}", 11L)
+                        .servletPath("/api")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("해당 구매요청서를 찾을 수 없습니다: purchaseId=11"));
+    }
+}

@@ -40,8 +40,13 @@ public class GlobalExceptionHandler {
             errorDetails.put("detail", e.getDetail());
         }
 
+        String msg = errorCode.getMessage();
+        if (e.getDetail() != null && !e.getDetail().isBlank()) {
+            msg = msg.endsWith(".") ? msg + " " + e.getDetail() : msg + ": " + e.getDetail();
+        }
+
         ApiResponse<Object> response = ApiResponse.fail(
-            errorCode.getMessage(),
+            msg,
             errorCode.getHttpStatus(),
             errorDetails
         );

@@ -12,6 +12,7 @@ import org.ever._4ever_be_gw.domain.mm.service.MmStatisticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -219,6 +220,101 @@ public class MmController {
 
         return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
                 data, "구매요청서 목록입니다.", HttpStatus.OK
+        ));
+    }
+
+    @GetMapping("/purchase-requisitions/{purchaseId}")
+    @Operation(
+            summary = "구매요청 상세 조회",
+            description = "구매요청서 단건 상세를 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서 상세입니다.\",\n  \"data\": {\n    \"id\": 1,\n    \"prNumber\": \"PR-2024-001\",\n    \"requesterId\": 123,\n    \"requesterName\": \"김철수\",\n    \"departmentId\": 77,\n    \"departmentName\": \"생산팀\",\n    \"createdAt\": \"2024-01-15T00:00:00Z\",\n    \"desiredDeliveryDate\": \"2024-01-25\",\n    \"status\": \"APPROVED\",\n    \"statusLabel\": \"승인\",\n    \"currency\": \"KRW\",\n    \"items\": [\n      {\n        \"id\": 900001,\n        \"lineNo\": 1,\n        \"itemId\": 40000123,\n        \"itemName\": \"강판\",\n        \"quantity\": 500,\n        \"uomCode\": \"EA\",\n        \"unitPrice\": 5000,\n        \"amount\": 2500000,\n        \"deliveryDate\": \"2024-01-25\",\n        \"note\": null\n      },\n      {\n        \"id\": 900002,\n        \"lineNo\": 2,\n        \"itemId\": 987654321,\n        \"itemName\": \"볼트\",\n        \"quantity\": 100,\n        \"uomCode\": \"EA\",\n        \"unitPrice\": 500,\n        \"amount\": 50000,\n        \"deliveryDate\": \"2024-01-25\",\n        \"note\": null\n      }\n    ],\n    \"totalAmount\": 2550000\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"해당 구매요청서를 조회할 권한이 없습니다.\",\n  \"errors\": { \"code\": 1011 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "리소스 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"해당 구매요청서를 찾을 수 없습니다: purchaseId=11\",\n  \"errors\": { \"code\": 1012 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\",\n  \"errors\": { \"code\": 1005 }\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Object>> getPurchaseRequisitionDetail(
+            @Parameter(description = "구매요청 ID", example = "1")
+            @PathVariable("purchaseId") Long purchaseId
+    ) {
+        // 모킹된 에러 시나리오
+        if (Long.valueOf(403001L).equals(purchaseId)) {
+            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
+                    org.ever._4ever_be_gw.common.exception.ErrorCode.FORBIDDEN_PURCHASE_ACCESS
+            );
+        }
+        // 1~10만 유효, 그 외는 404 처리
+        if (purchaseId == null || purchaseId < 1 || purchaseId > 10) {
+            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
+                    org.ever._4ever_be_gw.common.exception.ErrorCode.PURCHASE_REQUEST_NOT_FOUND,
+                    "purchaseId=" + purchaseId
+            );
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", purchaseId);
+        data.put("prNumber", "PR-2024-001");
+        data.put("requesterId", 123L);
+        data.put("requesterName", "김철수");
+        data.put("departmentId", 77L);
+        data.put("departmentName", "생산팀");
+        data.put("createdAt", java.time.Instant.parse("2024-01-15T00:00:00Z"));
+        data.put("desiredDeliveryDate", java.time.LocalDate.parse("2024-01-25"));
+        data.put("status", "APPROVED");
+        data.put("statusLabel", "승인");
+        data.put("currency", "KRW");
+
+        java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
+        items.add(new java.util.LinkedHashMap<>() {{
+            put("id", 900001L);
+            put("lineNo", 1);
+            put("itemId", 40000123L);
+            put("itemName", "강판");
+            put("quantity", 500);
+            put("uomCode", "EA");
+            put("unitPrice", 5000);
+            put("amount", 2_500_000);
+            put("deliveryDate", java.time.LocalDate.parse("2024-01-25"));
+            put("note", null);
+        }});
+        items.add(new java.util.LinkedHashMap<>() {{
+            put("id", 900002L);
+            put("lineNo", 2);
+            put("itemId", 987_654_321L);
+            put("itemName", "볼트");
+            put("quantity", 100);
+            put("uomCode", "EA");
+            put("unitPrice", 500);
+            put("amount", 50_000);
+            put("deliveryDate", java.time.LocalDate.parse("2024-01-25"));
+            put("note", null);
+        }});
+        data.put("items", items);
+        data.put("totalAmount", 2_550_000);
+
+        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
+                data, "구매요청서 상세입니다.", HttpStatus.OK
         ));
     }
 }
