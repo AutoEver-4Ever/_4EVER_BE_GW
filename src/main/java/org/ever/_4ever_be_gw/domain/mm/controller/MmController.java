@@ -439,4 +439,103 @@ public class MmController {
                 list, "발주서 목록 조회에 성공했습니다.", HttpStatus.OK
         ));
     }
+
+    // ---------------- Purchase Order Detail ----------------
+    @GetMapping("/purchase-orders/{purchaseId}")
+    @Operation(
+            summary = "발주서 상세 조회",
+            description = "발주서 단건 상세 정보를 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"id\": 1,\n    \"poNumber\": \"PO-2024-001\",\n    \"supplierName\": \"대한철강\",\n    \"supplierContact\": \"02-1234-5678\",\n    \"supplierEmail\": \"order@steel.co.kr\",\n    \"orderDate\": \"2024-01-18\",\n    \"deliveryDate\": \"2024-01-25\",\n    \"status\": \"승인됨\",\n    \"totalAmount\": 5000000,\n    \"items\": [\n      { \"itemName\": \"강판\", \"spec\": \"SS400 10mm\", \"quantity\": 500, \"unit\": \"kg\", \"unitPrice\": 8000, \"amount\": 4000000 },\n      { \"itemName\": \"알루미늄\", \"spec\": \"A6061 5mm\", \"quantity\": 300, \"unit\": \"kg\", \"unitPrice\": 3333, \"amount\": 1000000 }\n    ],\n    \"deliveryAddress\": \"경기도 안산시 단원구 공장로 456\",\n    \"requestedDeliveryDate\": \"2024-01-25\",\n    \"specialInstructions\": \"오전 배송 요청\",\n    \"paymentTerms\": \"월말 결제\",\n    \"memo\": \"1월 생산용 원자재 주문\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"인증이 필요합니다.\",\n  \"errors\": { \"code\": 1006 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"해당 데이터를 조회할 권한이 없습니다.\",\n  \"errors\": { \"code\": 1013 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "리소스 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"해당 발주서를 찾을 수 없습니다: poId=11\",\n  \"errors\": { \"code\": 1015 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\",\n  \"errors\": { \"code\": 1014 }\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Object>> getPurchaseOrderDetail(
+            @Parameter(description = "발주서 ID", example = "1")
+            @PathVariable("purchaseId") Long purchaseId
+    ) {
+        // 1~10만 존재
+        if (purchaseId == null || purchaseId < 1 || purchaseId > 10) {
+            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
+                    org.ever._4ever_be_gw.common.exception.ErrorCode.PURCHASE_ORDER_NOT_FOUND,
+                    "poId=" + purchaseId
+            );
+        }
+
+        // 목업 데이터 생성
+        int idx = (int)((purchaseId - 1) % 10);
+        String[] suppliers = {"대한철강","한국알루미늄","포스코","효성중공업","현대제철","두산중공업","세아베스틸","KG동부제철","동국제강","티엠씨메탈"};
+        String[] orderDates = {"2024-01-18","2024-01-17","2024-01-16","2024-01-15","2024-01-14","2024-01-13","2024-01-12","2024-01-11","2024-01-10","2024-01-09"};
+        String[] deliveryDates = {"2024-01-25","2024-01-24","2024-01-23","2024-01-22","2024-01-21","2024-01-20","2024-01-19","2024-01-18","2024-01-17","2024-01-16"};
+        String[] statuses = {"승인됨","대기중","반려","승인됨","대기중","승인됨","반려","대기중","승인됨","대기중"};
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", purchaseId);
+        data.put("poNumber", String.format("PO-2024-%03d", 1 + idx));
+        data.put("supplierName", suppliers[idx]);
+        data.put("supplierContact", "02-1234-5678");
+        data.put("supplierEmail", "order@steel.co.kr");
+        data.put("orderDate", orderDates[idx]);
+        data.put("deliveryDate", deliveryDates[idx]);
+        data.put("status", statuses[idx]);
+
+        java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
+        Map<String, Object> item1 = new LinkedHashMap<>();
+        item1.put("itemName", "강판");
+        item1.put("spec", "SS400 10mm");
+        item1.put("quantity", 500);
+        item1.put("unit", "kg");
+        item1.put("unitPrice", 8000);
+        item1.put("amount", 4_000_000);
+        items.add(item1);
+
+        Map<String, Object> item2 = new LinkedHashMap<>();
+        item2.put("itemName", "알루미늄");
+        item2.put("spec", "A6061 5mm");
+        item2.put("quantity", 300);
+        item2.put("unit", "kg");
+        item2.put("unitPrice", 3333);
+        item2.put("amount", 1_000_000);
+        items.add(item2);
+
+        data.put("items", items);
+        data.put("totalAmount", 5_000_000);
+        data.put("deliveryAddress", "경기도 안산시 단원구 공장로 456");
+        data.put("requestedDeliveryDate", deliveryDates[idx]);
+        data.put("specialInstructions", "오전 배송 요청");
+        data.put("paymentTerms", "월말 결제");
+        data.put("memo", "1월 생산용 원자재 주문");
+
+        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
+                data, "발주서 상세 정보 조회에 성공했습니다.", HttpStatus.OK
+        ));
+    }
 }
