@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.domain.mm.dto.PeriodMetrics;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
+import org.ever._4ever_be_gw.common.exception.ValidationException;
+import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.domain.mm.service.MmStatisticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -70,7 +72,7 @@ public class MmController {
                     )
             }
     )
-    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Map<String, PeriodMetrics>>> getStatistics(
+    public ResponseEntity<ApiResponse<Map<String, PeriodMetrics>>> getStatistics(
             @Parameter(name = "periods", description = "조회 기간 목록(콤마 구분). 예: week,month,quarter,year", example = "week,month,quarter,year")
             @RequestParam(name = "periods", required = false) String periods
     ) {
@@ -87,9 +89,7 @@ public class MmController {
                 .toList();
 
         if (periods != null && !periods.isBlank() && (!invalid.isEmpty() || requested.stream().noneMatch(ALLOWED_PERIODS::contains))) {
-            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.INVALID_PERIODS
-            );
+            throw new BusinessException(ErrorCode.INVALID_PERIODS);
         }
 
         List<String> finalPeriods = requested.stream()
@@ -97,7 +97,7 @@ public class MmController {
                 .toList();
 
         Map<String, PeriodMetrics> data = mmStatisticsService.getStatistics(finalPeriods);
-        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.success(data, "OK", HttpStatus.OK));
+        return ResponseEntity.ok(ApiResponse.success(data, "OK", HttpStatus.OK));
     }
 
     @GetMapping("/purchase-requisitions")
@@ -131,7 +131,7 @@ public class MmController {
                     )
             }
     )
-    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Object>> getPurchaseRequisitions(
+    public ResponseEntity<ApiResponse<Object>> getPurchaseRequisitions(
             @Parameter(description = "상태 필터 예: PENDING, APPROVED")
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "생성일 시작(YYYY-MM-DD)", example = "2024-01-01")
@@ -163,17 +163,12 @@ public class MmController {
             errors.add(Map.of("field", "size", "reason", "MAX_200"));
         }
         if (!errors.isEmpty()) {
-            throw new org.ever._4ever_be_gw.common.exception.ValidationException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.VALIDATION_FAILED,
-                    errors
-            );
+            throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
         // 403 샘플 조건: 과거 특정 기준 이전 조회는 금지 (모킹)
         if (fromDate != null && fromDate.isBefore(java.time.LocalDate.of(2024, 1, 1))) {
-            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.FORBIDDEN_RANGE
-            );
+            throw new BusinessException(ErrorCode.FORBIDDEN_RANGE);
         }
 
         // 성공 응답 (목업)
@@ -218,7 +213,7 @@ public class MmController {
         data.put("content", content);
         data.put("page", pageMeta);
 
-        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
+        return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "구매요청서 목록입니다.", HttpStatus.OK
         ));
     }
@@ -254,22 +249,17 @@ public class MmController {
                     )
             }
     )
-    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Object>> getPurchaseRequisitionDetail(
+    public ResponseEntity<ApiResponse<Object>> getPurchaseRequisitionDetail(
             @Parameter(description = "구매요청 ID", example = "1")
             @PathVariable("purchaseId") Long purchaseId
     ) {
         // 모킹된 에러 시나리오
         if (Long.valueOf(403001L).equals(purchaseId)) {
-            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.FORBIDDEN_PURCHASE_ACCESS
-            );
+            throw new BusinessException(ErrorCode.FORBIDDEN_PURCHASE_ACCESS);
         }
         // 1~10만 유효, 그 외는 404 처리
         if (purchaseId == null || purchaseId < 1 || purchaseId > 10) {
-            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.PURCHASE_REQUEST_NOT_FOUND,
-                    "purchaseId=" + purchaseId
-            );
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "purchaseId=" + purchaseId);
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
@@ -313,7 +303,7 @@ public class MmController {
         data.put("items", items);
         data.put("totalAmount", 2_550_000);
 
-        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
+        return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "구매요청서 상세입니다.", HttpStatus.OK
         ));
     }
@@ -356,7 +346,7 @@ public class MmController {
                     )
             }
     )
-    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Object>> getPurchaseOrders(
+    public ResponseEntity<ApiResponse<Object>> getPurchaseOrders(
             @Parameter(description = "상태 필터: APPROVED,PENDING,DELIVERED")
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "주문일 시작(YYYY-MM-DD)", example = "2024-01-01")
@@ -391,20 +381,17 @@ public class MmController {
             }
         }
         if (!errors.isEmpty()) {
-            throw new org.ever._4ever_be_gw.common.exception.ValidationException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.VALIDATION_FAILED, errors);
+            throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
         // 403 모킹: 너무 이른 기간 접근 제한
         if (from != null && from.isBefore(java.time.LocalDate.of(2024, 1, 1))) {
-            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.FORBIDDEN_DATA_ACCESS);
+            throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
         }
 
         // 500 모킹 트리거: sort=error,500 등
         if ("error".equalsIgnoreCase(sort) || "500".equalsIgnoreCase(sort)) {
-            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.UNKNOWN_PROCESSING_ERROR);
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
         }
 
         // 성공: 10개 목업 생성
@@ -435,7 +422,7 @@ public class MmController {
             list.add(row);
         }
 
-        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
+        return ResponseEntity.ok(ApiResponse.<Object>success(
                 list, "발주서 목록 조회에 성공했습니다.", HttpStatus.OK
         ));
     }
@@ -478,16 +465,13 @@ public class MmController {
                     )
             }
     )
-    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Object>> getPurchaseOrderDetail(
+    public ResponseEntity<ApiResponse<Object>> getPurchaseOrderDetail(
             @Parameter(description = "발주서 ID", example = "1")
             @PathVariable("purchaseId") Long purchaseId
     ) {
         // 1~10만 존재
         if (purchaseId == null || purchaseId < 1 || purchaseId > 10) {
-            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.PURCHASE_ORDER_NOT_FOUND,
-                    "poId=" + purchaseId
-            );
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + purchaseId);
         }
 
         // 목업 데이터 생성
@@ -534,7 +518,7 @@ public class MmController {
         data.put("paymentTerms", "월말 결제");
         data.put("memo", "1월 생산용 원자재 주문");
 
-        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
+        return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "발주서 상세 정보 조회에 성공했습니다.", HttpStatus.OK
         ));
     }
@@ -571,7 +555,7 @@ public class MmController {
                     )
             }
     )
-    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Object>> getVendors(
+    public ResponseEntity<ApiResponse<Object>> getVendors(
             @Parameter(description = "상태 필터: ACTIVE, INACTIVE")
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "카테고리 필터", example = "부품")
@@ -596,14 +580,12 @@ public class MmController {
             errors.add(Map.of("field", "size", "reason", "MAX_200"));
         }
         if (!errors.isEmpty()) {
-            throw new org.ever._4ever_be_gw.common.exception.ValidationException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.VALIDATION_FAILED, errors);
+            throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
         // 403 모킹 트리거: category=금지
         if ("금지".equals(category)) {
-            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.VENDOR_FORBIDDEN);
+            throw new BusinessException(ErrorCode.VENDOR_FORBIDDEN);
         }
 
         // 성공 목업 10개 (기본 5 + 추가 5)
@@ -769,7 +751,7 @@ public class MmController {
         data.put("hasPrev", hasPrev);
         data.put("vendors", vendors);
 
-        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
+        return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "공급업체 목록을 조회했습니다.", HttpStatus.OK
         ));
     }
@@ -812,22 +794,19 @@ public class MmController {
                     )
             }
     )
-    public ResponseEntity<org.ever._4ever_be_gw.common.response.ApiResponse<Object>> getVendorDetail(
+    public ResponseEntity<ApiResponse<Object>> getVendorDetail(
             @Parameter(description = "공급업체 ID", example = "1")
             @PathVariable("vendorId") Long vendorId
     ) {
         // 모킹 트리거들
         if (vendorId != null && vendorId == 403001L) {
-            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.VENDOR_FORBIDDEN);
+            throw new BusinessException(ErrorCode.VENDOR_FORBIDDEN);
         }
         if (vendorId != null && vendorId == 500001L) {
-            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.VENDOR_PROCESSING_ERROR);
+            throw new BusinessException(ErrorCode.VENDOR_PROCESSING_ERROR);
         }
         if (vendorId == null || vendorId < 1 || vendorId > 10) {
-            throw new org.ever._4ever_be_gw.common.exception.BusinessException(
-                    org.ever._4ever_be_gw.common.exception.ErrorCode.VENDOR_NOT_FOUND);
+            throw new BusinessException(ErrorCode.VENDOR_NOT_FOUND);
         }
 
         int idx = (int)((vendorId - 1) % 10);
@@ -852,7 +831,7 @@ public class MmController {
         data.put("createdAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
         data.put("updatedAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
 
-        return ResponseEntity.ok(org.ever._4ever_be_gw.common.response.ApiResponse.<Object>success(
+        return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "공급업체 상세 정보를 조회했습니다.", HttpStatus.OK
         ));
     }

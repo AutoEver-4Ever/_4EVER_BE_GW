@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -232,6 +233,26 @@ public class GlobalExceptionHandler {
             "요청한 리소스를 찾을 수 없습니다.",
             HttpStatus.NOT_FOUND,
             errorDetails
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * 정적 리소스 404 (Resource chain)
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    protected ResponseEntity<ApiResponse<Object>> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.error("정적 리소스를 찾을 수 없음: {}", e.getMessage());
+
+        Map<String, Object> errorDetails = new HashMap<>();
+        errorDetails.put("code", 404);
+        errorDetails.put("resourcePath", e.getResourcePath());
+
+        ApiResponse<Object> response = ApiResponse.fail(
+                "요청한 리소스를 찾을 수 없습니다.",
+                HttpStatus.NOT_FOUND,
+                errorDetails
         );
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
