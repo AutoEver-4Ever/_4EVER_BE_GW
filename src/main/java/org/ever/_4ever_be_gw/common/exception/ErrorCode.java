@@ -30,6 +30,9 @@ public enum ErrorCode {
     QUOTATION_DUE_DATE_INVALID(1019, HttpStatus.BAD_REQUEST, "요청 납기일은 현재 날짜 이후여야 합니다."),
     QUOTATION_ITEMS_EMPTY(1020, HttpStatus.UNPROCESSABLE_ENTITY, "items는 1개 이상이어야 합니다."),
     PURCHASE_ORDER_NOT_FOUND(1015, HttpStatus.NOT_FOUND, "해당 발주서를 찾을 수 없습니다."),
+    QUOTATION_LIST_PROCESSING_ERROR(1021, HttpStatus.INTERNAL_SERVER_ERROR, "견적 목록 조회 처리 중 서버 오류가 발생했습니다."),
+    QUOTATION_NOT_FOUND(1022, HttpStatus.NOT_FOUND, "해당 견적을 찾을 수 없습니다."),
+    QUOTATION_FORBIDDEN(1023, HttpStatus.FORBIDDEN, "견적 상세를 조회할 권한이 없습니다."),
 
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
