@@ -39,6 +39,8 @@ public enum ErrorCode {
     CUSTOMER_NOT_FOUND(1027, HttpStatus.NOT_FOUND, "고객사를 찾을 수 없습니다."),
     CUSTOMER_FORBIDDEN(1028, HttpStatus.FORBIDDEN, "해당 고객사를 조회할 권한이 없습니다."),
     CUSTOMER_UPDATE_FORBIDDEN(1029, HttpStatus.FORBIDDEN, "해당 고객사를 수정할 권한이 없습니다."),
+    CUSTOMER_DELETE_FORBIDDEN(1030, HttpStatus.FORBIDDEN, "해당 고객사를 삭제할 권한이 없습니다."),
+    CUSTOMER_DELETE_CONFLICT(1031, HttpStatus.CONFLICT, "해당 고객사는 거래 내역이 존재하여 삭제할 수 없습니다."),
 
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),

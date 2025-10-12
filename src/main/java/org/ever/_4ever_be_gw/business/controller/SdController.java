@@ -945,4 +945,70 @@ public class SdController {
 
         return ResponseEntity.ok(ApiResponse.success(data, "고객사 정보가 수정되었습니다.", HttpStatus.OK));
     }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/customers/{customerId}")
+    @Operation(
+            summary = "고객사 삭제",
+            description = "고객사 정보를 삭제합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 정보가 삭제되었습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"인증이 필요합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"해당 고객사를 삭제할 권한이 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "리소스 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"고객사를 찾을 수 없습니다: customerId=10000\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "409",
+                            description = "충돌(거래 내역 존재)",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "conflict", value = "{\n  \"status\": 409,\n  \"success\": false,\n  \"message\": \"해당 고객사는 거래 내역이 존재하여 삭제할 수 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> deleteCustomer(
+            @org.springframework.web.bind.annotation.PathVariable("customerId") Long customerId
+    ) {
+        // 500 모킹
+        if (Long.valueOf(500001L).equals(customerId)) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+        // 403 모킹
+        if (Long.valueOf(403001L).equals(customerId)) {
+            throw new BusinessException(ErrorCode.CUSTOMER_DELETE_FORBIDDEN);
+        }
+        // 409 모킹
+        if (Long.valueOf(409001L).equals(customerId)) {
+            throw new BusinessException(ErrorCode.CUSTOMER_DELETE_CONFLICT);
+        }
+        // 404 범위 외 (1~10 유효)
+        if (customerId == null || customerId < 1 || customerId > 10) {
+            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + customerId);
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(null, "고객사 정보가 삭제되었습니다.", HttpStatus.OK));
+    }
 }
