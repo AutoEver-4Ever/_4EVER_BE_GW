@@ -36,6 +36,8 @@ public enum ErrorCode {
     QUOTATION_CONFIRM_INVALID_STATE(1024, HttpStatus.BAD_REQUEST, "요청한 견적 중 검토 요청이 불가능한 상태가 포함되어 있습니다."),
     QUOTATION_CONFIRM_NOT_FOUND(1025, HttpStatus.NOT_FOUND, "존재하지 않는 견적이 포함되어 있습니다."),
     CUSTOMER_REQUIRED_FIELDS_MISSING(1026, HttpStatus.BAD_REQUEST, "필수 필드가 누락되었습니다."),
+    CUSTOMER_NOT_FOUND(1027, HttpStatus.NOT_FOUND, "고객사를 찾을 수 없습니다."),
+    CUSTOMER_FORBIDDEN(1028, HttpStatus.FORBIDDEN, "해당 고객사를 조회할 권한이 없습니다."),
 
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
