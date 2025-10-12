@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/scm-pp/mm")
-@Tag(name = "MM Statistics", description = "MM 통계 조회 API")
+@Tag(name = "구매관리(MM)", description = "구매관리(MM) API")
 public class MmController {
 
     private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
