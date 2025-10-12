@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
 
         String msg = errorCode.getMessage();
         if (e.getDetail() != null && !e.getDetail().isBlank()) {
-            if (errorCode == ErrorCode.PURCHASE_REQUEST_NOT_FOUND || errorCode == ErrorCode.PURCHASE_ORDER_NOT_FOUND) {
+            if (errorCode == ErrorCode.PURCHASE_REQUEST_NOT_FOUND || errorCode == ErrorCode.PURCHASE_ORDER_NOT_FOUND || errorCode == ErrorCode.QUOTATION_NOT_FOUND || errorCode == ErrorCode.CUSTOMER_NOT_FOUND) {
                 // 메시지 끝의 마침표를 제거하고 콜론으로 상세를 이어 붙임
                 if (msg.endsWith(".")) {
                     msg = msg.substring(0, msg.length() - 1);

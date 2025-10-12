@@ -2,10 +2,10 @@ package org.ever._4ever_be_gw.domain.mm;
 
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
-import org.ever._4ever_be_gw.domain.mm.controller.MmController;
-import org.ever._4ever_be_gw.domain.mm.dto.PeriodMetrics;
-import org.ever._4ever_be_gw.domain.mm.dto.PeriodStat;
-import org.ever._4ever_be_gw.domain.mm.service.MmStatisticsService;
+import org.ever._4ever_be_gw.scmpp.controller.MmController;
+import org.ever._4ever_be_gw.scmpp.dto.PeriodMetricsDto;
+import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
+import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -59,30 +59,30 @@ class MmStatisticsTest {
     @Test
     @DisplayName("GET /api/scm-pp/mm/statistics 은 기간별 키로 응답한다")
     void getStatistics_returnsPeriodKeyedData() throws Exception {
-        Map<String, PeriodMetrics> data = new LinkedHashMap<>();
-        data.put("week", PeriodMetrics.builder()
-                .purchaseRequestCount(new PeriodStat(184L, new BigDecimal("0.0728")))
-                .purchaseApprovalPendingCount(new PeriodStat(39L, new BigDecimal("-0.0532")))
-                .purchaseOrderAmount(new PeriodStat(1_283_000_000L, new BigDecimal("0.1044")))
-                .purchaseOrderApprovalPendingCount(new PeriodStat(22L, new BigDecimal("0.1000")))
+        Map<String, PeriodMetricsDto> data = new LinkedHashMap<>();
+        data.put("week", PeriodMetricsDto.builder()
+                .purchaseRequestCount(new PeriodStatDto(184L, new BigDecimal("0.0728")))
+                .purchaseApprovalPendingCount(new PeriodStatDto(39L, new BigDecimal("-0.0532")))
+                .purchaseOrderAmount(new PeriodStatDto(1_283_000_000L, new BigDecimal("0.1044")))
+                .purchaseOrderApprovalPendingCount(new PeriodStatDto(22L, new BigDecimal("0.1000")))
                 .build());
-        data.put("month", PeriodMetrics.builder()
-                .purchaseRequestCount(new PeriodStat(736L, new BigDecimal("0.0389")))
-                .purchaseApprovalPendingCount(new PeriodStat(161L, new BigDecimal("-0.0417")))
-                .purchaseOrderAmount(new PeriodStat(5_214_000_000L, new BigDecimal("0.0361")))
-                .purchaseOrderApprovalPendingCount(new PeriodStat(94L, new BigDecimal("0.0652")))
+        data.put("month", PeriodMetricsDto.builder()
+                .purchaseRequestCount(new PeriodStatDto(736L, new BigDecimal("0.0389")))
+                .purchaseApprovalPendingCount(new PeriodStatDto(161L, new BigDecimal("-0.0417")))
+                .purchaseOrderAmount(new PeriodStatDto(5_214_000_000L, new BigDecimal("0.0361")))
+                .purchaseOrderApprovalPendingCount(new PeriodStatDto(94L, new BigDecimal("0.0652")))
                 .build());
-        data.put("quarter", PeriodMetrics.builder()
-                .purchaseRequestCount(new PeriodStat(2_154L, new BigDecimal("0.0215")))
-                .purchaseApprovalPendingCount(new PeriodStat(472L, new BigDecimal("-0.0186")))
-                .purchaseOrderAmount(new PeriodStat(15_123_000_000L, new BigDecimal("0.0247")))
-                .purchaseOrderApprovalPendingCount(new PeriodStat(281L, new BigDecimal("0.0426")))
+        data.put("quarter", PeriodMetricsDto.builder()
+                .purchaseRequestCount(new PeriodStatDto(2_154L, new BigDecimal("0.0215")))
+                .purchaseApprovalPendingCount(new PeriodStatDto(472L, new BigDecimal("-0.0186")))
+                .purchaseOrderAmount(new PeriodStatDto(15_123_000_000L, new BigDecimal("0.0247")))
+                .purchaseOrderApprovalPendingCount(new PeriodStatDto(281L, new BigDecimal("0.0426")))
                 .build());
-        data.put("year", PeriodMetrics.builder()
-                .purchaseRequestCount(new PeriodStat(8_421L, new BigDecimal("0.0298")))
-                .purchaseApprovalPendingCount(new PeriodStat(1_813L, new BigDecimal("-0.0221")))
-                .purchaseOrderAmount(new PeriodStat(59_876_000_000L, new BigDecimal("0.0312")))
-                .purchaseOrderApprovalPendingCount(new PeriodStat(1_103L, new BigDecimal("0.0185")))
+        data.put("year", PeriodMetricsDto.builder()
+                .purchaseRequestCount(new PeriodStatDto(8_421L, new BigDecimal("0.0298")))
+                .purchaseApprovalPendingCount(new PeriodStatDto(1_813L, new BigDecimal("-0.0221")))
+                .purchaseOrderAmount(new PeriodStatDto(59_876_000_000L, new BigDecimal("0.0312")))
+                .purchaseOrderApprovalPendingCount(new PeriodStatDto(1_103L, new BigDecimal("0.0185")))
                 .build());
         given(mmStatisticsService.getStatistics(anyList())).willReturn(data);
 
@@ -103,18 +103,18 @@ class MmStatisticsTest {
     @Test
     @DisplayName("요청한 기간만 포함한다")
     void getStatistics_respectsRequestedPeriods() throws Exception {
-        Map<String, PeriodMetrics> partial = new LinkedHashMap<>();
-        partial.put("week", PeriodMetrics.builder()
-                .purchaseRequestCount(new PeriodStat(184L, new BigDecimal("0.0728")))
-                .purchaseApprovalPendingCount(new PeriodStat(39L, new BigDecimal("-0.0532")))
-                .purchaseOrderAmount(new PeriodStat(1_283_000_000L, new BigDecimal("0.1044")))
-                .purchaseOrderApprovalPendingCount(new PeriodStat(22L, new BigDecimal("0.1000")))
+        Map<String, PeriodMetricsDto> partial = new LinkedHashMap<>();
+        partial.put("week", PeriodMetricsDto.builder()
+                .purchaseRequestCount(new PeriodStatDto(184L, new BigDecimal("0.0728")))
+                .purchaseApprovalPendingCount(new PeriodStatDto(39L, new BigDecimal("-0.0532")))
+                .purchaseOrderAmount(new PeriodStatDto(1_283_000_000L, new BigDecimal("0.1044")))
+                .purchaseOrderApprovalPendingCount(new PeriodStatDto(22L, new BigDecimal("0.1000")))
                 .build());
-        partial.put("month", PeriodMetrics.builder()
-                .purchaseRequestCount(new PeriodStat(736L, new BigDecimal("0.0389")))
-                .purchaseApprovalPendingCount(new PeriodStat(161L, new BigDecimal("-0.0417")))
-                .purchaseOrderAmount(new PeriodStat(5_214_000_000L, new BigDecimal("0.0361")))
-                .purchaseOrderApprovalPendingCount(new PeriodStat(94L, new BigDecimal("0.0652")))
+        partial.put("month", PeriodMetricsDto.builder()
+                .purchaseRequestCount(new PeriodStatDto(736L, new BigDecimal("0.0389")))
+                .purchaseApprovalPendingCount(new PeriodStatDto(161L, new BigDecimal("-0.0417")))
+                .purchaseOrderAmount(new PeriodStatDto(5_214_000_000L, new BigDecimal("0.0361")))
+                .purchaseOrderApprovalPendingCount(new PeriodStatDto(94L, new BigDecimal("0.0652")))
                 .build());
         given(mmStatisticsService.getStatistics(anyList())).willReturn(partial);
 
@@ -168,4 +168,3 @@ class MmStatisticsTest {
                 .andExpect(jsonPath("$.message").value("서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요."));
     }
 }
-
