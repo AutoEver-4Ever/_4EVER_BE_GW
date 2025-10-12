@@ -566,4 +566,132 @@ public class SdController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(data, "고객사가 등록되었습니다.", HttpStatus.CREATED));
     }
+
+    @GetMapping("/customers")
+    @Operation(
+            summary = "고객사 목록 조회",
+            description = "고객사를 페이지네이션으로 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 목록을 조회했습니다.\",\n  \"data\": {\n    \"total\": 3,\n    \"page\": 1,\n    \"size\": 10,\n    \"customers\": [\n      {\n        \"customerId\": 1,\n        \"customerCode\": \"C-001\",\n        \"companyName\": \"삼성전자\",\n        \"contactPerson\": \"김철수\",\n        \"phone\": \"02-1234-5678\",\n        \"email\": \"kim@samsung.com\",\n        \"address\": \"서울시 강남구 테헤란로 123\",\n        \"transactionAmount\": 1250000000,\n        \"orderCount\": 45,\n        \"lastOrderDate\": \"2024-01-15\",\n        \"status\": \"활성\"\n      }\n    ]\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"인증이 필요합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"해당 데이터를 조회할 권한이 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> getCustomers(
+            @Parameter(description = "상태: ACTIVE, DEACTIVE")
+            @RequestParam(name = "status", required = false) String status,
+            @Parameter(description = "검색 키워드")
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @Parameter(description = "페이지 번호(1-base)")
+            @RequestParam(name = "page", required = false) Integer page,
+            @Parameter(description = "페이지 크기(최대 200)")
+            @RequestParam(name = "size", required = false) Integer size
+    ) {
+        // 500 모킹 트리거
+        if (keyword != null && ("error".equalsIgnoreCase(keyword) || "500".equalsIgnoreCase(keyword))) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+        // 403 모킹 트리거
+        if (keyword != null && (keyword.equalsIgnoreCase("금지") || keyword.equalsIgnoreCase("forbidden"))) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
+        }
+
+        // 422 검증
+        List<Map<String, String>> errors = new ArrayList<>();
+        if (status != null) {
+            var allowed = java.util.Set.of("ACTIVE", "DEACTIVE");
+            if (!allowed.contains(status)) {
+                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ACTIVE, DEACTIVE"));
+            }
+        }
+        if (page != null && page < 1) {
+            errors.add(Map.of("field", "page", "reason", "MIN_1"));
+        }
+        if (size != null && size > 200) {
+            errors.add(Map.of("field", "size", "reason", "MAX_200"));
+        }
+        if (!errors.isEmpty()) {
+            throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
+        }
+
+        int p = (page == null || page < 1) ? 1 : page;
+        int s = (size == null || size < 1) ? 10 : size;
+
+        // 목업 데이터 준비(최소 10건)
+        List<Map<String, Object>> all = new ArrayList<>();
+        String[] companies = {"삼성전자", "LG화학", "현대자동차", "SK하이닉스", "네이버", "카카오", "포스코", "두산중공업", "CJ대한통운", "한화시스템", "아모레퍼시픽", "롯데케미칼"};
+        String[] persons = {"김철수", "박영희", "이민호", "최지우", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유", "신동엽", "강호동"};
+        String[] phones = {"02-1234-5678", "02-2345-6789", "031-111-2222", "02-9876-5432"};
+        String[] emails = {"contact@corp.com", "sales@corp.com", "info@corp.com"};
+        for (int i = 0; i < 12; i++) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("customerId", i + 1);
+            row.put("customerCode", String.format("C-%03d", i + 1));
+            row.put("companyName", companies[i % companies.length]);
+            row.put("contactPerson", persons[i % persons.length]);
+            row.put("phone", phones[i % phones.length]);
+            row.put("email", (i % 2 == 0) ? (persons[i % persons.length].charAt(0) + "@" + companies[i % companies.length] + ".com") : emails[i % emails.length]);
+            row.put("address", (i % 2 == 0) ? "서울시 강남구 테헤란로 123" : "서울시 영등포구 여의도동 456");
+            row.put("transactionAmount", 1_250_000_000L - (i * 37_000_000L));
+            row.put("orderCount", 45 - (i % 10));
+            row.put("lastOrderDate", String.format("2024-01-%02d", 15 - (i % 10)));
+            row.put("status", (i % 3 == 0) ? "비활성" : "활성");
+            all.add(row);
+        }
+
+        // 필터 적용
+        List<Map<String, Object>> filtered = all;
+        if (status != null) {
+            boolean active = status.equals("ACTIVE");
+            filtered = filtered.stream().filter(m -> (active ? "활성" : "비활성").equals(m.get("status"))).toList();
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            String kw = keyword.toLowerCase();
+            filtered = filtered.stream().filter(m -> {
+                String cname = String.valueOf(m.get("companyName")).toLowerCase();
+                String person = String.valueOf(m.get("contactPerson")).toLowerCase();
+                return cname.contains(kw) || person.contains(kw);
+            }).toList();
+        }
+
+        int total = filtered.size();
+        int fromIdx = Math.min((p - 1) * s, total);
+        int toIdx = Math.min(fromIdx + s, total);
+        List<Map<String, Object>> customers = filtered.subList(fromIdx, toIdx);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("total", total);
+        data.put("page", p);
+        data.put("size", s);
+        data.put("customers", customers);
+
+        return ResponseEntity.ok(ApiResponse.success(data, "고객사 목록을 조회했습니다.", HttpStatus.OK));
+    }
 }
