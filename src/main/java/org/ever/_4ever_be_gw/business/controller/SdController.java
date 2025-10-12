@@ -1011,4 +1011,133 @@ public class SdController {
 
         return ResponseEntity.ok(ApiResponse.success(null, "고객사 정보가 삭제되었습니다.", HttpStatus.OK));
     }
+
+    @GetMapping("/analytics/sales")
+    @Operation(
+            summary = "매출 분석 통계 조회",
+            description = "주차 범위 내 매출 추이, 제품 비중, 상위 고객사를 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 통계 데이터를 조회했습니다.\",\n  \"data\": {\n    \"trend\": [ { \"year\": 2025, \"week\": 10, \"sale\": 3.5, \"orderCount\": 120 } ],\n    \"productShare\": [ { \"productCode\": \"P-001\", \"productName\": \"OLED TV\", \"sale\": 12.3, \"saleShare\": 35.2 } ],\n    \"topCustomers\": [ { \"customerCode\": \"C-001\", \"customerName\": \"삼성전자\", \"sale\": 8.5, \"saleShare\": 24.3 } ]\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "400",
+                            description = "범위 초과",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "range_too_large", value = "{\n  \"status\": 400,\n  \"success\": false,\n  \"message\": \"조회 기간은 최대 12주(3개월)까지만 가능합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> getSalesAnalytics(
+            @Parameter(description = "시작 연도") @RequestParam int startYear,
+            @Parameter(description = "시작 주차") @RequestParam int startWeek,
+            @Parameter(description = "종료 연도") @RequestParam int endYear,
+            @Parameter(description = "종료 주차") @RequestParam int endWeek
+    ) {
+        // 500 모킹 트리거
+        if (startYear == 5000 || endYear == 5000) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+
+        // 데이터 캘린더 정의(목업): 2024 주차 1~52, 2025 주차 1~39(= 9월 4주차 근사)
+        int idxStart = toIndex(startYear, startWeek);
+        int idxEnd = toIndex(endYear, endWeek);
+        if (idxStart > idxEnd) { int t = idxStart; idxStart = idxEnd; idxEnd = t; }
+
+        int weeks = idxEnd - idxStart + 1;
+        if (weeks > 12) {
+            throw new BusinessException(ErrorCode.ANALYTICS_RANGE_TOO_LARGE);
+        }
+
+        // 전체 트렌드 풀 생성
+        java.util.List<java.util.Map<String, Object>> fullTrend = buildWeeklyTrend();
+        java.util.List<java.util.Map<String, Object>> trend = fullTrend.subList(idxStart, Math.min(idxEnd + 1, fullTrend.size()));
+
+        // 제품 비중(자동차 외장재)
+        java.util.List<java.util.Map<String, Object>> productShare = new java.util.ArrayList<>();
+        productShare.add(row("P-001", "도어패널", 12.8, 28.5));
+        productShare.add(row("P-002", "프론트 범퍼", 10.4, 23.1));
+        productShare.add(row("P-003", "리어 범퍼", 8.9, 19.8));
+        productShare.add(row("P-004", "사이드 미러", 6.1, 13.2));
+        productShare.add(row("P-005", "보닛", 4.5, 10.4));
+        productShare.add(row("P-006", "트렁크 리드", 2.3, 5.0));
+
+        // 상위 고객사(자동차 관련)
+        java.util.List<java.util.Map<String, Object>> topCustomers = new java.util.ArrayList<>();
+        topCustomers.add(crow("C-001", "현대자동차", 9.8, 27.0));
+        topCustomers.add(crow("C-002", "기아", 7.3, 20.1));
+        topCustomers.add(crow("C-003", "르노코리아", 5.1, 14.0));
+        topCustomers.add(crow("C-004", "쌍용자동차", 3.9, 10.8));
+        topCustomers.add(crow("C-005", "테슬라코리아", 3.2, 8.8));
+
+        java.util.Map<String, Object> data = new java.util.LinkedHashMap<>();
+        data.put("trend", trend);
+        data.put("productShare", productShare);
+        data.put("topCustomers", topCustomers);
+
+        return ResponseEntity.ok(ApiResponse.success(data, "매출 통계 데이터를 조회했습니다.", HttpStatus.OK));
+    }
+
+    private static int toIndex(int year, int week) {
+        if (year < 2024 || year > 2025) return 0; // 단순 보정
+        int base2024 = 0;
+        int weeks2024 = 52;
+        if (year == 2024) {
+            int w = Math.max(1, Math.min(52, week));
+            return base2024 + (w - 1);
+        } else { // 2025
+            int base2025 = base2024 + weeks2024; // 52
+            int w = Math.max(1, Math.min(39, week));
+            return base2025 + (w - 1);
+        }
+    }
+
+    private static java.util.List<java.util.Map<String, Object>> buildWeeklyTrend() {
+        java.util.List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
+        // 2024: 1..52
+        for (int w = 1; w <= 52; w++) {
+            list.add(tr("2024", w, 2.8 + 1.5 * Math.sin(w / 4.0), 100 + (w % 40)));
+        }
+        // 2025: 1..39 (9월 4주차 근사)
+        for (int w = 1; w <= 39; w++) {
+            list.add(tr("2025", w, 3.2 + 1.7 * Math.sin((w + 2) / 3.5), 110 + (w % 45)));
+        }
+        return list;
+    }
+
+    private static java.util.Map<String, Object> tr(String year, int week, double sale, int orders) {
+        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("year", Integer.parseInt(year));
+        m.put("week", week);
+        m.put("sale", Math.round(sale * 10.0) / 10.0);
+        m.put("orderCount", orders);
+        return m;
+    }
+
+    private static java.util.Map<String, Object> row(String code, String name, double sale, double share) {
+        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("productCode", code);
+        m.put("productName", name);
+        m.put("sale", sale);
+        m.put("saleShare", share);
+        return m;
+    }
+
+    private static java.util.Map<String, Object> crow(String code, String name, double sale, double share) {
+        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("customerCode", code);
+        m.put("customerName", name);
+        m.put("sale", sale);
+        m.put("saleShare", share);
+        return m;
+    }
 }

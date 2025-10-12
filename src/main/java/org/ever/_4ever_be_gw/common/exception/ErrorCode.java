@@ -41,6 +41,7 @@ public enum ErrorCode {
     CUSTOMER_UPDATE_FORBIDDEN(1029, HttpStatus.FORBIDDEN, "해당 고객사를 수정할 권한이 없습니다."),
     CUSTOMER_DELETE_FORBIDDEN(1030, HttpStatus.FORBIDDEN, "해당 고객사를 삭제할 권한이 없습니다."),
     CUSTOMER_DELETE_CONFLICT(1031, HttpStatus.CONFLICT, "해당 고객사는 거래 내역이 존재하여 삭제할 수 없습니다."),
+    ANALYTICS_RANGE_TOO_LARGE(1032, HttpStatus.BAD_REQUEST, "조회 기간은 최대 12주(3개월)까지만 가능합니다."),
 
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
