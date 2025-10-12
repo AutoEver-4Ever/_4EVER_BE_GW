@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ever._4ever_be_gw.business.dto.QuotationRequestDto;
+import org.ever._4ever_be_gw.business.dto.QuotationConfirmRequestDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/business/sd")
-@Tag(name = "SD Statistics", description = "영업관리(SD) 통계 조회 API")
+@Tag(name = "SD Statistics", description = "영업관리(SD) API")
 public class SdController {
 
     private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
@@ -389,5 +390,62 @@ public class SdController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(data, "신규 견적서 등록이 완료되었습니다.", HttpStatus.CREATED));
+    }
+
+    @PostMapping("/quotations/confirm")
+    @Operation(
+            summary = "견적 검토 요청",
+            description = "선택한 견적들에 대해 검토 요청을 수행합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 검토 요청이 정상적으로 처리되었습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "400",
+                            description = "검토 불가 상태 포함",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "invalid_state", value = "{\n  \"status\": 400,\n  \"success\": false,\n  \"message\": \"요청한 견적 중 검토 요청이 불가능한 상태가 포함되어 있습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "미존재 견적 포함",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"존재하지 않는 견적이 포함되어 있습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> confirmQuotations(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "request", value = "{\n  \"quotationIds\": [12001, 12002, 12005]\n}"))
+            )
+            @RequestBody QuotationConfirmRequestDto request
+    ) {
+        List<Long> ids = request != null ? request.getQuotationIds() : null;
+
+        // 500 모킹 트리거
+        if (ids != null && ids.contains(500001L)) {
+            throw new RuntimeException("boom");
+        }
+        // 400: 검토 불가 상태 포함 (모킹용 sentinel) - 우선 처리
+        if (ids != null && ids.contains(400001L)) {
+            throw new BusinessException(ErrorCode.QUOTATION_CONFIRM_INVALID_STATE);
+        }
+        // 404: 존재하지 않는 견적 포함 (목업 범위 12001~12010)
+        if (ids != null && ids.stream().anyMatch(id -> id < 12001L || id > 12010L)) {
+            throw new BusinessException(ErrorCode.QUOTATION_CONFIRM_NOT_FOUND);
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(null, "견적 검토 요청이 정상적으로 처리되었습니다.", HttpStatus.OK));
     }
 }
