@@ -38,6 +38,7 @@ public enum ErrorCode {
     CUSTOMER_REQUIRED_FIELDS_MISSING(1026, HttpStatus.BAD_REQUEST, "필수 필드가 누락되었습니다."),
     CUSTOMER_NOT_FOUND(1027, HttpStatus.NOT_FOUND, "고객사를 찾을 수 없습니다."),
     CUSTOMER_FORBIDDEN(1028, HttpStatus.FORBIDDEN, "해당 고객사를 조회할 권한이 없습니다."),
+    CUSTOMER_UPDATE_FORBIDDEN(1029, HttpStatus.FORBIDDEN, "해당 고객사를 수정할 권한이 없습니다."),
 
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),

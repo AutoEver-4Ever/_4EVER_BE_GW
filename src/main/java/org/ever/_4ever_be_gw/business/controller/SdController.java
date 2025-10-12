@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ever._4ever_be_gw.business.dto.QuotationRequestDto;
 import org.ever._4ever_be_gw.business.dto.QuotationConfirmRequestDto;
 import org.ever._4ever_be_gw.business.dto.CustomerCreateRequestDto;
+import org.ever._4ever_be_gw.business.dto.CustomerUpdateRequestDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
@@ -831,5 +832,117 @@ public class SdController {
         }
 
         return ResponseEntity.ok(ApiResponse.success(data, "고객사 상세 정보를 조회했습니다.", HttpStatus.OK));
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/customers/{customerId}")
+    @Operation(
+            summary = "고객사 정보 수정",
+            description = "고객사 기본/연락/담당자 정보를 수정합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 정보가 수정되었습니다.\",\n  \"data\": {\n    \"customerId\": \"C-001\",\n    \"companyName\": \"삼성전자\",\n    \"ceo\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"status\": \"활성\",\n    \"contact\": {\n      \"phone\": \"02-1234-5678\",\n      \"address\": \"서울시 강남구 테헤란로 123\",\n      \"email\": \"info@samsung.com\"\n    },\n    \"manager\": {\n      \"name\": \"김철수\",\n      \"mobile\": \"010-1234-5678\",\n      \"email\": \"manager@samsung.com\"\n    },\n    \"note\": \"주요 거래처\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"인증이 필요합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"해당 고객사를 수정할 권한이 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "리소스 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"고객사를 찾을 수 없습니다: customerId=C-999\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"businessNumber\", \"reason\": \"INVALID_FORMAT (###-##-#####)\" },\n    { \"field\": \"contact.phone\", \"reason\": \"INVALID_PHONE_FORMAT\" },\n    { \"field\": \"manager.email\", \"reason\": \"INVALID_EMAIL_FORMAT\" }\n  ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> updateCustomer(
+            @org.springframework.web.bind.annotation.PathVariable("customerId") Long customerId,
+            @RequestBody CustomerUpdateRequestDto request
+    ) {
+        // 500 모킹 트리거
+        if (request != null && request.getCompanyName() != null && request.getCompanyName().equalsIgnoreCase("ERROR")) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+        // 403 모킹
+        if (Long.valueOf(403001L).equals(customerId)) {
+            throw new BusinessException(ErrorCode.CUSTOMER_UPDATE_FORBIDDEN);
+        }
+        // 404 범위 외
+        if (customerId == null || customerId < 1L || customerId > 10L) {
+            String code = String.format("C-%03d", customerId == null ? 0 : customerId);
+            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + code);
+        }
+
+        // 422 형식 검증
+        java.util.List<java.util.Map<String, String>> errors = new java.util.ArrayList<>();
+        if (request != null) {
+            if (request.getBusinessNumber() != null && !request.getBusinessNumber().matches("\\d{3}-\\d{2}-\\d{5}")) {
+                errors.add(java.util.Map.of("field", "businessNumber", "reason", "INVALID_FORMAT (###-##-#####)"));
+            }
+            if (request.getContact() != null && request.getContact().getPhone() != null && !request.getContact().getPhone().isBlank()) {
+                if (!request.getContact().getPhone().matches("^\\d{2,3}-\\d{3,4}-\\d{4}$")) {
+                    errors.add(java.util.Map.of("field", "contact.phone", "reason", "INVALID_PHONE_FORMAT"));
+                }
+            }
+            if (request.getManager() != null && request.getManager().getEmail() != null && !request.getManager().getEmail().isBlank()) {
+                if (!request.getManager().getEmail().matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+                    errors.add(java.util.Map.of("field", "manager.email", "reason", "INVALID_EMAIL_FORMAT"));
+                }
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
+        }
+
+        String code = String.format("C-%03d", customerId);
+
+        // 성공 응답 목업: 요청 값을 반영하여 반환
+        java.util.Map<String, Object> data = new java.util.LinkedHashMap<>();
+        data.put("customerId", code);
+        data.put("companyName", request != null ? request.getCompanyName() : null);
+        data.put("ceo", request != null ? request.getCeo() : null);
+        data.put("businessNumber", request != null ? request.getBusinessNumber() : null);
+        data.put("status", request != null ? request.getStatus() : null);
+
+        java.util.Map<String, Object> contact = new java.util.LinkedHashMap<>();
+        if (request != null && request.getContact() != null) {
+            contact.put("phone", request.getContact().getPhone());
+            contact.put("address", request.getContact().getAddress());
+            contact.put("email", request.getContact().getEmail());
+        }
+        data.put("contact", contact);
+
+        java.util.Map<String, Object> manager = new java.util.LinkedHashMap<>();
+        if (request != null && request.getManager() != null) {
+            manager.put("name", request.getManager().getName());
+            manager.put("mobile", request.getManager().getMobile());
+            manager.put("email", request.getManager().getEmail());
+        }
+        data.put("manager", manager);
+        data.put("note", request != null ? request.getNote() : null);
+
+        return ResponseEntity.ok(ApiResponse.success(data, "고객사 정보가 수정되었습니다.", HttpStatus.OK));
     }
 }
