@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/business/sd")
-@Tag(name = "SD Statistics", description = "영업관리(SD) API")
+@Tag(name = "영업관리(SD)", description = "영업관리(SD) API")
 public class SdController {
 
     private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
