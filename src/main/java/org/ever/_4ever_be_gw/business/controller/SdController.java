@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ever._4ever_be_gw.business.dto.QuotationRequestDto;
 import org.ever._4ever_be_gw.business.dto.QuotationConfirmRequestDto;
+import org.ever._4ever_be_gw.business.dto.CustomerCreateRequestDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
@@ -447,5 +448,122 @@ public class SdController {
         }
 
         return ResponseEntity.ok(ApiResponse.success(null, "견적 검토 요청이 정상적으로 처리되었습니다.", HttpStatus.OK));
+    }
+
+    @PostMapping("/customers")
+    @Operation(
+            summary = "고객사 등록",
+            description = "고객사 정보를 신규 등록합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "201",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"고객사가 등록되었습니다.\",\n  \"data\": {\n    \"customerId\": 501,\n    \"customerCode\": \"C-0001\",\n    \"companyName\": \"삼성전자\",\n    \"ceoName\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"statusLabel\": \"활성\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"contact@samsung.com\",\n    \"address\": \"서울시 강남구 테헤란로 123\",\n    \"manager\": { \"name\": \"김철수\", \"mobile\": \"010-1234-5678\", \"email\": \"kim@samsung.com\" },\n    \"totalOrders\": 0,\n    \"totalTransactionAmount\": 0,\n    \"currency\": \"KRW\",\n    \"note\": \"주요 고객사, 정기 거래처\",\n    \"createdAt\": \"2025-10-12T12:34:56Z\",\n    \"updatedAt\": \"2025-10-12T12:34:56Z\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "400",
+                            description = "필수 필드 누락",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "missing_required", value = "{\n  \"status\": 400,\n  \"success\": false,\n  \"message\": \"필수 필드가 누락되었습니다.\",\n  \"errors\": [\n    { \"field\": \"companyName\", \"reason\": \"REQUIRED\" },\n    { \"field\": \"businessNumber\", \"reason\": \"REQUIRED\" },\n    { \"field\": \"ceoName\", \"reason\": \"REQUIRED\" },\n    { \"field\": \"contactPhone/contactEmail\", \"reason\": \"AT_LEAST_ONE_REQUIRED\" }\n  ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "형식 검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"businessNumber\", \"reason\": \"INVALID_FORMAT (###-##-#####)\" },\n    { \"field\": \"contactEmail\", \"reason\": \"INVALID_EMAIL\" },\n    { \"field\": \"contactPhone\", \"reason\": \"INVALID_PHONE\" }\n  ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> createCustomer(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "request", value = "{\n  \"companyName\": \"삼성전자\",\n  \"businessNumber\": \"123-45-67890\",\n  \"ceoName\": \"이재용\",\n  \"contactPhone\": \"02-1234-5678\",\n  \"contactEmail\": \"contact@samsung.com\",\n  \"address\": \"서울시 강남구 테헤란로 123\",\n  \"manager\": {\n    \"name\": \"김철수\",\n    \"mobile\": \"010-1234-5678\",\n    \"email\": \"kim@samsung.com\"\n  },\n  \"note\": \"주요 고객사, 정기 거래처\"\n}"))
+            )
+            @RequestBody CustomerCreateRequestDto request
+    ) {
+        // 500 모킹 트리거: 특정 회사명
+        if (request != null && request.getCompanyName() != null && request.getCompanyName().equalsIgnoreCase("error")) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+
+        // 400 필수값 검증
+        java.util.List<java.util.Map<String, String>> missing = new java.util.ArrayList<>();
+        if (request == null || request.getCompanyName() == null || request.getCompanyName().isBlank()) {
+            missing.add(java.util.Map.of("field", "companyName", "reason", "REQUIRED"));
+        }
+        if (request == null || request.getBusinessNumber() == null || request.getBusinessNumber().isBlank()) {
+            missing.add(java.util.Map.of("field", "businessNumber", "reason", "REQUIRED"));
+        }
+        if (request == null || request.getCeoName() == null || request.getCeoName().isBlank()) {
+            missing.add(java.util.Map.of("field", "ceoName", "reason", "REQUIRED"));
+        }
+        boolean noPhone = (request == null || request.getContactPhone() == null || request.getContactPhone().isBlank());
+        boolean noEmail = (request == null || request.getContactEmail() == null || request.getContactEmail().isBlank());
+        if (noPhone && noEmail) {
+            missing.add(java.util.Map.of("field", "contactPhone/contactEmail", "reason", "AT_LEAST_ONE_REQUIRED"));
+        }
+        if (!missing.isEmpty()) {
+            throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.CUSTOMER_REQUIRED_FIELDS_MISSING, missing);
+        }
+
+        // 422 형식 검증
+        java.util.List<java.util.Map<String, String>> errors = new java.util.ArrayList<>();
+        var bn = request.getBusinessNumber();
+        if (bn != null && !bn.matches("\\d{3}-\\d{2}-\\d{5}")) {
+            errors.add(java.util.Map.of("field", "businessNumber", "reason", "INVALID_FORMAT (###-##-#####)"));
+        }
+        var email = request.getContactEmail();
+        if (email != null && !email.isBlank() && !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            errors.add(java.util.Map.of("field", "contactEmail", "reason", "INVALID_EMAIL"));
+        }
+        var phone = request.getContactPhone();
+        if (phone != null && !phone.isBlank() && !phone.matches("^\\d{2,3}-\\d{3,4}-\\d{4}$")) {
+            errors.add(java.util.Map.of("field", "contactPhone", "reason", "INVALID_PHONE"));
+        }
+        if (!errors.isEmpty()) {
+            throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
+        }
+
+        // 성공 응답 목업
+        java.util.Map<String, Object> data = new java.util.LinkedHashMap<>();
+        data.put("customerId", 501);
+        data.put("customerCode", "C-0001");
+        data.put("companyName", request.getCompanyName());
+        data.put("ceoName", request.getCeoName());
+        data.put("businessNumber", request.getBusinessNumber());
+        data.put("statusCode", "ACTIVE");
+        data.put("statusLabel", "활성");
+        data.put("contactPhone", request.getContactPhone());
+        data.put("contactEmail", request.getContactEmail());
+        data.put("address", request.getAddress());
+        java.util.Map<String, Object> manager = new java.util.LinkedHashMap<>();
+        if (request.getManager() != null) {
+            manager.put("name", request.getManager().getName());
+            manager.put("mobile", request.getManager().getMobile());
+            manager.put("email", request.getManager().getEmail());
+        } else {
+            manager.put("name", null);
+            manager.put("mobile", null);
+            manager.put("email", null);
+        }
+        data.put("manager", manager);
+        data.put("totalOrders", 0);
+        data.put("totalTransactionAmount", 0);
+        data.put("currency", "KRW");
+        data.put("note", request.getNote());
+        java.time.Instant now = java.time.Instant.now();
+        data.put("createdAt", now);
+        data.put("updatedAt", now);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(data, "고객사가 등록되었습니다.", HttpStatus.CREATED));
     }
 }
