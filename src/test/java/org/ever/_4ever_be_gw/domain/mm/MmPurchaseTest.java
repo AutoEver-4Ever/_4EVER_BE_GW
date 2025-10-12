@@ -1,7 +1,7 @@
 package org.ever._4ever_be_gw.domain.mm;
 
-import org.ever._4ever_be_gw.domain.mm.controller.MmController;
-import org.ever._4ever_be_gw.domain.mm.service.MmStatisticsService;
+import org.ever._4ever_be_gw.scmpp.controller.MmController;
+import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

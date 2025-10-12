@@ -1,6 +1,6 @@
 package org.ever._4ever_be_gw.domain.sd;
 
-import org.ever._4ever_be_gw.domain.sd.controller.SdController;
+import org.ever._4ever_be_gw.business.controller.SdController;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

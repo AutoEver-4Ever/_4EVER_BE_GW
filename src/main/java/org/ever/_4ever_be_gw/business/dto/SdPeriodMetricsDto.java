@@ -1,10 +1,10 @@
-package org.ever._4ever_be_gw.domain.sd.dto;
+package org.ever._4ever_be_gw.business.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.ever._4ever_be_gw.domain.mm.dto.PeriodStatDto;
+import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 
 @Getter
 @Builder

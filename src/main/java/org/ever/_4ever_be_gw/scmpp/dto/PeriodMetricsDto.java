@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.domain.mm.dto;
+package org.ever._4ever_be_gw.scmpp.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

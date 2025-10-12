@@ -1,15 +1,16 @@
-package org.ever._4ever_be_gw.domain.sd.controller;
+package org.ever._4ever_be_gw.business.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_gw.business.dto.QuotationRequestDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
-import org.ever._4ever_be_gw.domain.mm.dto.PeriodStatDto;
-import org.ever._4ever_be_gw.domain.sd.dto.SdPeriodMetricsDto;
+import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
+import org.ever._4ever_be_gw.business.dto.SdPeriodMetricsDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -139,7 +140,7 @@ public class SdController {
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(name = "request", value = "{\n  \"dueDate\": \"2025-11-01\",\n  \"items\": [\n    {\n      \"id\": 10001,\n      \"quantity\": 10,\n      \"unitPrice\": 500000\n    },\n    {\n      \"id\": 10002,\n      \"quantity\": 5,\n      \"unitPrice\": 200000\n    }\n  ],\n  \"note\": \"긴급 납품 요청\"\n}"))
             )
-            @RequestBody org.ever._4ever_be_gw.domain.sd.dto.QuotationRequestDto request
+            @RequestBody QuotationRequestDto request
     ) {
         java.time.LocalDate today = java.time.LocalDate.now();
         if (request.getDueDate() == null || !request.getDueDate().isAfter(today)) {

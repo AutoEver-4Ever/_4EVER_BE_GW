@@ -1,6 +1,6 @@
-package org.ever._4ever_be_gw.domain.mm.service;
+package org.ever._4ever_be_gw.scmpp.service;
 
-import org.ever._4ever_be_gw.domain.mm.dto.PeriodMetricsDto;
+import org.ever._4ever_be_gw.scmpp.dto.PeriodMetricsDto;
 
 import java.util.List;
 import java.util.Map;
