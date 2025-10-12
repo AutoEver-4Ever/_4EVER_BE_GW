@@ -228,6 +228,101 @@ public class SdController {
         return ResponseEntity.ok(ApiResponse.success(data, "견적 목록 조회에 성공했습니다.", HttpStatus.OK));
     }
 
+    @GetMapping("/quotations/{quotationId}")
+    @Operation(
+            summary = "견적 상세 조회",
+            description = "견적 단건 상세 정보를 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationCode\": \"Q2024001\",\n    \"quotationDate\": \"2024-01-15\",\n    \"dueDate\": \"2024-02-15\",\n    \"statusCode\": \"PENDING\",\n    \"statusLabel\": \"대기\",\n    \"customerName\": \"삼성전자\",\n    \"ownerName\": \"김철수\",\n    \"items\": [\n      { \"itemId\": 900001, \"productName\": \"제품 A\", \"quantity\": 10, \"unitPrice\": 500000, \"amount\": 5000000 },\n      { \"itemId\": 900002, \"productName\": \"제품 B\", \"quantity\": 5,  \"unitPrice\": 200000, \"amount\": 1000000 }\n    ],\n    \"totalAmount\": 15000000\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"견적 상세를 조회할 권한이 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "미존재",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"해당 견적을 찾을 수 없습니다: quotationId=12001\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> getQuotationDetail(
+            @Parameter(description = "견적 ID")
+            @org.springframework.web.bind.annotation.PathVariable("quotationId") Long quotationId
+    ) {
+        // 403 모킹
+        if (Long.valueOf(403001L).equals(quotationId)) {
+            throw new BusinessException(ErrorCode.QUOTATION_FORBIDDEN);
+        }
+        // 500 모킹
+        if (Long.valueOf(500001L).equals(quotationId)) {
+            throw new RuntimeException("boom");
+        }
+        // 10건 유효 범위: 12001 ~ 12010
+        if (quotationId == null || quotationId < 12001L || quotationId > 12010L) {
+            throw new BusinessException(ErrorCode.QUOTATION_NOT_FOUND, "quotationId=" + quotationId);
+        }
+
+        // 목업 데이터 구성
+        String[] customers = {"삼성전자", "LG전자", "현대자동차", "카카오", "네이버", "SK하이닉스", "포스코", "두산중공업", "한화시스템", "CJ대한통운"};
+        String[] owners = {"김철수", "이영희", "박민수", "최지훈", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유"};
+        String[] codes = {"PENDING", "REVIEW", "APPROVED", "REJECTED"};
+
+        int idx = (int) ((quotationId - 12001) % 10);
+        String quotationCode = String.format("Q2024%03d", (quotationId - 12000));
+        String statusCode = codes[idx % codes.length];
+        String statusLabel = switch (statusCode) {
+            case "PENDING" -> "대기";
+            case "REVIEW" -> "검토";
+            case "APPROVED" -> "승인";
+            case "REJECTED" -> "반려";
+            default -> "";
+        };
+
+        Map<String, Object> item1 = new LinkedHashMap<>();
+        item1.put("itemId", 900001 + idx);
+        item1.put("productName", "제품 A");
+        item1.put("quantity", 10);
+        item1.put("unitPrice", 500_000L);
+        item1.put("amount", 5_000_000L);
+
+        Map<String, Object> item2 = new LinkedHashMap<>();
+        item2.put("itemId", 900011 + idx);
+        item2.put("productName", "제품 B");
+        item2.put("quantity", 5);
+        item2.put("unitPrice", 200_000L);
+        item2.put("amount", 1_000_000L);
+
+        long totalAmount = (Long) item1.get("amount") + (Long) item2.get("amount");
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("quotationId", quotationId);
+        data.put("quotationCode", quotationCode);
+        data.put("quotationDate", "2024-01-15");
+        data.put("dueDate", "2024-02-15");
+        data.put("statusCode", statusCode);
+        data.put("statusLabel", statusLabel);
+        data.put("customerName", customers[idx]);
+        data.put("ownerName", owners[idx]);
+        data.put("items", List.of(item1, item2));
+        data.put("totalAmount", totalAmount);
+
+        return ResponseEntity.ok(ApiResponse.success(data, "견적 상세 조회에 성공했습니다.", HttpStatus.OK));
+    }
+
     @PostMapping("/quotations")
     @Operation(
             summary = "신규 견적서 생성",
