@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Getter
 @Builder
 @AllArgsConstructor
-public class PeriodStat {
+public class PeriodStatDto {
     @JsonProperty("value")
     private final long value;
 

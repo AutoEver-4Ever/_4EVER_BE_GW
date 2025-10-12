@@ -8,11 +8,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
-import org.ever._4ever_be_gw.domain.mm.dto.PeriodStat;
-import org.ever._4ever_be_gw.domain.sd.dto.SdPeriodMetrics;
+import org.ever._4ever_be_gw.domain.mm.dto.PeriodStatDto;
+import org.ever._4ever_be_gw.domain.sd.dto.SdPeriodMetricsDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -53,7 +55,7 @@ public class SdController {
                     )
             }
     )
-    public ResponseEntity<ApiResponse<Map<String, SdPeriodMetrics>>> getStatistics(
+    public ResponseEntity<ApiResponse<Map<String, SdPeriodMetricsDto>>> getStatistics(
             @Parameter(name = "periods", description = "조회 기간 목록(콤마 구분)")
             @RequestParam(name = "periods", required = false) String periods
     ) {
@@ -71,33 +73,100 @@ public class SdController {
 
         List<String> finalPeriods = requested.stream().filter(ALLOWED_PERIODS::contains).toList();
 
-        Map<String, SdPeriodMetrics> data = new LinkedHashMap<>();
+        Map<String, SdPeriodMetricsDto> data = new LinkedHashMap<>();
         if (finalPeriods.contains("week")) {
-            data.put("week", SdPeriodMetrics.builder()
-                    .salesAmount(new PeriodStat(152_300_000L, new BigDecimal("0.105")))
-                    .newOrdersCount(new PeriodStat(42L, new BigDecimal("0.067")))
+            data.put("week", SdPeriodMetricsDto.builder()
+                    .salesAmount(new PeriodStatDto(152_300_000L, new BigDecimal("0.105")))
+                    .newOrdersCount(new PeriodStatDto(42L, new BigDecimal("0.067")))
                     .build());
         }
         if (finalPeriods.contains("month")) {
-            data.put("month", SdPeriodMetrics.builder()
-                    .salesAmount(new PeriodStat(485_200_000L, new BigDecimal("0.125")))
-                    .newOrdersCount(new PeriodStat(127L, new BigDecimal("0.082")))
+            data.put("month", SdPeriodMetricsDto.builder()
+                    .salesAmount(new PeriodStatDto(485_200_000L, new BigDecimal("0.125")))
+                    .newOrdersCount(new PeriodStatDto(127L, new BigDecimal("0.082")))
                     .build());
         }
         if (finalPeriods.contains("quarter")) {
-            data.put("quarter", SdPeriodMetrics.builder()
-                    .salesAmount(new PeriodStat(1_385_200_000L, new BigDecimal("0.047")))
-                    .newOrdersCount(new PeriodStat(392L, new BigDecimal("0.031")))
+            data.put("quarter", SdPeriodMetricsDto.builder()
+                    .salesAmount(new PeriodStatDto(1_385_200_000L, new BigDecimal("0.047")))
+                    .newOrdersCount(new PeriodStatDto(392L, new BigDecimal("0.031")))
                     .build());
         }
         if (finalPeriods.contains("year")) {
-            data.put("year", SdPeriodMetrics.builder()
-                    .salesAmount(new PeriodStat(5_485_200_000L, new BigDecimal("0.036")))
-                    .newOrdersCount(new PeriodStat(4_217L, new BigDecimal("0.028")))
+            data.put("year", SdPeriodMetricsDto.builder()
+                    .salesAmount(new PeriodStatDto(5_485_200_000L, new BigDecimal("0.036")))
+                    .newOrdersCount(new PeriodStatDto(4_217L, new BigDecimal("0.028")))
                     .build());
         }
 
         return ResponseEntity.ok(ApiResponse.success(data, "OK", HttpStatus.OK));
     }
-}
 
+    @PostMapping("/quotations")
+    @Operation(
+            summary = "신규 견적서 생성",
+            description = "요청 양식만 유효하면 200 OK를 반환합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "201",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"신규 견적서 등록이 완료되었습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationDate\": \"2025-10-12\",\n    \"dueDate\": \"2025-11-01\",\n    \"totalAmount\": 7000000,\n    \"statusCode\": \"PENDING\",\n    \"statusLabel\": \"대기\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "400",
+                            description = "납기일 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "bad_request", value = "{\n  \"status\": 400,\n  \"success\": false,\n  \"message\": \"요청 납기일은 현재 날짜 이후여야 합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unprocessable", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"items는 1개 이상이어야 합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> createQuotation(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "request", value = "{\n  \"dueDate\": \"2025-11-01\",\n  \"items\": [\n    {\n      \"id\": 10001,\n      \"quantity\": 10,\n      \"unitPrice\": 500000\n    },\n    {\n      \"id\": 10002,\n      \"quantity\": 5,\n      \"unitPrice\": 200000\n    }\n  ],\n  \"note\": \"긴급 납품 요청\"\n}"))
+            )
+            @RequestBody org.ever._4ever_be_gw.domain.sd.dto.QuotationRequestDto request
+    ) {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        if (request.getDueDate() == null || !request.getDueDate().isAfter(today)) {
+            throw new BusinessException(ErrorCode.QUOTATION_DUE_DATE_INVALID);
+        }
+
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new BusinessException(ErrorCode.QUOTATION_ITEMS_EMPTY);
+        }
+
+        long totalAmount = request.getItems().stream()
+                .mapToLong(i -> {
+                    long q = i.getQuantity() == null ? 0 : i.getQuantity();
+                    long up = i.getUnitPrice() == null ? 0 : i.getUnitPrice();
+                    return q * up;
+                })
+                .sum();
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("quotationId", 12001);
+        data.put("quotationDate", today.toString());
+        data.put("dueDate", request.getDueDate().toString());
+        data.put("totalAmount", totalAmount);
+        data.put("statusCode", "PENDING");
+        data.put("statusLabel", "대기");
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(data, "신규 견적서 등록이 완료되었습니다.", HttpStatus.CREATED));
+    }
+}

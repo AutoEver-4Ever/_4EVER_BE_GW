@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
-import org.ever._4ever_be_gw.domain.mm.dto.PeriodMetrics;
+import org.ever._4ever_be_gw.domain.mm.dto.PeriodMetricsDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
@@ -72,7 +72,7 @@ public class MmController {
                     )
             }
     )
-    public ResponseEntity<ApiResponse<Map<String, PeriodMetrics>>> getStatistics(
+    public ResponseEntity<ApiResponse<Map<String, PeriodMetricsDto>>> getStatistics(
             @Parameter(name = "periods", description = "조회 기간 목록(콤마 구분)")
             @RequestParam(name = "periods", required = false) String periods
     ) {
@@ -96,7 +96,7 @@ public class MmController {
                 .filter(ALLOWED_PERIODS::contains)
                 .toList();
 
-        Map<String, PeriodMetrics> data = mmStatisticsService.getStatistics(finalPeriods);
+        Map<String, PeriodMetricsDto> data = mmStatisticsService.getStatistics(finalPeriods);
         return ResponseEntity.ok(ApiResponse.success(data, "OK", HttpStatus.OK));
     }
 
