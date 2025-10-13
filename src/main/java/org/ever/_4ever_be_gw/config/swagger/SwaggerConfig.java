@@ -19,6 +19,9 @@ public class SwaggerConfig {
     @Value("${spring.mvc.servlet.path:}")
     private String servletPath;
 
+    @Value("${app.swagger.external-base-path:${spring.mvc.servlet.path:}}")
+    private String swaggerExternalBasePath;
+
     private final Environment environment;
 
     public SwaggerConfig(Environment environment) {
@@ -27,7 +30,7 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI openAPI() {
-        String basePath = (servletPath == null || servletPath.isBlank()) ? "" : servletPath.trim();
+        String basePath = (swaggerExternalBasePath == null || swaggerExternalBasePath.isBlank()) ? "" : swaggerExternalBasePath.trim();
 
         Server localServer = new Server()
                 .url("http://localhost:" + serverPort + basePath)
