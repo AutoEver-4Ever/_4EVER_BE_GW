@@ -877,7 +877,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"orders\": [\n      {\n        \"id\": 1001,\n        \"poNumber\": \"PO-2024-001\",\n        \"supplierName\": \"대한철강\",\n        \"itemsSummary\": \"강판 500kg, 알루미늄 300kg\",\n        \"totalAmount\": 5000000,\n        \"orderDate\": \"2024-01-18\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"priority\": null,\n        \"status\": \"승인됨\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 10,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 목록 조회에 성공했습니다.\",\n  \"data\": [\n    {\n      \"id\": 1001,\n      \"poNumber\": \"PO-2024-001\",\n      \"supplierName\": \"대한철강\",\n      \"itemsSummary\": \"강판 500kg, 알루미늄 300kg\",\n      \"totalAmount\": 5000000,\n      \"orderDate\": \"2024-01-18\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"status\": \"APPROVED\"\n    }\n  ]\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -895,7 +895,7 @@ public class MmController {
                             responseCode = "422",
                             description = "검증 실패",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [ { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: APPROVED, PENDING, DELIVERED\" } ]\n}"))
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [ { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: APPROVED, PENDING, REJECTED, DELIVERED\" } ]\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "500",
@@ -906,27 +906,31 @@ public class MmController {
             }
     )
     public ResponseEntity<ApiResponse<Object>> getPurchaseOrders(
-            @Parameter(description = "상태 필터: APPROVED,PENDING,DELIVERED")
+            @Parameter(description = "상태 필터: PENDING, APPROVED, REJECTED, DELIVERED")
             @RequestParam(name = "status", required = false) String status,
+            @Parameter(description = "공급업체명 검색")
+            @RequestParam(name = "supplierName", required = false) String supplierName,
+            @Parameter(description = "발주서 번호 검색")
+            @RequestParam(name = "poNumber", required = false) String poNumber,
             @Parameter(description = "주문일 시작(YYYY-MM-DD)")
             @RequestParam(name = "orderDateFrom", required = false) String orderDateFrom,
             @Parameter(description = "주문일 종료(YYYY-MM-DD)")
             @RequestParam(name = "orderDateTo", required = false) String orderDateTo,
-            @Parameter(description = "정렬 필드,정렬방향")
+            @Parameter(description = "정렬 필드,정렬방향(orderDate|deliveryDate)")
             @RequestParam(name = "sort", required = false) String sort,
             @Parameter(description = "페이지 번호(1-base)")
             @RequestParam(name = "page", required = false) Integer page,
-            @Parameter(description = "페이지 크기")
+            @Parameter(description = "페이지 크기(최대 200)")
             @RequestParam(name = "size", required = false) Integer size
     ) {
-        // 422 검증
         List<Map<String, String>> errors = new java.util.ArrayList<>();
         java.time.LocalDate from = null;
         java.time.LocalDate to = null;
+
         if (status != null) {
-            var allowed = java.util.Set.of("APPROVED", "PENDING", "DELIVERED");
+            var allowed = java.util.Set.of("APPROVED", "PENDING", "REJECTED", "DELIVERED");
             if (!allowed.contains(status)) {
-                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: APPROVED, PENDING, DELIVERED"));
+                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: APPROVED, PENDING, REJECTED, DELIVERED"));
             }
         }
         if (orderDateFrom != null) {
@@ -939,40 +943,51 @@ public class MmController {
                 errors.add(Map.of("field", "orderDateTo", "reason", "INVALID_DATE"));
             }
         }
+        if (from != null && to != null && from.isAfter(to)) {
+            errors.add(Map.of("field", "orderDate", "reason", "FROM_AFTER_TO"));
+        }
+        if (size != null && size > 200) {
+            errors.add(Map.of("field", "size", "reason", "MAX_200"));
+        }
         if (!errors.isEmpty()) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        // 빈 파라미터 기본값 처리 (Swagger Try-out 시 쿼리 비움)
         String effectiveSort = (sort == null || sort.isBlank()) ? "orderDate,desc" : sort;
-        int pageIndex = (page == null || page < 1) ? 0 : page - 1;
-        int s = (size == null || size < 1) ? 10 : size;
+        String[] sortParts = effectiveSort.split(",");
+        String sortField = sortParts[0].trim();
+        String sortDirection = sortParts.length > 1 ? sortParts[1].trim().toLowerCase(Locale.ROOT) : "desc";
+        if (!java.util.Set.of("orderDate", "deliveryDate").contains(sortField)) {
+            sortField = "orderDate";
+        }
+        if (!sortDirection.equals("asc") && !sortDirection.equals("desc")) {
+            sortDirection = "desc";
+        }
 
-        // 403 모킹: 너무 이른 기간 접근 제한
+        int currentPage = (page == null || page < 1) ? 1 : page;
+        int pageSize = (size == null || size < 1) ? 10 : size;
+
         if (from != null && from.isBefore(java.time.LocalDate.of(2024, 1, 1))) {
             throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
         }
-
-        // 500 모킹 트리거: sort=error,500 등
-        if ("error".equalsIgnoreCase(effectiveSort) || "500".equalsIgnoreCase(effectiveSort)) {
+        if (effectiveSort.toLowerCase(Locale.ROOT).contains("error") || effectiveSort.contains("500")) {
             throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
         }
 
-        // 성공: 10개 목업 생성
-        java.util.List<Map<String, Object>> list = new java.util.ArrayList<>();
+        java.util.List<Map<String, Object>> all = new java.util.ArrayList<>();
         String[][] base = new String[][]{
-                {"PO-2024-001","대한철강","강판 500kg, 알루미늄 300kg","2024-01-18","2024-01-25","승인됨"},
-                {"PO-2024-002","한국알루미늄","알루미늄 시트 200매","2024-01-17","2024-01-24","대기중"},
-                {"PO-2024-003","포스코","고강도 스틸 1톤","2024-01-16","2024-01-23","반려"},
-                {"PO-2024-004","효성중공업","볼트 1000개","2024-01-15","2024-01-22","승인됨"},
-                {"PO-2024-005","현대제철","스테인리스 파이프 200개","2024-01-14","2024-01-21","대기중"},
-                {"PO-2024-006","두산중공업","알루미늄 판재 100매","2024-01-13","2024-01-20","승인됨"},
-                {"PO-2024-007","세아베스틸","스틸 코일 3톤","2024-01-12","2024-01-19","반려"},
-                {"PO-2024-008","KG동부제철","강철 빔 50개","2024-01-11","2024-01-18","대기중"},
-                {"PO-2024-009","동국제강","철판 2톤","2024-01-10","2024-01-17","승인됨"},
-                {"PO-2024-010","티엠씨메탈","알루미늄 봉 100개","2024-01-09","2024-01-16","대기중"}
+                {"PO-2024-001","대한철강","강판 500kg, 알루미늄 300kg","2024-01-18","2024-01-25","APPROVED"},
+                {"PO-2024-002","한국알루미늄","알루미늄 시트 200매","2024-01-17","2024-01-24","PENDING"},
+                {"PO-2024-003","포스코","고강도 스틸 1톤","2024-01-16","2024-01-23","REJECTED"},
+                {"PO-2024-004","효성중공업","볼트 1000개","2024-01-15","2024-01-22","APPROVED"},
+                {"PO-2024-005","현대제철","스테인리스 파이프 200개","2024-01-14","2024-01-21","PENDING"},
+                {"PO-2024-006","두산중공업","알루미늄 판재 100매","2024-01-13","2024-01-20","DELIVERED"},
+                {"PO-2024-007","세아베스틸","스틸 코일 3톤","2024-01-12","2024-01-19","REJECTED"},
+                {"PO-2024-008","KG동부제철","강철 빔 50개","2024-01-11","2024-01-18","PENDING"},
+                {"PO-2024-009","동국제강","철판 2톤","2024-01-10","2024-01-17","APPROVED"},
+                {"PO-2024-010","티엠씨메탈","알루미늄 봉 100개","2024-01-09","2024-01-16","DELIVERED"}
         };
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < base.length; i++) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("id", 1001 + i);
             row.put("poNumber", base[i][0]);
@@ -981,22 +996,57 @@ public class MmController {
             row.put("totalAmount", 5_000_000 - (i * 120_000));
             row.put("orderDate", base[i][3]);
             row.put("deliveryDate", base[i][4]);
-            row.put("priority", (i == 2 ? 1 : null));
             row.put("status", base[i][5]);
-            list.add(row);
+            all.add(row);
         }
 
-        // 페이지네이션 메타 생성 (1-base)
-        int total = list.size();
-        int fromIdx = Math.min(pageIndex * s, total);
-        int toIdx = Math.min(fromIdx + s, total);
-        java.util.List<Map<String, Object>> pageOrders = list.subList(fromIdx, toIdx);
+        java.util.List<Map<String, Object>> filtered = all;
+        if (status != null) {
+            String st = status.toUpperCase(Locale.ROOT);
+            filtered = filtered.stream().filter(m -> st.equals(m.get("status"))).toList();
+        }
+        if (supplierName != null && !supplierName.isBlank()) {
+            String keyword = supplierName.toLowerCase(Locale.ROOT);
+            filtered = filtered.stream()
+                    .filter(m -> String.valueOf(m.get("supplierName")).toLowerCase(Locale.ROOT).contains(keyword))
+                    .toList();
+        }
+        if (poNumber != null && !poNumber.isBlank()) {
+            String keyword = poNumber.toLowerCase(Locale.ROOT);
+            filtered = filtered.stream()
+                    .filter(m -> String.valueOf(m.get("poNumber")).toLowerCase(Locale.ROOT).contains(keyword))
+                    .toList();
+        }
+        if (from != null) {
+            java.time.LocalDate fromDate = from;
+            filtered = filtered.stream()
+                    .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))).isBefore(fromDate))
+                    .toList();
+        }
+        if (to != null) {
+            java.time.LocalDate toDate = to;
+            filtered = filtered.stream()
+                    .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))).isAfter(toDate))
+                    .toList();
+        }
 
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("orders", pageOrders);
-        data.put("page", PageResponseUtils.buildPage(pageIndex, s, total));
+        java.util.Comparator<Map<String, Object>> comparator;
+        if (sortField.equals("deliveryDate")) {
+            comparator = java.util.Comparator.comparing(m -> java.time.LocalDate.parse(String.valueOf(m.get("deliveryDate"))));
+        } else {
+            comparator = java.util.Comparator.comparing(m -> java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))));
+        }
+        if (sortDirection.equals("desc")) {
+            comparator = comparator.reversed();
+        }
+        filtered = filtered.stream().sorted(comparator).toList();
 
-        return ResponseEntity.ok(ApiResponse.<Object>success(data, "발주서 목록 조회에 성공했습니다.", HttpStatus.OK));
+        int total = filtered.size();
+        int fromIdx = Math.min((currentPage - 1) * pageSize, total);
+        int toIdx = Math.min(fromIdx + pageSize, total);
+        java.util.List<Map<String, Object>> pageContent = filtered.subList(fromIdx, toIdx);
+
+        return ResponseEntity.ok(ApiResponse.success(pageContent, "발주서 목록 조회에 성공했습니다.", HttpStatus.OK));
     }
 
     // ---------------- Purchase Order Detail ----------------

@@ -139,14 +139,9 @@ class MmPurchaseTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("발주서 목록 조회에 성공했습니다."))
-                .andExpect(jsonPath("$.data.page.number").value(0))
-                .andExpect(jsonPath("$.data.page.size").value(10))
-                .andExpect(jsonPath("$.data.page.totalElements").value(10))
-                .andExpect(jsonPath("$.data.page.totalPages").value(1))
-                .andExpect(jsonPath("$.data.page.hasNext").value(false))
-                .andExpect(jsonPath("$.data.orders").isArray())
-                .andExpect(jsonPath("$.data.orders[0].id").value(1001))
-                .andExpect(jsonPath("$.data.orders[9].id").value(1010));
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].id").value(1001))
+                .andExpect(jsonPath("$.data[0].status").value("APPROVED"));
     }
 
     @Test
@@ -162,7 +157,7 @@ class MmPurchaseTest {
                 .andExpect(jsonPath("$.message").value("요청 파라미터 검증에 실패했습니다."))
                 .andExpect(jsonPath("$.errors").isArray())
                 .andExpect(jsonPath("$.errors[0].field").value("status"))
-                .andExpect(jsonPath("$.errors[0].reason").value("ALLOWED_VALUES: APPROVED, PENDING, DELIVERED"));
+                .andExpect(jsonPath("$.errors[0].reason").value("ALLOWED_VALUES: APPROVED, PENDING, REJECTED, DELIVERED"));
     }
 
     @Test
