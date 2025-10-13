@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import java.util.List;
 
@@ -18,16 +19,40 @@ public class SwaggerConfig {
     @Value("${spring.mvc.servlet.path:}")
     private String servletPath;
 
+    @Value("${app.swagger.external-base-path:${spring.mvc.servlet.path:}}")
+    private String swaggerExternalBasePath;
+
+    private final Environment environment;
+
+    public SwaggerConfig(Environment environment) {
+        this.environment = environment;
+    }
+
     @Bean
     public OpenAPI openAPI() {
-        String basePath = (servletPath == null || servletPath.isBlank()) ? "" : servletPath.trim();
+        String basePath = (swaggerExternalBasePath == null || swaggerExternalBasePath.isBlank()) ? "" : swaggerExternalBasePath.trim();
+
+        Server localServer = new Server()
+                .url("http://localhost:" + serverPort + basePath)
+                .description("Local Server");
+
+        Server prodServer = new Server()
+                .url("https://api.everp.co.kr" + basePath)
+                .description("Production Server");
+
+        boolean isProd = false;
+        for (String profile : environment.getActiveProfiles()) {
+            if ("prod".equalsIgnoreCase(profile)) {
+                isProd = true;
+                break;
+            }
+        }
+
+        List<Server> servers = isProd ? List.of(prodServer, localServer) : List.of(localServer, prodServer);
+
         return new OpenAPI()
                 .info(apiInfo())
-                .servers(List.of(
-                        new Server()
-                                .url("http://localhost:" + serverPort + basePath)
-                                .description("Local Server")
-                ));
+                .servers(servers);
     }
 
     private Info apiInfo() {
