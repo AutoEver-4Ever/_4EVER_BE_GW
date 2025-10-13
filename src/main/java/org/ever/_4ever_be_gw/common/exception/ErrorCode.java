@@ -44,6 +44,10 @@ public enum ErrorCode {
     ANALYTICS_RANGE_TOO_LARGE(1032, HttpStatus.BAD_REQUEST, "조회 기간은 최대 12주(3개월)까지만 가능합니다."),
     AUTH_TOKEN_REQUIRED(1033, HttpStatus.UNAUTHORIZED, "유효한 인증 토큰이 필요합니다."),
     BODY_VALIDATION_FAILED(1034, HttpStatus.UNPROCESSABLE_ENTITY, "요청 본문 검증에 실패했습니다."),
+    PURCHASE_REQUEST_UPDATE_CONFLICT(1035, HttpStatus.CONFLICT, "현재 상태에서는 수정이 허용되지 않습니다. (required: NON_STOCK & PENDING)"),
+    PURCHASE_REQUEST_APPROVAL_FORBIDDEN(1036, HttpStatus.FORBIDDEN, "승인 권한이 없습니다. (required role: PR_APPROVER|PURCHASING_MANAGER|ADMIN)"),
+    PURCHASE_REQUEST_INVALID_TRANSITION(1037, HttpStatus.UNPROCESSABLE_ENTITY, "해당 상태에서는 승인할 수 없습니다."),
+    PURCHASE_REQUEST_APPROVAL_PROCESSING_ERROR(1038, HttpStatus.INTERNAL_SERVER_ERROR, "요청 처리 중 오류가 발생했습니다."),
 
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),

@@ -14,8 +14,9 @@ import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,11 +24,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionCreateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionUpdateRequestDto;
 
 @RestController
 @RequestMapping("/scm-pp/mm")
@@ -425,6 +429,330 @@ public class MmController {
         return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "구매요청서 상세입니다.", HttpStatus.OK
         ));
+    }
+
+    @PutMapping("/purchase-requisitions/{prId}")
+    @Operation(
+            summary = "구매요청서 수정",
+            description = "비재고성(NON_STOCK)이며 대기(PENDING) 상태인 구매요청서를 수정합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "수정 성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서가 수정되었습니다.\",\n  \"data\": {\n    \"id\": 102345,\n    \"prNumber\": \"PR-NS-2025-00001\",\n    \"prType\": \"NON_STOCK\",\n    \"status\": \"PENDING\",\n    \"departmentId\": 12,\n    \"departmentName\": \"경영지원팀\",\n    \"desiredDeliveryDate\": \"2025-10-20\",\n    \"itemCount\": 2,\n    \"totalExpectedAmount\": 318000,\n    \"items\": [\n      {\n        \"id\": 900001,\n        \"lineNo\": 1,\n        \"itemName\": \"A4 복사용지\",\n        \"quantity\": 12,\n        \"uomName\": \"BOX\",\n        \"expectedUnitPrice\": 14000,\n        \"expectedTotalPrice\": 168000,\n        \"preferredVendorName\": \"OO물산\",\n        \"purpose\": \"사무실 비품 보강\",\n        \"note\": \"수량/단가 재산정\"\n      },\n      {\n        \"id\": 900003,\n        \"lineNo\": 3,\n        \"itemName\": \"화이트보드 마커\",\n        \"quantity\": 50,\n        \"uomName\": \"EA\",\n        \"expectedUnitPrice\": 3000,\n        \"expectedTotalPrice\": 150000,\n        \"preferredVendorName\": \"문구나라\",\n        \"purpose\": \"소모품 보충\",\n        \"note\": \"색상 혼합\"\n      }\n    ]\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "구매요청서를 찾을 수 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"해당 구매요청서를 찾을 수 없습니다: purchaseId=999999\",\n  \"errors\": { \"code\": 1012 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "409",
+                            description = "수정 불가 상태",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "conflict", value = "{\n  \"status\": 409,\n  \"success\": false,\n  \"message\": \"현재 상태에서는 수정이 허용되지 않습니다. (required: NON_STOCK & PENDING)\",\n  \"errors\": { \"code\": 1035 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "본문 검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 본문 검증에 실패했습니다.\",\n  \"errors\": [ { \"field\": \"items[0].op\", \"reason\": \"ALLOWED_VALUES: ADD, UPDATE, REMOVE\" } ]\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> updatePurchaseRequisition(
+            @Parameter(description = "구매요청 ID", example = "102345")
+            @PathVariable("prId") Long prId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "request", value = "{\n  \"desiredDeliveryDate\": \"2025-10-20\",\n  \"items\": [\n    { \"op\": \"ADD\", \"lineNo\": 3, \"itemName\": \"화이트보드 마커\", \"quantity\": 50, \"uomName\": \"EA\", \"expectedUnitPrice\": 3000, \"preferredVendorName\": \"문구나라\", \"purpose\": \"소모품 보충\", \"note\": \"색상 혼합\" },\n    { \"op\": \"UPDATE\", \"id\": 900001, \"quantity\": 12, \"expectedUnitPrice\": 14000 }\n  ]\n}"))
+            )
+            @RequestBody MmPurchaseRequisitionUpdateRequestDto request
+    ) {
+        if (prId == null || prId < 100000L) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "purchaseId=" + prId);
+        }
+        if (Long.valueOf(102346L).equals(prId) || Long.valueOf(102348L).equals(prId)) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_UPDATE_CONFLICT);
+        }
+        if (!Long.valueOf(102345L).equals(prId)) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "purchaseId=" + prId);
+        }
+
+        java.time.LocalDate baseDesiredDate = java.time.LocalDate.parse("2025-10-15");
+        java.time.LocalDate effectiveDesiredDate = (request != null && request.getDesiredDeliveryDate() != null)
+                ? request.getDesiredDeliveryDate()
+                : baseDesiredDate;
+
+        List<Map<String, String>> errors = new java.util.ArrayList<>();
+        if (request != null && request.getDesiredDeliveryDate() != null && !request.getDesiredDeliveryDate().isAfter(java.time.LocalDate.now())) {
+            errors.add(Map.of("field", "desiredDeliveryDate", "reason", "PAST_DATE"));
+        }
+
+        java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
+        Map<String, Object> baseItem1 = new java.util.LinkedHashMap<>();
+        baseItem1.put("id", 900001L);
+        baseItem1.put("lineNo", 1);
+        baseItem1.put("itemName", "A4 복사용지");
+        baseItem1.put("quantity", 10);
+        baseItem1.put("uomName", "BOX");
+        baseItem1.put("expectedUnitPrice", 15_000L);
+        baseItem1.put("expectedTotalPrice", 150_000L);
+        baseItem1.put("preferredVendorName", "OO물산");
+        baseItem1.put("purpose", "사무실 비품 보강");
+        baseItem1.put("note", "긴급 구매");
+        items.add(baseItem1);
+
+        Map<String, Object> baseItem2 = new java.util.LinkedHashMap<>();
+        baseItem2.put("id", 900002L);
+        baseItem2.put("lineNo", 2);
+        baseItem2.put("itemName", "화이트보드 세정제");
+        baseItem2.put("quantity", 5);
+        baseItem2.put("uomName", "EA");
+        baseItem2.put("expectedUnitPrice", 12_000L);
+        baseItem2.put("expectedTotalPrice", 60_000L);
+        baseItem2.put("preferredVendorName", "청소나라");
+        baseItem2.put("purpose", "사무실 유지보수");
+        baseItem2.put("note", null);
+        items.add(baseItem2);
+
+        java.util.Map<Long, Map<String, Object>> itemIndex = items.stream()
+                .collect(java.util.stream.Collectors.toMap(m -> ((Number) m.get("id")).longValue(), m -> m, (a, b) -> a, java.util.LinkedHashMap::new));
+
+        if (request != null && request.getItems() != null) {
+            for (int i = 0; i < request.getItems().size(); i++) {
+                var incoming = request.getItems().get(i);
+                String fieldPrefix = "items[" + i + "]";
+                String op = incoming.getOp() == null ? null : incoming.getOp().trim().toUpperCase();
+                if (op == null || op.isEmpty()) {
+                    errors.add(Map.of("field", fieldPrefix + ".op", "reason", "REQUIRED"));
+                    continue;
+                }
+                if (!java.util.Set.of("ADD", "UPDATE", "REMOVE").contains(op)) {
+                    errors.add(Map.of("field", fieldPrefix + ".op", "reason", "ALLOWED_VALUES: ADD, UPDATE, REMOVE"));
+                    continue;
+                }
+                if ("ADD".equals(op) && (incoming.getQuantity() == null || incoming.getQuantity() <= 0)) {
+                    errors.add(Map.of("field", fieldPrefix + ".quantity", "reason", "MUST_BE_POSITIVE"));
+                }
+                if (("UPDATE".equals(op) || "REMOVE".equals(op)) && incoming.getId() == null) {
+                    errors.add(Map.of("field", fieldPrefix + ".id", "reason", "REQUIRED"));
+                } else if (("UPDATE".equals(op) || "REMOVE".equals(op)) && !itemIndex.containsKey(incoming.getId())) {
+                    errors.add(Map.of("field", fieldPrefix + ".id", "reason", "NOT_FOUND"));
+                }
+                if ("UPDATE".equals(op) && incoming.getQuantity() != null && incoming.getQuantity() <= 0) {
+                    errors.add(Map.of("field", fieldPrefix + ".quantity", "reason", "MUST_BE_POSITIVE"));
+                }
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            throw new ValidationException(ErrorCode.BODY_VALIDATION_FAILED, errors);
+        }
+
+        long nextItemId = 900003L;
+        if (request != null && request.getItems() != null) {
+            for (var incoming : request.getItems()) {
+                String op = incoming.getOp() == null ? null : incoming.getOp().trim().toUpperCase();
+                if (op == null) {
+                    continue;
+                }
+                switch (op) {
+                    case "ADD" -> {
+                        Map<String, Object> newItem = new java.util.LinkedHashMap<>();
+                        newItem.put("id", nextItemId++);
+                        newItem.put("lineNo", incoming.getLineNo() != null ? incoming.getLineNo() : items.size() + 1);
+                        newItem.put("itemName", incoming.getItemName());
+                        newItem.put("quantity", incoming.getQuantity());
+                        newItem.put("uomName", incoming.getUomName());
+                        newItem.put("expectedUnitPrice", incoming.getExpectedUnitPrice());
+                        Long expectedTotal = (incoming.getQuantity() != null && incoming.getExpectedUnitPrice() != null)
+                                ? incoming.getQuantity().longValue() * incoming.getExpectedUnitPrice()
+                                : null;
+                        newItem.put("expectedTotalPrice", expectedTotal);
+                        newItem.put("preferredVendorName", incoming.getPreferredVendorName());
+                        newItem.put("purpose", incoming.getPurpose());
+                        newItem.put("note", incoming.getNote());
+                        items.add(newItem);
+                    }
+                    case "UPDATE" -> {
+                        if (incoming.getId() == null) {
+                            break;
+                        }
+                        Map<String, Object> target = itemIndex.get(incoming.getId());
+                        if (target == null) {
+                            break;
+                        }
+                        if (incoming.getQuantity() != null) {
+                            target.put("quantity", incoming.getQuantity());
+                        }
+                        if (incoming.getExpectedUnitPrice() != null) {
+                            target.put("expectedUnitPrice", incoming.getExpectedUnitPrice());
+                        }
+                        if (incoming.getItemName() != null) {
+                            target.put("itemName", incoming.getItemName());
+                        }
+                        if (incoming.getUomName() != null) {
+                            target.put("uomName", incoming.getUomName());
+                        }
+                        if (incoming.getPreferredVendorName() != null) {
+                            target.put("preferredVendorName", incoming.getPreferredVendorName());
+                        }
+                        if (incoming.getPurpose() != null) {
+                            target.put("purpose", incoming.getPurpose());
+                        }
+                        if (incoming.getNote() != null) {
+                            target.put("note", incoming.getNote());
+                        }
+                    }
+                    case "REMOVE" -> {
+                        if (incoming.getId() == null) {
+                            break;
+                        }
+                        long removeId = incoming.getId();
+                        items.removeIf(m -> ((Number) m.get("id")).longValue() == removeId);
+                    }
+                    default -> {
+                    }
+                }
+                itemIndex = items.stream()
+                        .collect(java.util.stream.Collectors.toMap(m -> ((Number) m.get("id")).longValue(), m -> m, (a, b) -> a, java.util.LinkedHashMap::new));
+            }
+        }
+
+        items.forEach(it -> {
+            Integer quantity = (Integer) it.get("quantity");
+            Long unitPrice = (Long) it.get("expectedUnitPrice");
+            if (quantity != null && unitPrice != null) {
+                it.put("expectedTotalPrice", quantity.longValue() * unitPrice);
+            }
+        });
+
+        items.sort(java.util.Comparator.comparing(m -> {
+            Object ln = m.get("lineNo");
+            return (ln instanceof Integer) ? (Integer) ln : Integer.MAX_VALUE;
+        }));
+
+        long totalExpectedAmount = items.stream()
+                .map(m -> (Long) m.get("expectedTotalPrice"))
+                .filter(java.util.Objects::nonNull)
+                .mapToLong(Long::longValue)
+                .sum();
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", prId);
+        data.put("prNumber", "PR-NS-2025-00001");
+        data.put("prType", "NON_STOCK");
+        data.put("status", "PENDING");
+        data.put("departmentId", 12L);
+        data.put("departmentName", "경영지원팀");
+        data.put("desiredDeliveryDate", effectiveDesiredDate);
+        data.put("itemCount", items.size());
+        data.put("totalExpectedAmount", totalExpectedAmount);
+        data.put("items", items);
+
+        return ResponseEntity.ok(ApiResponse.success(data, "구매요청서가 수정되었습니다.", HttpStatus.OK));
+    }
+
+    @PostMapping("/purchase-requisitions/{prId}/release")
+    @Operation(
+            summary = "구매요청서 승인",
+            description = "구매요청서를 승인(Release) 처리합니다. 승인 가능한 역할 토큰이 필요합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "승인 성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서가 승인되었습니다.\",\n  \"data\": {\n    \"id\": 102345,\n    \"prNumber\": \"PR-NS-2025-00001\",\n    \"prType\": \"NON_STOCK\",\n    \"status\": \"APPROVED\",\n    \"origin\": \"MRP\",\n    \"originRefId\": \"MRP-2025-10-01-00123\",\n    \"requesterId\": 123,\n    \"requesterName\": \"홍길동\",\n    \"departmentId\": 12,\n    \"departmentName\": \"영업1팀\",\n    \"approvedAt\": \"2025-10-07T09:15:00Z\",\n    \"approvedBy\": 777,\n    \"approvedByName\": \"김관리자\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{ \"status\": 401, \"success\": false, \"message\": \"인증이 필요합니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "승인 권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{ \"status\": 403, \"success\": false, \"message\": \"승인 권한이 없습니다. (required role: PR_APPROVER|PURCHASING_MANAGER|ADMIN)\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "구매요청서 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{ \"status\": 404, \"success\": false, \"message\": \"해당 구매요청서를 찾을 수 없습니다: prId=999999\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "승인 불가 상태",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "invalid_transition", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"해당 상태에서는 승인할 수 없습니다.\",\n  \"errors\": [ { \"field\": \"status\", \"reason\": \"INVALID_TRANSITION: DRAFT/REJECTED/VOID/APPROVED → APPROVED 불가\" } ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "처리 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{ \"status\": 500, \"success\": false, \"message\": \"요청 처리 중 오류가 발생했습니다.\" }"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> releasePurchaseRequisition(
+            @Parameter(description = "구매요청 ID", example = "102345")
+            @PathVariable("prId") Long prId,
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+
+        String upperToken = authorization.trim().toUpperCase(Locale.ROOT);
+        if (upperToken.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_APPROVAL_PROCESSING_ERROR);
+        }
+
+        Set<String> approverRoles = Set.of("PR_APPROVER", "PURCHASING_MANAGER", "ADMIN");
+        boolean hasPrivilege = approverRoles.stream().anyMatch(upperToken::contains);
+        if (!hasPrivilege) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_APPROVAL_FORBIDDEN);
+        }
+
+        if (prId == null || prId < 100000L) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
+        }
+        if (Long.valueOf(102347L).equals(prId)) {
+            List<Map<String, String>> errors = List.of(Map.of(
+                    "field", "status",
+                    "reason", "INVALID_TRANSITION: DRAFT/REJECTED/VOID/APPROVED → APPROVED 불가"
+            ));
+            throw new ValidationException(ErrorCode.PURCHASE_REQUEST_INVALID_TRANSITION, errors);
+        }
+        if (Long.valueOf(102399L).equals(prId)) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_APPROVAL_PROCESSING_ERROR);
+        }
+        if (!Long.valueOf(102345L).equals(prId)) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", prId);
+        data.put("prNumber", "PR-NS-2025-00001");
+        data.put("prType", "NON_STOCK");
+        data.put("status", "APPROVED");
+        data.put("origin", "MRP");
+        data.put("originRefId", "MRP-2025-10-01-00123");
+        data.put("requesterId", 123L);
+        data.put("requesterName", "홍길동");
+        data.put("departmentId", 12L);
+        data.put("departmentName", "영업1팀");
+        data.put("approvedAt", java.time.Instant.parse("2025-10-07T09:15:00Z"));
+        data.put("approvedBy", 777L);
+        data.put("approvedByName", "김관리자");
+
+        return ResponseEntity.ok(ApiResponse.success(data, "구매요청서가 승인되었습니다.", HttpStatus.OK));
     }
 
     // ---------------- Purchase Orders List ----------------
