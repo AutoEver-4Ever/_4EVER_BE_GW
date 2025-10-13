@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionCreateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionUpdateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionRejectRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.MmVendorCreateRequestDto;
 
 @RestController
 @RequestMapping("/scm-pp/mm")
@@ -1262,6 +1263,86 @@ public class MmController {
         return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "공급업체 목록을 조회했습니다.", HttpStatus.OK
         ));
+    }
+
+    @PostMapping("/vendors")
+    @Operation(
+            summary = "공급업체 등록",
+            description = "신규 공급업체를 등록합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "등록 성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체가 정상적으로 등록되었습니다.\",\n  \"data\": {\n    \"vendorId\": 101,\n    \"vendorCode\": \"SUP-2025-0001\",\n    \"companyName\": \"대한철강\",\n    \"contactPerson\": \"홍길동\",\n    \"email\": \"contact@koreasteel.com\",\n    \"createdAt\": \"2025-10-13T10:00:00Z\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{ \"status\": 401, \"success\": false, \"message\": \"인증이 필요합니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{ \"status\": 403, \"success\": false, \"message\": \"공급업체 등록 권한이 없습니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"companyName\", \"reason\": \"필수 입력값입니다.\" },\n    { \"field\": \"email\", \"reason\": \"올바른 이메일 형식이 아닙니다.\" }\n  ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{ \"status\": 500, \"success\": false, \"message\": \"공급업체 등록 처리 중 오류가 발생했습니다.\" }"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> createVendor(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "{\n  \"companyName\": \"대한철강\",\n  \"category\": \"원자재\",\n  \"contactPerson\": \"홍길동\",\n  \"contactPhone\": \"02-1234-5678\",\n  \"email\": \"contact@koreasteel.com\",\n  \"deliveryLeadTime\": 3,\n  \"address\": \"서울시 강남구 테헤란로 123\",\n  \"materialList\": [\"철강재\", \"스테인리스\", \"알루미늄\"]\n}"))
+            )
+            @RequestBody MmVendorCreateRequestDto request
+    ) {
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+
+        String token = authorization.trim().toUpperCase(Locale.ROOT);
+        if (!token.contains("PR_APPROVER") && !token.contains("PURCHASING_MANAGER") && !token.contains("ADMIN")) {
+            throw new BusinessException(ErrorCode.VENDOR_CREATE_FORBIDDEN);
+        }
+        if (token.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.VENDOR_CREATE_PROCESSING_ERROR);
+        }
+
+        List<Map<String, String>> errors = new java.util.ArrayList<>();
+        if (request == null || request.getCompanyName() == null || request.getCompanyName().isBlank()) {
+            errors.add(Map.of("field", "companyName", "reason", "필수 입력값입니다."));
+        }
+        if (request == null || request.getEmail() == null || request.getEmail().isBlank() || !request.getEmail().contains("@")) {
+            errors.add(Map.of("field", "email", "reason", "올바른 이메일 형식이 아닙니다."));
+        }
+        if (!errors.isEmpty()) {
+            throw new ValidationException(ErrorCode.VENDOR_CREATE_VALIDATION_FAILED, errors);
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("vendorId", 101L);
+        data.put("vendorCode", "SUP-2025-0001");
+        data.put("companyName", request.getCompanyName());
+        data.put("contactPerson", request.getContactPerson());
+        data.put("email", request.getEmail());
+        data.put("createdAt", java.time.Instant.parse("2025-10-13T10:00:00Z"));
+
+        return ResponseEntity.ok(ApiResponse.success(data, "공급업체가 정상적으로 등록되었습니다.", HttpStatus.OK));
     }
 
     // ---------------- Vendor Detail ----------------
