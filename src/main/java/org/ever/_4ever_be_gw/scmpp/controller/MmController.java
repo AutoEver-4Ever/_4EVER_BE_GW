@@ -14,6 +14,7 @@ import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionCreateRequestDto;
 
 @RestController
 @RequestMapping("/scm-pp/mm")
@@ -163,7 +166,7 @@ public class MmController {
             errors.add(Map.of("field", "size", "reason", "MAX_200"));
         }
         if (!errors.isEmpty()) {
-            throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
+            throw new ValidationException(ErrorCode.BODY_VALIDATION_FAILED, errors);
         }
 
         // 기본값 처리
@@ -224,6 +227,93 @@ public class MmController {
         return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "구매요청서 목록입니다.", HttpStatus.OK
         ));
+    }
+
+    @PostMapping("/purchase-requisitions")
+    @Operation(
+            summary = "비재고성 자재 구매요청서 생성",
+            description = "요청 본문에 포함된 품목들로 비재고성 자재 구매요청서를 생성합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "201",
+                            description = "생성됨",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "created", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"비재고성 자재 구매요청서가 생성되었습니다.\",\n  \"data\": {\n    \"prId\": 202510120001,\n    \"prNumber\": \"PR-NS-2025-00001\",\n    \"departmentId\": 12,\n    \"departmentName\": \"경영지원팀\",\n    \"requesterId\": 123,\n    \"requestDate\": \"2025-10-12\",\n    \"createdAt\": \"2025-10-12T09:30:15Z\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "400",
+                            description = "본문 형식 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "bad_request", value = "{\n  \"status\": 400,\n  \"success\": false,\n  \"message\": \"요청 본문 형식이 올바르지 않습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"유효한 인증 토큰이 필요합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 본문 검증에 실패했습니다.\",\n  \"errors\": [ { \"field\": \"items[0].quantity\", \"reason\": \"MUST_BE_POSITIVE\" }, { \"field\": \"items[0].desiredDeliveryDate\", \"reason\": \"PAST_DATE\" } ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> createPurchaseRequisition(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "request", value = "{\n  \"requesterId\": 123,\n  \"items\": [ { \"itemName\": \"A4 복사용지\", \"quantity\": 10, \"uomName\": \"BOX\", \"expectedUnitPrice\": 15000, \"expectedTotalPrice\": 150000, \"preferredVendorName\": \"OO물산\", \"desiredDeliveryDate\": \"2025-10-15\", \"purpose\": \"사무실 비품 보강\", \"note\": \"급히 필요함\" } ]\n}"))
+            )
+            @RequestBody MmPurchaseRequisitionCreateRequestDto request
+    ) {
+        // 401 모킹: 특정 요청자 ID
+        if (request != null && Long.valueOf(401001L).equals(request.getRequesterId())) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+        // 500 모킹: ERROR 품목명 포함
+        if (request != null && request.getItems() != null && request.getItems().stream().anyMatch(i -> "ERROR".equalsIgnoreCase(i.getItemName()))) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+
+        // 422 검증
+        List<Map<String, String>> errors = new java.util.ArrayList<>();
+        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            errors.add(Map.of("field", "items", "reason", "REQUIRED"));
+        } else {
+            for (int i = 0; i < request.getItems().size(); i++) {
+                var it = request.getItems().get(i);
+                if (it.getQuantity() == null || it.getQuantity() <= 0) {
+                    errors.add(Map.of("field", "items[" + i + "].quantity", "reason", "MUST_BE_POSITIVE"));
+                }
+                if (it.getDesiredDeliveryDate() != null && !it.getDesiredDeliveryDate().isAfter(java.time.LocalDate.now())) {
+                    errors.add(Map.of("field", "items[" + i + "].desiredDeliveryDate", "reason", "PAST_DATE"));
+                }
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
+        }
+
+        // 성공 응답
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("prId", 202510120001L);
+        data.put("prNumber", "PR-NS-2025-00001");
+        data.put("departmentId", 12);
+        data.put("departmentName", "경영지원팀");
+        data.put("requesterId", request.getRequesterId());
+        data.put("requestDate", java.time.LocalDate.now().toString());
+        data.put("createdAt", java.time.Instant.now());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(data, "비재고성 자재 구매요청서가 생성되었습니다.", HttpStatus.CREATED));
     }
 
     @GetMapping("/purchase-requisitions/{purchaseId}")
