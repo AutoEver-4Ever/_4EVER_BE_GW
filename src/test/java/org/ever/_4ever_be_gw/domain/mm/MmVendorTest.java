@@ -109,7 +109,10 @@ class MmVendorTest {
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("공급업체 상세 정보를 조회했습니다."))
                 .andExpect(jsonPath("$.data.vendorId").value(1))
+                .andExpect(jsonPath("$.data.vendorCode").value("SUP001"))
                 .andExpect(jsonPath("$.data.companyName").exists())
+                .andExpect(jsonPath("$.data.leadTimeLabel").value("3일 소요"))
+                .andExpect(jsonPath("$.data.statusCode").value("ACTIVE"))
                 .andExpect(jsonPath("$.data.materials").isArray());
     }
 

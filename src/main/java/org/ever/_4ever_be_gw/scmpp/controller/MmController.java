@@ -1318,23 +1318,39 @@ public class MmController {
         }
 
         int idx = (int)((vendorId - 1) % 10);
-        String[] names = {"한국철강","대한전자부품","글로벌화학","한빛소재","에이치금속","태성테크","광명산업","한성전자","그린케미칼","아주금속"};
-        String[] categories = {"원자재","부품","원자재","부품","원자재","부품","원자재","부품","원자재","원자재"};
-        int[] leadDays = {3,1,5,2,4,7,6,2,9,10};
+        String[] codes = {"SUP001","SUP002","SUP003","SUP004","SUP005","SUP006","SUP007","SUP008","SUP009","SUP010"};
+        String[] names = {"한국철강","대한전자부품","글로벌화학","한빛소재","스마트로지스틱스","태성테크","광명산업","한성전자","그린케미칼","아주금속"};
+        String[] categories = {"원자재","전자부품","원자재","부품","기타","전자부품","원자재","부품","원자재","원자재"};
+        int[] leadDays = {3,1,5,2,0,7,6,2,9,10};
+        String[] phones = {"02-1234-5678","031-987-6543","051-555-0123","02-3456-7890","02-9999-1111","02-7777-8888","031-3333-4444","02-2222-1111","051-777-0000","032-101-2020"};
+        String[] emails = {"contact@koreasteel.com","sales@dahanelec.com","info@globalchem.co.kr","info@hanbits.com","service@smartlogistics.kr","sales@taesung.com","contact@kwangmyung.co.kr","info@hanseong.com","sales@greenchem.co.kr","contact@ajumetal.co.kr"};
         String[] statusCode = {"ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE"};
         String[] statusLabel = {"활성","활성","비활성","활성","활성","비활성","활성","활성","비활성","활성"};
+        java.util.List<java.util.List<String>> materialsByVendor = java.util.List.of(
+                java.util.List.of("철강재", "스테인리스", "알루미늄"),
+                java.util.List.of("커넥터", "PCB", "센서"),
+                java.util.List.of("유기용제", "촉매", "첨가제"),
+                java.util.List.of("알루미늄 플레이트", "구조용 볼트"),
+                java.util.List.of("물류 지원", "패킹"),
+                java.util.List.of("전자모듈", "케이블"),
+                java.util.List.of("강판", "합금"),
+                java.util.List.of("반도체 부품", "커넥터"),
+                java.util.List.of("산업용 화학", "첨가제"),
+                java.util.List.of("철강 코일", "합금 파이프")
+        );
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("vendorId", vendorId);
+        data.put("vendorCode", codes[idx]);
         data.put("companyName", names[idx]);
-        data.put("contactPhone", "02-1234-5678");
-        data.put("contactEmail", "contact@koreasteel.com");
+        data.put("contactPhone", phones[idx]);
+        data.put("contactEmail", emails[idx]);
         data.put("category", categories[idx]);
         data.put("leadTimeDays", leadDays[idx]);
-        data.put("leadTimeLabel", leadDays[idx] + "일 소요");
+        data.put("leadTimeLabel", leadDays[idx] == 0 ? "당일 배송" : leadDays[idx] + "일 소요");
         data.put("statusCode", statusCode[idx]);
         data.put("statusLabel", statusLabel[idx]);
-        data.put("materials", java.util.List.of("철강재", "스테인리스", "알루미늄"));
+        data.put("materials", materialsByVendor.get(idx));
         // 간단한 시계열 생성
         data.put("createdAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
         data.put("updatedAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
