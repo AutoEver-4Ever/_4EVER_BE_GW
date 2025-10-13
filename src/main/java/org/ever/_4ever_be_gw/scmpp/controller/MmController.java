@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionCreateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionUpdateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionRejectRequestDto;
 
 @RestController
 @RequestMapping("/scm-pp/mm")
@@ -749,6 +750,118 @@ public class MmController {
         data.put("approvedByName", "김관리자");
 
         return ResponseEntity.ok(ApiResponse.success(data, "구매요청서가 승인되었습니다.", HttpStatus.OK));
+    }
+
+    @PostMapping("/purchase-requisitions/{prId}/reject")
+    @Operation(
+            summary = "구매요청서 반려",
+            description = "구매요청서를 반려 처리하고 사유를 기록합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "반려 성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서가 반려되었습니다.\",\n  \"data\": {\n    \"id\": 102345,\n    \"prNumber\": \"PR-NS-2025-00001\",\n    \"status\": \"REJECTED\",\n    \"origin\": \"MRP\",\n    \"originRefId\": \"MRP-2025-10-01-00123\",\n    \"requesterId\": 123,\n    \"requesterName\": \"홍길동\",\n    \"departmentId\": 12,\n    \"departmentName\": \"영업1팀\",\n    \"rejectedAt\": \"2025-10-07T10:30:00Z\",\n    \"rejectedBy\": 777,\n    \"rejectedByName\": \"김관리자\",\n    \"rejectReason\": \"예산 초과로 반려합니다.\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{ \"status\": 401, \"success\": false, \"message\": \"인증이 필요합니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "반려 권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{ \"status\": 403, \"success\": false, \"message\": \"해당 문서를 반려할 권한이 없습니다. (required role: PR_APPROVER|PURCHASING_MANAGER|ADMIN)\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "구매요청서 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{ \"status\": 404, \"success\": false, \"message\": \"해당 구매요청서를 찾을 수 없습니다: prId=999999\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "반려 불가 상태 또는 본문 검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "invalid_transition", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"해당 상태에서는 반려할 수 없습니다.\",\n  \"errors\": [ { \"field\": \"status\", \"reason\": \"INVALID_TRANSITION: DRAFT/APPROVED/REJECTED/VOID → REJECTED 불가\" } ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "처리 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{ \"status\": 500, \"success\": false, \"message\": \"요청 처리 중 오류가 발생했습니다.\" }"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> rejectPurchaseRequisition(
+            @Parameter(description = "구매요청 ID", example = "102345")
+            @PathVariable("prId") Long prId,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "{ \"comment\": \"예산 초과로 반려합니다.\" }"))
+            )
+            @RequestBody MmPurchaseRequisitionRejectRequestDto request
+    ) {
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+
+        String upperToken = authorization.trim().toUpperCase(Locale.ROOT);
+        if (upperToken.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_REJECTION_PROCESSING_ERROR);
+        }
+
+        Set<String> approverRoles = Set.of("PR_APPROVER", "PURCHASING_MANAGER", "ADMIN");
+        boolean hasPrivilege = approverRoles.stream().anyMatch(upperToken::contains);
+        if (!hasPrivilege) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_REJECTION_FORBIDDEN);
+        }
+
+        List<Map<String, String>> errors = new java.util.ArrayList<>();
+        if (request == null || request.getComment() == null || request.getComment().isBlank()) {
+            errors.add(Map.of("field", "comment", "reason", "REQUIRED"));
+        }
+        if (!errors.isEmpty()) {
+            throw new ValidationException(ErrorCode.BODY_VALIDATION_FAILED, errors);
+        }
+
+        if (prId == null || prId < 100000L) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
+        }
+        if (Long.valueOf(102347L).equals(prId)) {
+            List<Map<String, String>> transitionErrors = List.of(Map.of(
+                    "field", "status",
+                    "reason", "INVALID_TRANSITION: DRAFT/APPROVED/REJECTED/VOID → REJECTED 불가"
+            ));
+            throw new ValidationException(ErrorCode.PURCHASE_REQUEST_REJECTION_INVALID_TRANSITION, transitionErrors);
+        }
+        if (Long.valueOf(102399L).equals(prId)) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_REJECTION_PROCESSING_ERROR);
+        }
+        if (!Long.valueOf(102345L).equals(prId)) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", prId);
+        data.put("prNumber", "PR-NS-2025-00001");
+        data.put("status", "REJECTED");
+        data.put("origin", "MRP");
+        data.put("originRefId", "MRP-2025-10-01-00123");
+        data.put("requesterId", 123L);
+        data.put("requesterName", "홍길동");
+        data.put("departmentId", 12L);
+        data.put("departmentName", "영업1팀");
+        data.put("rejectedAt", java.time.Instant.parse("2025-10-07T10:30:00Z"));
+        data.put("rejectedBy", 777L);
+        data.put("rejectedByName", "김관리자");
+        data.put("rejectReason", request.getComment());
+
+        return ResponseEntity.ok(ApiResponse.success(data, "구매요청서가 반려되었습니다.", HttpStatus.OK));
     }
 
     // ---------------- Purchase Orders List ----------------
