@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,6 +36,7 @@ import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionCreateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionUpdateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionRejectRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.MmVendorCreateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.MmVendorUpdateRequestDto;
 
 @RestController
 @RequestMapping("/scm-pp/mm")
@@ -1518,5 +1520,110 @@ public class MmController {
         data.put("invitedAt", java.time.Instant.parse("2025-10-13T10:05:00Z"));
 
         return ResponseEntity.ok(ApiResponse.success(data, "공급업체 계정이 생성되고 초대 이메일이 발송되었습니다.", HttpStatus.OK));
+    }
+
+    @PatchMapping("/vendors/{vendorId}")
+    @Operation(
+            summary = "공급업체 정보 수정",
+            description = "공급업체 기본 정보를 수정합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "수정 성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 정보를 수정했습니다.\",\n  \"data\": {\n    \"vendorId\": 1,\n    \"vendorCode\": \"V-001\",\n    \"companyName\": \"대한철강\",\n    \"category\": \"원자재\",\n    \"address\": \"서울특별시 강남구 테헤란로 123\",\n    \"leadTimeDays\": 3,\n    \"materialList\": [\"철강재\", \"스테인리스\"],\n    \"statusCode\": \"ACTIVE\",\n    \"contactPerson\": \"홍길동\",\n    \"contactPosition\": \"영업팀장\",\n    \"contactPhone\": \"010-1234-5678\",\n    \"contactEmail\": \"contact@koreasteel.com\",\n    \"createdAt\": \"2025-10-07T00:00:00Z\",\n    \"updatedAt\": \"2025-10-13T12:00:00Z\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{ \"status\": 401, \"success\": false, \"message\": \"인증이 필요합니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{ \"status\": 403, \"success\": false, \"message\": \"공급업체 수정 권한이 없습니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "공급업체 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{ \"status\": 404, \"success\": false, \"message\": \"수정할 공급업체를 찾을 수 없습니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 본문 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"contactPerson\", \"reason\": \"FIELD_NOT_EDITABLE_BY_ADMIN\" },\n    { \"field\": \"contactPhone\", \"reason\": \"FIELD_NOT_EDITABLE_BY_ADMIN\" }\n  ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "처리 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{ \"status\": 500, \"success\": false, \"message\": \"공급업체 정보 수정 처리 중 오류가 발생했습니다.\" }"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> updateVendor(
+            @PathVariable("vendorId") Long vendorId,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestBody(required = false) MmVendorUpdateRequestDto request
+    ) {
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+
+        String token = authorization.trim().toUpperCase(Locale.ROOT);
+        if (!token.contains("PR_APPROVER") && !token.contains("PURCHASING_MANAGER") && !token.contains("ADMIN")) {
+            throw new BusinessException(ErrorCode.VENDOR_UPDATE_FORBIDDEN);
+        }
+        if (token.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.VENDOR_UPDATE_PROCESSING_ERROR);
+        }
+
+        java.util.List<Map<String, String>> errors = new java.util.ArrayList<>();
+        if (request != null) {
+            if (request.getContactPerson() != null) {
+                errors.add(Map.of("field", "contactPerson", "reason", "FIELD_NOT_EDITABLE_BY_ADMIN"));
+            }
+            if (request.getContactPhone() != null) {
+                errors.add(Map.of("field", "contactPhone", "reason", "FIELD_NOT_EDITABLE_BY_ADMIN"));
+            }
+            if (request.getContactEmail() != null) {
+                errors.add(Map.of("field", "contactEmail", "reason", "FIELD_NOT_EDITABLE_BY_ADMIN"));
+            }
+            if (request.getStatusCode() != null && !java.util.Set.of("ACTIVE", "INACTIVE").contains(request.getStatusCode())) {
+                errors.add(Map.of("field", "statusCode", "reason", "ALLOWED_VALUES: ACTIVE, INACTIVE"));
+            }
+            if (request.getLeadTimeDays() != null && request.getLeadTimeDays() < 0) {
+                errors.add(Map.of("field", "leadTimeDays", "reason", "MUST_BE_POSITIVE_OR_ZERO"));
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new ValidationException(ErrorCode.VENDOR_UPDATE_VALIDATION_FAILED, errors);
+        }
+
+        if (vendorId == null || vendorId < 1 || vendorId > 200) {
+            throw new BusinessException(ErrorCode.VENDOR_UPDATE_NOT_FOUND);
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("vendorId", vendorId);
+        data.put("vendorCode", "V-001");
+        data.put("companyName", request != null && request.getCompanyName() != null ? request.getCompanyName() : "대한철강");
+        data.put("category", request != null && request.getCategory() != null ? request.getCategory() : "원자재");
+        data.put("address", request != null && request.getAddress() != null ? request.getAddress() : "서울특별시 강남구 테헤란로 123");
+        data.put("leadTimeDays", request != null && request.getLeadTimeDays() != null ? request.getLeadTimeDays() : 3);
+        data.put("materialList", request != null && request.getMaterialList() != null ? request.getMaterialList() : java.util.List.of("철강재", "스테인리스"));
+        data.put("statusCode", request != null && request.getStatusCode() != null ? request.getStatusCode() : "ACTIVE");
+        data.put("contactPerson", "홍길동");
+        data.put("contactPosition", "영업팀장");
+        data.put("contactPhone", "010-1234-5678");
+        data.put("contactEmail", "contact@koreasteel.com");
+        data.put("createdAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
+        data.put("updatedAt", java.time.Instant.parse("2025-10-13T12:00:00Z"));
+
+        return ResponseEntity.ok(ApiResponse.success(data, "공급업체 정보를 수정했습니다.", HttpStatus.OK));
     }
 }
