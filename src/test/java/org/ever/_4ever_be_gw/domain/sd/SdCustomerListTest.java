@@ -36,8 +36,8 @@ class SdCustomerListTest {
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("고객사 목록을 조회했습니다."))
                 .andExpect(jsonPath("$.data.customers").isArray())
-                .andExpect(jsonPath("$.data.page").value(1))
-                .andExpect(jsonPath("$.data.size").value(10));
+                .andExpect(jsonPath("$.data.page.number").value(0))
+                .andExpect(jsonPath("$.data.page.size").value(10));
     }
 
     @Test
@@ -107,4 +107,3 @@ class SdCustomerListTest {
                 .andExpect(jsonPath("$.message").value("요청 처리 중 알 수 없는 오류가 발생했습니다."));
     }
 }
-

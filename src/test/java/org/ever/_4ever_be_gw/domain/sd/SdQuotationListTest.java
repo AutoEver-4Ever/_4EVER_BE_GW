@@ -39,7 +39,7 @@ class SdQuotationListTest {
                 .andExpect(jsonPath("$.data.items[0].quotationId").exists())
                 .andExpect(jsonPath("$.data.items[0].quotationCode").exists())
                 .andExpect(jsonPath("$.data.items[0].customerName").exists())
-                .andExpect(jsonPath("$.data.page.number").value(1))
+                .andExpect(jsonPath("$.data.page.number").value(0))
                 .andExpect(jsonPath("$.data.page.size").value(10))
                 .andExpect(jsonPath("$.data.page.totalElements").value(57))
                 .andExpect(jsonPath("$.data.page.totalPages").value(6))
@@ -92,4 +92,3 @@ class SdQuotationListTest {
                 .andExpect(jsonPath("$.data.page.size").value(20));
     }
 }
-

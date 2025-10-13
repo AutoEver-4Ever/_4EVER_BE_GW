@@ -58,12 +58,13 @@ class MmVendorTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("공급업체 목록을 조회했습니다."))
-                .andExpect(jsonPath("$.data.total").value(10))
                 .andExpect(jsonPath("$.data.vendors").isArray())
                 .andExpect(jsonPath("$.data.vendors[0].vendorId").value(1))
-                .andExpect(jsonPath("$.data.totalPages").value(1))
-                .andExpect(jsonPath("$.data.hasNext").value(false))
-                .andExpect(jsonPath("$.data.hasPrev").value(false));
+                .andExpect(jsonPath("$.data.page.number").value(0))
+                .andExpect(jsonPath("$.data.page.size").value(10))
+                .andExpect(jsonPath("$.data.page.totalElements").value(10))
+                .andExpect(jsonPath("$.data.page.totalPages").value(1))
+                .andExpect(jsonPath("$.data.page.hasNext").value(false));
     }
 
     @Test

@@ -10,6 +10,7 @@ import org.ever._4ever_be_gw.scmpp.dto.PeriodMetricsDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
+import org.ever._4ever_be_gw.common.util.PageResponseUtils;
 import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -238,12 +239,7 @@ public class MmController {
                     .toList();
         }
 
-        Map<String, Object> pageMeta = new LinkedHashMap<>();
-        pageMeta.put("number", p);
-        pageMeta.put("size", s);
-        pageMeta.put("totalElements", 257);
-        pageMeta.put("totalPages", 13);
-        pageMeta.put("hasNext", (p + 1) < 13);
+        Map<String, Object> pageMeta = PageResponseUtils.buildPage(p, s, 257L);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("content", filtered);
@@ -765,7 +761,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"total\": 10,\n    \"page\": 1,\n    \"size\": 10,\n    \"totalPages\": 1,\n    \"hasNext\": false,\n    \"hasPrev\": false,\n    \"orders\": [\n      {\n        \"id\": 1001,\n        \"poNumber\": \"PO-2024-001\",\n        \"supplierName\": \"대한철강\",\n        \"itemsSummary\": \"강판 500kg, 알루미늄 300kg\",\n        \"totalAmount\": 5000000,\n        \"orderDate\": \"2024-01-18\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"priority\": null,\n        \"status\": \"승인됨\"\n      }\n    ]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"orders\": [\n      {\n        \"id\": 1001,\n        \"poNumber\": \"PO-2024-001\",\n        \"supplierName\": \"대한철강\",\n        \"itemsSummary\": \"강판 500kg, 알루미늄 300kg\",\n        \"totalAmount\": 5000000,\n        \"orderDate\": \"2024-01-18\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"priority\": null,\n        \"status\": \"승인됨\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 10,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -833,7 +829,7 @@ public class MmController {
 
         // 빈 파라미터 기본값 처리 (Swagger Try-out 시 쿼리 비움)
         String effectiveSort = (sort == null || sort.isBlank()) ? "orderDate,desc" : sort;
-        int p = (page == null || page < 1) ? 1 : page;
+        int pageIndex = (page == null || page < 1) ? 0 : page - 1;
         int s = (size == null || size < 1) ? 10 : size;
 
         // 403 모킹: 너무 이른 기간 접근 제한
@@ -876,21 +872,13 @@ public class MmController {
 
         // 페이지네이션 메타 생성 (1-base)
         int total = list.size();
-        int totalPages = (int) Math.ceil((double) total / Math.max(1, s));
-        boolean hasNext = p < totalPages;
-        boolean hasPrev = p > 1;
-        int fromIdx = Math.min((p - 1) * s, total);
+        int fromIdx = Math.min(pageIndex * s, total);
         int toIdx = Math.min(fromIdx + s, total);
         java.util.List<Map<String, Object>> pageOrders = list.subList(fromIdx, toIdx);
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("total", total);
-        data.put("page", p);
-        data.put("size", s);
-        data.put("totalPages", totalPages);
-        data.put("hasNext", hasNext);
-        data.put("hasPrev", hasPrev);
         data.put("orders", pageOrders);
+        data.put("page", PageResponseUtils.buildPage(pageIndex, s, total));
 
         return ResponseEntity.ok(ApiResponse.<Object>success(data, "발주서 목록 조회에 성공했습니다.", HttpStatus.OK));
     }
@@ -1001,7 +989,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 목록을 조회했습니다.\",\n  \"data\": {\n    \"total\": 10,\n    \"page\": 1,\n    \"size\": 10,\n    \"totalPages\": 1,\n    \"hasNext\": false,\n    \"hasPrev\": false,\n    \"vendors\": [\n      {\n        \"vendorId\": 1,\n        \"companyName\": \"한국철강\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@koreasteel.com\",\n        \"category\": \"원자재\",\n        \"leadTimeDays\": 3,\n        \"leadTimeLabel\": \"3일\",\n        \"statusCode\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"actions\": [\"view\"],\n        \"createdAt\": \"2025-10-07T00:00:00Z\",\n        \"updatedAt\": \"2025-10-07T00:00:00Z\"\n      }\n    ]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 목록을 조회했습니다.\",\n  \"data\": {\n    \"vendors\": [\n      {\n        \"vendorId\": 1,\n        \"companyName\": \"한국철강\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@koreasteel.com\",\n        \"category\": \"원자재\",\n        \"leadTimeDays\": 3,\n        \"leadTimeLabel\": \"3일\",\n        \"statusCode\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"actions\": [\"view\"],\n        \"createdAt\": \"2025-10-07T00:00:00Z\",\n        \"updatedAt\": \"2025-10-07T00:00:00Z\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 10,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1199,25 +1187,17 @@ public class MmController {
             put("updatedAt", java.time.Instant.parse("2025-01-25T00:00:00Z"));
         }});
 
-        // 페이지네이션 슬라이싱 (1-base page)
-        int p = (page == null || page < 1) ? 1 : page;
+        // 페이지네이션 슬라이싱 (1-base page 입력, 0-base 응답)
+        int pageIndex = (page == null || page < 1) ? 0 : page - 1;
         int s = (size == null || size < 1) ? 10 : size;
-        int fromIdx = Math.min((p - 1) * s, allVendors.size());
+        int fromIdx = Math.min(pageIndex * s, allVendors.size());
         int toIdx = Math.min(fromIdx + s, allVendors.size());
         java.util.List<Map<String, Object>> vendors = allVendors.subList(fromIdx, toIdx);
 
         Map<String, Object> data = new LinkedHashMap<>();
         int total = allVendors.size();
-        int totalPages = (int) Math.ceil((double) total / Math.max(1, s));
-        boolean hasNext = p < totalPages;
-        boolean hasPrev = p > 1;
-        data.put("total", total);
-        data.put("page", p);
-        data.put("size", s);
-        data.put("totalPages", totalPages);
-        data.put("hasNext", hasNext);
-        data.put("hasPrev", hasPrev);
         data.put("vendors", vendors);
+        data.put("page", PageResponseUtils.buildPage(pageIndex, s, total));
 
         return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "공급업체 목록을 조회했습니다.", HttpStatus.OK
