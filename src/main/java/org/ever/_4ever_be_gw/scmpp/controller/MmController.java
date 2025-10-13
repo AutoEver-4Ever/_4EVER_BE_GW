@@ -1440,4 +1440,83 @@ public class MmController {
                 data, "공급업체 상세 정보를 조회했습니다.", HttpStatus.OK
         ));
     }
+
+    @PostMapping("/vendors/{vendorId}/account")
+    @Operation(
+            summary = "공급업체 계정 생성",
+            description = "공급업체 계정을 생성하고 임시 비밀번호가 포함된 초대 이메일을 발송합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 계정이 생성되고 초대 이메일이 발송되었습니다.\",\n  \"data\": {\n    \"vendorId\": 101,\n    \"vendorCode\": \"SUP-2025-0001\",\n    \"email\": \"contact@everp.com\",\n    \"tempPassword\": \"Abc12345!\",\n    \"invitedAt\": \"2025-10-13T10:05:00Z\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{ \"status\": 401, \"success\": false, \"message\": \"인증이 필요합니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{ \"status\": 403, \"success\": false, \"message\": \"계정 생성 권한이 없습니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "공급업체 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{ \"status\": 404, \"success\": false, \"message\": \"해당 공급업체를 찾을 수 없습니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "409",
+                            description = "이미 계정 생성됨",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "conflict", value = "{ \"status\": 409, \"success\": false, \"message\": \"이미 계정이 발급된 공급업체입니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "처리 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{ \"status\": 500, \"success\": false, \"message\": \"초대 이메일 발송 중 오류가 발생했습니다.\" }"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> inviteVendorAccount(
+            @PathVariable("vendorId") Long vendorId,
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+
+        String token = authorization.trim().toUpperCase(Locale.ROOT);
+        if (!token.contains("PR_APPROVER") && !token.contains("PURCHASING_MANAGER") && !token.contains("ADMIN")) {
+            throw new BusinessException(ErrorCode.VENDOR_ACCOUNT_FORBIDDEN);
+        }
+        if (token.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.VENDOR_ACCOUNT_PROCESSING_ERROR);
+        }
+
+        if (vendorId.equals(999L)) {
+            throw new BusinessException(ErrorCode.VENDOR_ACCOUNT_ALREADY_EXISTS);
+        }
+        if (vendorId == null || vendorId < 1 || vendorId > 200) {
+            throw new BusinessException(ErrorCode.VENDOR_NOT_FOUND);
+        }
+
+        String baseEmail = "contact@koreasteel.com";
+        String accountEmail = baseEmail.substring(0, baseEmail.indexOf('@')) + "@everp.com";
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("vendorId", vendorId);
+        data.put("vendorCode", "SUP-2025-0001");
+        data.put("email", accountEmail);
+        data.put("tempPassword", "Abc12345!");
+        data.put("invitedAt", java.time.Instant.parse("2025-10-13T10:05:00Z"));
+
+        return ResponseEntity.ok(ApiResponse.success(data, "공급업체 계정이 생성되고 초대 이메일이 발송되었습니다.", HttpStatus.OK));
+    }
 }
