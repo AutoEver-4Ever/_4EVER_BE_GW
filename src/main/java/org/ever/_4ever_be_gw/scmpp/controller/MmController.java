@@ -1102,7 +1102,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 목록을 조회했습니다.\",\n  \"data\": {\n    \"vendors\": [\n      {\n        \"vendorId\": 1,\n        \"companyName\": \"한국철강\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@koreasteel.com\",\n        \"category\": \"원자재\",\n        \"leadTimeDays\": 3,\n        \"leadTimeLabel\": \"3일\",\n        \"statusCode\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"actions\": [\"view\"],\n        \"createdAt\": \"2025-10-07T00:00:00Z\",\n        \"updatedAt\": \"2025-10-07T00:00:00Z\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 10,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"vendorId\": 1,\n        \"vendorCode\": \"SUP001\",\n        \"companyName\": \"한국철강\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@koreasteel.com\",\n        \"category\": \"원자재\",\n        \"leadTimeDays\": 3,\n        \"leadTimeLabel\": \"3일\",\n        \"statusCode\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"actions\": [\"view\"],\n        \"createdAt\": \"2025-10-07T00:00:00Z\",\n        \"updatedAt\": \"2025-10-07T00:00:00Z\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 5,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1120,7 +1120,7 @@ public class MmController {
                             responseCode = "422",
                             description = "검증 실패",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: ACTIVE, INACTIVE\" },\n    { \"field\": \"page\", \"reason\": \"MIN_1\" },\n    { \"field\": \"size\", \"reason\": \"MAX_200\" }\n  ]\n}"))
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: ACTIVE, INACTIVE\" },\n    { \"field\": \"page\", \"reason\": \"MIN_0\" },\n    { \"field\": \"size\", \"reason\": \"MAX_200\" }\n  ]\n}"))
                     )
             }
     )
@@ -1129,8 +1129,8 @@ public class MmController {
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "카테고리 필터", example = "부품")
             @RequestParam(name = "category", required = false) String category,
-            @Parameter(description = "페이지(1-base)", example = "1")
-            @RequestParam(name = "page", required = false, defaultValue = "1") Integer page,
+            @Parameter(description = "페이지 번호(0-base)", example = "0")
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
             @Parameter(description = "페이지 크기(최대 200)", example = "10")
             @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
     ) {
@@ -1142,8 +1142,8 @@ public class MmController {
                 errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ACTIVE, INACTIVE"));
             }
         }
-        if (page != null && page < 1) {
-            errors.add(Map.of("field", "page", "reason", "MIN_1"));
+        if (page != null && page < 0) {
+            errors.add(Map.of("field", "page", "reason", "MIN_0"));
         }
         if (size != null && size > 200) {
             errors.add(Map.of("field", "size", "reason", "MAX_200"));
@@ -1157,10 +1157,10 @@ public class MmController {
             throw new BusinessException(ErrorCode.VENDOR_FORBIDDEN);
         }
 
-        // 성공 목업 10개 (기본 5 + 추가 5)
         java.util.List<Map<String, Object>> allVendors = new java.util.ArrayList<>();
         allVendors.add(new LinkedHashMap<>() {{
             put("vendorId", 1);
+            put("vendorCode", "SUP001");
             put("companyName", "한국철강");
             put("contactPhone", "02-1234-5678");
             put("contactEmail", "contact@koreasteel.com");
@@ -1175,10 +1175,11 @@ public class MmController {
         }});
         allVendors.add(new LinkedHashMap<>() {{
             put("vendorId", 2);
+            put("vendorCode", "SUP002");
             put("companyName", "대한전자부품");
             put("contactPhone", "031-987-6543");
             put("contactEmail", "sales@dahanelec.com");
-            put("category", "부품");
+            put("category", "전자부품");
             put("leadTimeDays", 1);
             put("leadTimeLabel", "1일");
             put("statusCode", "ACTIVE");
@@ -1189,6 +1190,7 @@ public class MmController {
         }});
         allVendors.add(new LinkedHashMap<>() {{
             put("vendorId", 3);
+            put("vendorCode", "SUP003");
             put("companyName", "글로벌화학");
             put("contactPhone", "051-555-0123");
             put("contactEmail", "info@globalchem.co.kr");
@@ -1203,6 +1205,7 @@ public class MmController {
         }});
         allVendors.add(new LinkedHashMap<>() {{
             put("vendorId", 4);
+            put("vendorCode", "SUP004");
             put("companyName", "한빛소재");
             put("contactPhone", "02-3456-7890");
             put("contactEmail", "info@hanbits.com");
@@ -1217,99 +1220,43 @@ public class MmController {
         }});
         allVendors.add(new LinkedHashMap<>() {{
             put("vendorId", 5);
-            put("companyName", "에이치금속");
-            put("contactPhone", "032-222-3333");
-            put("contactEmail", "contact@hmetal.co.kr");
-            put("category", "원자재");
-            put("leadTimeDays", 4);
-            put("leadTimeLabel", "4일");
+            put("vendorCode", "SUP005");
+            put("companyName", "스마트로지스틱스");
+            put("contactPhone", "02-9999-1111");
+            put("contactEmail", "service@smartlogistics.kr");
+            put("category", "기타");
+            put("leadTimeDays", 0);
+            put("leadTimeLabel", "당일 배송");
             put("statusCode", "ACTIVE");
             put("statusLabel", "활성");
             put("actions", java.util.List.of("view"));
-            put("createdAt", java.time.Instant.parse("2025-06-01T00:00:00Z"));
-            put("updatedAt", java.time.Instant.parse("2025-06-05T00:00:00Z"));
+            put("createdAt", java.time.Instant.parse("2025-08-02T00:00:00Z"));
+            put("updatedAt", java.time.Instant.parse("2025-09-01T00:00:00Z"));
         }});
-        allVendors.add(new LinkedHashMap<>() {{
-            put("vendorId", 6);
-            put("companyName", "태성테크");
-            put("contactPhone", "02-7777-8888");
-            put("contactEmail", "sales@taesung.com");
-            put("category", "부품");
-            put("leadTimeDays", 7);
-            put("leadTimeLabel", "7일");
-            put("statusCode", "INACTIVE");
-            put("statusLabel", "비활성");
-            put("actions", java.util.List.of("view"));
-            put("createdAt", java.time.Instant.parse("2025-05-10T00:00:00Z"));
-            put("updatedAt", java.time.Instant.parse("2025-05-12T00:00:00Z"));
-        }});
-        allVendors.add(new LinkedHashMap<>() {{
-            put("vendorId", 7);
-            put("companyName", "광명산업");
-            put("contactPhone", "031-3333-4444");
-            put("contactEmail", "contact@kwangmyung.co.kr");
-            put("category", "원자재");
-            put("leadTimeDays", 6);
-            put("leadTimeLabel", "6일");
-            put("statusCode", "ACTIVE");
-            put("statusLabel", "활성");
-            put("actions", java.util.List.of("view"));
-            put("createdAt", java.time.Instant.parse("2025-04-01T00:00:00Z"));
-            put("updatedAt", java.time.Instant.parse("2025-04-03T00:00:00Z"));
-        }});
-        allVendors.add(new LinkedHashMap<>() {{
-            put("vendorId", 8);
-            put("companyName", "한성전자");
-            put("contactPhone", "02-2222-1111");
-            put("contactEmail", "info@hanseong.com");
-            put("category", "부품");
-            put("leadTimeDays", 2);
-            put("leadTimeLabel", "2일");
-            put("statusCode", "ACTIVE");
-            put("statusLabel", "활성");
-            put("actions", java.util.List.of("view"));
-            put("createdAt", java.time.Instant.parse("2025-03-01T00:00:00Z"));
-            put("updatedAt", java.time.Instant.parse("2025-03-08T00:00:00Z"));
-        }});
-        allVendors.add(new LinkedHashMap<>() {{
-            put("vendorId", 9);
-            put("companyName", "그린케미칼");
-            put("contactPhone", "051-777-0000");
-            put("contactEmail", "sales@greenchem.co.kr");
-            put("category", "원자재");
-            put("leadTimeDays", 9);
-            put("leadTimeLabel", "9일");
-            put("statusCode", "INACTIVE");
-            put("statusLabel", "비활성");
-            put("actions", java.util.List.of("view"));
-            put("createdAt", java.time.Instant.parse("2025-02-11T00:00:00Z"));
-            put("updatedAt", java.time.Instant.parse("2025-02-15T00:00:00Z"));
-        }});
-        allVendors.add(new LinkedHashMap<>() {{
-            put("vendorId", 10);
-            put("companyName", "아주금속");
-            put("contactPhone", "032-101-2020");
-            put("contactEmail", "contact@ajumetal.co.kr");
-            put("category", "원자재");
-            put("leadTimeDays", 10);
-            put("leadTimeLabel", "10일");
-            put("statusCode", "ACTIVE");
-            put("statusLabel", "활성");
-            put("actions", java.util.List.of("view"));
-            put("createdAt", java.time.Instant.parse("2025-01-20T00:00:00Z"));
-            put("updatedAt", java.time.Instant.parse("2025-01-25T00:00:00Z"));
-        }});
+        // 상태/카테고리 필터 적용
+        java.util.List<Map<String, Object>> filtered = allVendors;
+        if (status != null) {
+            final String expectedStatus = status.toUpperCase(Locale.ROOT);
+            filtered = filtered.stream()
+                    .filter(v -> expectedStatus.equals(String.valueOf(v.get("statusCode"))))
+                    .toList();
+        }
+        if (category != null && !category.isBlank()) {
+            final String expectedCategory = category.trim();
+            filtered = filtered.stream()
+                    .filter(v -> expectedCategory.equals(v.get("category")))
+                    .toList();
+        }
 
-        // 페이지네이션 슬라이싱 (1-base page 입력, 0-base 응답)
-        int pageIndex = (page == null || page < 1) ? 0 : page - 1;
+        int total = filtered.size();
+        int pageIndex = (page == null || page < 0) ? 0 : page;
         int s = (size == null || size < 1) ? 10 : size;
-        int fromIdx = Math.min(pageIndex * s, allVendors.size());
-        int toIdx = Math.min(fromIdx + s, allVendors.size());
-        java.util.List<Map<String, Object>> vendors = allVendors.subList(fromIdx, toIdx);
+        int fromIdx = Math.min(pageIndex * s, total);
+        int toIdx = Math.min(fromIdx + s, total);
+        java.util.List<Map<String, Object>> content = filtered.subList(fromIdx, toIdx);
 
         Map<String, Object> data = new LinkedHashMap<>();
-        int total = allVendors.size();
-        data.put("vendors", vendors);
+        data.put("content", content);
         data.put("page", PageResponseUtils.buildPage(pageIndex, s, total));
 
         return ResponseEntity.ok(ApiResponse.<Object>success(

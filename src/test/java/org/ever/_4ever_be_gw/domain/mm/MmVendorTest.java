@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -51,19 +52,19 @@ class MmVendorTest {
     void getVendors_success() throws Exception {
         mockMvc.perform(get("/api/scm-pp/mm/vendors")
                         .servletPath("/api")
-                        .queryParam("page", "1")
+                        .queryParam("page", "0")
                         .queryParam("size", "10")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("공급업체 목록을 조회했습니다."))
-                .andExpect(jsonPath("$.data.vendors").isArray())
-                .andExpect(jsonPath("$.data.vendors[0].vendorId").value(1))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].vendorId").value(1))
+                .andExpect(jsonPath("$.data.content[0].vendorCode").value("SUP001"))
                 .andExpect(jsonPath("$.data.page.number").value(0))
                 .andExpect(jsonPath("$.data.page.size").value(10))
-                .andExpect(jsonPath("$.data.page.totalElements").value(10))
-                .andExpect(jsonPath("$.data.page.totalPages").value(1))
+                .andExpect(jsonPath("$.data.page.totalElements").value(5))
                 .andExpect(jsonPath("$.data.page.hasNext").value(false));
     }
 
@@ -73,14 +74,15 @@ class MmVendorTest {
         mockMvc.perform(get("/api/scm-pp/mm/vendors")
                         .servletPath("/api")
                         .queryParam("status", "BAD")
-                        .queryParam("page", "0")
+                        .queryParam("page", "-1")
                         .queryParam("size", "500")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.status").value(422))
                 .andExpect(jsonPath("$.message").value("요청 파라미터 검증에 실패했습니다."))
-                .andExpect(jsonPath("$.errors").isArray());
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors[*].reason", hasItem("MIN_0")));
     }
 
     @Test
