@@ -1320,7 +1320,7 @@ public class MmController {
     @PostMapping("/vendors")
     @Operation(
             summary = "공급업체 등록",
-            description = "신규 공급업체를 등록합니다.",
+            description = "신규 공급업체를 등록하고 ERP 내부용 ID/코드를 발급하며 등록된 이메일로 임시 로그인 정보를 발송합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
@@ -1359,7 +1359,7 @@ public class MmController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\n  \"companyName\": \"대한철강\",\n  \"category\": \"원자재\",\n  \"contactPerson\": \"홍길동\",\n  \"contactPhone\": \"02-1234-5678\",\n  \"email\": \"contact@koreasteel.com\",\n  \"deliveryLeadTime\": 3,\n  \"address\": \"서울시 강남구 테헤란로 123\",\n  \"materialList\": [\"철강재\", \"스테인리스\", \"알루미늄\"]\n}"))
+                            examples = @ExampleObject(value = "{\n  \"companyName\": \"대한철강\",\n  \"category\": \"원자재\",\n  \"contactPerson\": \"홍길동\",\n  \"contactPhone\": \"02-1234-5678\",\n  \"email\": \"contact@koreasteel.com\",\n  \"deliveryLeadTime\": 3,\n  \"address\": \"서울시 강남구 테헤란로 123\",\n  \"materialList\": [\n    {\n      \"materialName\": \"철강재\",\n      \"unit\": \"kg\",\n      \"unitPrice\": 1500\n    },\n    {\n      \"materialName\": \"스테인리스\",\n      \"unit\": \"kg\",\n      \"unitPrice\": 2500\n    },\n    {\n      \"materialName\": \"알루미늄\",\n      \"unit\": \"kg\",\n      \"unitPrice\": 2200\n    }\n  ]\n}"))
             )
             @RequestBody MmVendorCreateRequestDto request
     ) {

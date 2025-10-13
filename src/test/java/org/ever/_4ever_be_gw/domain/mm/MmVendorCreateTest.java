@@ -57,7 +57,23 @@ class MmVendorCreateTest {
                 "  \"email\": \"contact@koreasteel.com\",\n" +
                 "  \"deliveryLeadTime\": 3,\n" +
                 "  \"address\": \"서울시 강남구 테헤란로 123\",\n" +
-                "  \"materialList\": [\"철강재\", \"스테인리스\", \"알루미늄\"]\n" +
+                "  \"materialList\": [\n" +
+                "    {\n" +
+                "      \"materialName\": \"철강재\",\n" +
+                "      \"unit\": \"kg\",\n" +
+                "      \"unitPrice\": 1500\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"materialName\": \"스테인리스\",\n" +
+                "      \"unit\": \"kg\",\n" +
+                "      \"unitPrice\": 2500\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"materialName\": \"알루미늄\",\n" +
+                "      \"unit\": \"kg\",\n" +
+                "      \"unitPrice\": 2200\n" +
+                "    }\n" +
+                "  ]\n" +
                 "}";
     }
 

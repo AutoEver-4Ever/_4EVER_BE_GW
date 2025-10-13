@@ -12,6 +12,12 @@ public class MmVendorCreateRequestDto {
     private String email;
     private Integer deliveryLeadTime;
     private String address;
-    private List<String> materialList;
-}
+    private List<MaterialItem> materialList;
 
+    @Getter
+    public static class MaterialItem {
+        private String materialName;
+        private String unit;
+        private Integer unitPrice;
+    }
+}
