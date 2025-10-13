@@ -63,6 +63,36 @@ class MmPurchaseTest {
     }
 
     @Test
+    @DisplayName("구매요청 목록 - 요청자명 검색")
+    void getPurchaseRequisitions_filterByRequesterName() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions").servletPath("/api")
+                        .queryParam("requesterName", "김민수")
+                        .queryParam("sort", "createdAt,desc")
+                        .queryParam("page", "0")
+                        .queryParam("size", "20")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.content").isArray());
+    }
+
+    @Test
+    @DisplayName("구매요청 목록 - 부서 필터링")
+    void getPurchaseRequisitions_filterByDepartment() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions").servletPath("/api")
+                        .queryParam("departmentId", "15")
+                        .queryParam("sort", "createdAt,asc")
+                        .queryParam("page", "0")
+                        .queryParam("size", "10")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.content").isArray());
+    }
+
+    @Test
     @DisplayName("검증 실패 시 422와 errors 배열")
     void getPurchaseRequisitions_validationErrors() throws Exception {
         mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions").servletPath("/api")

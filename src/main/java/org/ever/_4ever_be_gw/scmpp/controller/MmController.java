@@ -137,6 +137,10 @@ public class MmController {
     public ResponseEntity<ApiResponse<Object>> getPurchaseRequisitions(
             @Parameter(description = "상태 필터: PENDING, APPROVED")
             @RequestParam(name = "status", required = false) String status,
+            @Parameter(description = "요청자명 검색")
+            @RequestParam(name = "requesterName", required = false) String requesterName,
+            @Parameter(description = "요청 부서 ID 필터")
+            @RequestParam(name = "departmentId", required = false) Long departmentId,
             @Parameter(description = "생성일 시작(YYYY-MM-DD)")
             @RequestParam(name = "createdFrom", required = false) String createdFrom,
             @Parameter(description = "생성일 종료(YYYY-MM-DD)")
@@ -166,7 +170,7 @@ public class MmController {
             errors.add(Map.of("field", "size", "reason", "MAX_200"));
         }
         if (!errors.isEmpty()) {
-            throw new ValidationException(ErrorCode.BODY_VALIDATION_FAILED, errors);
+            throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
         // 기본값 처리
@@ -184,7 +188,7 @@ public class MmController {
         for (int i = 0; i < 10; i++) {
             final long id = 102345L + i;
             final long requesterId = 123L + (i % 5);
-            final String requesterName = switch (i % 5) {
+            final String requesterNameVal = switch (i % 5) {
                 case 0 -> "홍길동";
                 case 1 -> "김민수";
                 case 2 -> "이영희";
@@ -201,9 +205,11 @@ public class MmController {
             row.put("id", id);
             row.put("prNumber", String.format("%09d", 100002345 + i));
             row.put("requesterId", requesterId);
-            row.put("requesterName", requesterName);
-            row.put("departmentId", 12L);
-            row.put("departmentName", "영업1팀");
+            row.put("requesterName", requesterNameVal);
+            long deptId = (i % 2 == 0) ? 12L : 15L;
+            String deptName = (deptId == 12L) ? "영업1팀" : "경영지원팀";
+            row.put("departmentId", deptId);
+            row.put("departmentName", deptName);
             row.put("origin", origin);
             row.put("originRefId", originRef);
             row.put("createdAt", createdAt);
@@ -211,6 +217,21 @@ public class MmController {
             row.put("itemCount", itemCount);
             row.put("hasPreferredVendor", hasPreferred);
             content.add(row);
+        }
+
+        // 필터 적용 (requesterName, departmentId)
+        java.util.List<Map<String, Object>> filtered = content;
+        if (requesterName != null && !requesterName.isBlank()) {
+            final String kw = requesterName.toLowerCase();
+            filtered = filtered.stream()
+                    .filter(m -> String.valueOf(m.get("requesterName")).toLowerCase().contains(kw))
+                    .toList();
+        }
+        if (departmentId != null) {
+            final long did = departmentId;
+            filtered = filtered.stream()
+                    .filter(m -> java.util.Objects.equals(((Number)m.get("departmentId")).longValue(), did))
+                    .toList();
         }
 
         Map<String, Object> pageMeta = new LinkedHashMap<>();
@@ -221,7 +242,7 @@ public class MmController {
         pageMeta.put("hasNext", (p + 1) < 13);
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("content", content);
+        data.put("content", filtered);
         data.put("page", pageMeta);
 
         return ResponseEntity.ok(ApiResponse.<Object>success(
@@ -299,7 +320,7 @@ public class MmController {
             }
         }
         if (!errors.isEmpty()) {
-            throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
+            throw new ValidationException(ErrorCode.BODY_VALIDATION_FAILED, errors);
         }
 
         // 성공 응답
