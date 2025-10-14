@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -192,12 +193,12 @@ import java.util.stream.Collectors;
             throw new BusinessException(ErrorCode.QUOTATION_LIST_PROCESSING_ERROR);
         }
 
-        // 성공 목업 57건 생성
+        // 성공 목업 50건 생성
         List<Map<String, Object>> items = new ArrayList<>();
         String[] customers = {"삼성전자", "LG전자", "현대자동차", "카카오", "네이버", "SK하이닉스", "포스코", "두산중공업", "한화시스템", "CJ대한통운"};
         String[] owners = {"김철수", "이영희", "박민수", "최지훈", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유"};
         String[] codes = {"PENDING", "REVIEW", "APPROVED", "REJECTED"};
-        for (int i = 0; i < 57; i++) {
+        for (int i = 0; i < 50; i++) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("quotationId", 12001 + i);
             row.put("quotationCode", String.format("Q2024%03d", i + 1));
@@ -323,8 +324,8 @@ import java.util.stream.Collectors;
         if (Long.valueOf(500001L).equals(quotationId)) {
             throw new RuntimeException("boom");
         }
-        // 10건 유효 범위: 12001 ~ 12010
-        if (quotationId == null || quotationId < 12001L || quotationId > 12010L) {
+        // 유효 범위: 12001 ~ 12050
+        if (quotationId == null || quotationId < 12001L || quotationId > 12050L) {
             throw new BusinessException(ErrorCode.QUOTATION_NOT_FOUND, "quotationId=" + quotationId);
         }
 
@@ -655,7 +656,7 @@ import java.util.stream.Collectors;
             }
     )
     public ResponseEntity<ApiResponse<Object>> getCustomers(
-            @Parameter(description = "상태: ACTIVE, DEACTIVE")
+            @Parameter(description = "상태: ALL, ACTIVE, DEACTIVE")
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "검색 키워드")
             @RequestParam(name = "keyword", required = false) String keyword,
@@ -676,9 +677,9 @@ import java.util.stream.Collectors;
         // 422 검증
         List<Map<String, String>> errors = new ArrayList<>();
         if (status != null) {
-            var allowed = java.util.Set.of("ACTIVE", "DEACTIVE");
+            var allowed = java.util.Set.of("ALL", "ACTIVE", "DEACTIVE");
             if (!allowed.contains(status)) {
-                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ACTIVE, DEACTIVE"));
+                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ALL, ACTIVE, DEACTIVE"));
             }
         }
         if (page != null && page < 0) {
@@ -700,7 +701,7 @@ import java.util.stream.Collectors;
         String[] persons = {"김철수", "박영희", "이민호", "최지우", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유", "신동엽", "강호동"};
         String[] phones = {"02-1234-5678", "02-2345-6789", "031-111-2222", "02-9876-5432"};
         String[] emails = {"contact@corp.com", "sales@corp.com", "info@corp.com"};
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 50; i++) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("customerId", i + 1);
             row.put("customerCode", String.format("C-%03d", i + 1));
@@ -718,7 +719,7 @@ import java.util.stream.Collectors;
 
         // 필터 적용
         List<Map<String, Object>> filtered = all;
-        if (status != null) {
+        if (status != null && !"ALL".equals(status)) {
             boolean active = status.equals("ACTIVE");
             filtered = filtered.stream().filter(m -> (active ? "활성" : "비활성").equals(m.get("status"))).toList();
         }
@@ -744,7 +745,7 @@ import java.util.stream.Collectors;
         return ResponseEntity.ok(ApiResponse.success(data, "고객사 목록을 조회했습니다.", HttpStatus.OK));
     }
 
-    @GetMapping("/customers/{customerId}")
+    @GetMapping("/customers/{cusId}")
     @Operation(
             summary = "고객사 상세 조회",
             description = "고객사 상세 정보를 조회합니다.",
@@ -753,7 +754,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"customerId\": 1,\n    \"customerCode\": \"C-001\",\n    \"companyName\": \"삼성전자\",\n    \"businessNumber\": \"123-45-67890\",\n    \"ceo\": \"이재용\",\n    \"establishmentDate\": \"1969-01-13\",\n    \"industry\": \"전자/반도체\",\n    \"creditRating\": \"A등급\",\n    \"employeeCount\": 267937,\n    \"website\": \"www.samsung.com\",\n    \"status\": \"활성\",\n    \"contact\": {\n      \"phone\": \"02-1234-5678\",\n      \"fax\": \"02-1234-5679\",\n      \"email\": \"kim@samsung.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"manager\": {\n      \"name\": \"김철수\",\n      \"position\": \"구매팀장\",\n      \"department\": \"구매부\",\n      \"mobile\": \"010-1234-5678\",\n      \"directPhone\": \"02-1234-5680\"\n    },\n    \"transaction\": {\n      \"totalOrders\": 45,\n      \"totalAmount\": 1250000000,\n      \"lastOrderDate\": \"2024-01-15\",\n      \"paymentTerm\": \"30일 후 결제\",\n      \"creditLimit\": 5000000000,\n      \"taxType\": \"일반과세\"\n    },\n    \"note\": \"주요 고객사, 정기 거래처\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"customerId\": 1,\n    \"customerCode\": \"C-001\",\n    \"companyName\": \"삼성전자\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"statusLabel\": \"활성\",\n    \"contact\": {\n      \"phone\": \"02-1234-5678\",\n      \"email\": \"contact@samsung.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"manager\": {\n      \"name\": \"김철수\",\n      \"mobile\": \"010-1234-5678\",\n      \"email\": \"kim@samsung.com\"\n    },\n    \"transaction\": {\n      \"totalOrders\": 45,\n      \"totalAmount\": 1250000000\n    },\n    \"note\": \"주요 고객사, 정기 거래처\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -783,97 +784,75 @@ import java.util.stream.Collectors;
     )
     public ResponseEntity<ApiResponse<Object>> getCustomerDetail(
             @Parameter(description = "고객사 ID")
-            @org.springframework.web.bind.annotation.PathVariable("customerId") Long customerId
+            @org.springframework.web.bind.annotation.PathVariable("cusId") Long cusId
     ) {
-        // 403 모킹
-        if (Long.valueOf(403001L).equals(customerId)) {
+
+        // 403 모킹 (특정 ID)
+        if (Long.valueOf(403001L).equals(cusId)) {
             throw new BusinessException(ErrorCode.CUSTOMER_FORBIDDEN);
         }
         // 500 모킹
-        if (Long.valueOf(500001L).equals(customerId)) {
+        if (Long.valueOf(500001L).equals(cusId)) {
             throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
         }
-        // 유효 범위: 1~10
-        if (customerId == null || customerId < 1 || customerId > 10) {
-            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + customerId);
+        // 유효 범위: 1~50
+        if (cusId == null || cusId < 1 || cusId > 50) {
+            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + cusId);
         }
 
         // 고객사 상세 목업 (id=1은 예시 값 사용)
         Map<String, Object> data = new LinkedHashMap<>();
-        if (customerId == 1L) {
+        if (cusId == 1L) {
             data.put("customerId", 1);
             data.put("customerCode", "C-001");
             data.put("companyName", "삼성전자");
             data.put("businessNumber", "123-45-67890");
-            data.put("ceo", "이재용");
-            data.put("establishmentDate", "1969-01-13");
-            data.put("industry", "전자/반도체");
-            data.put("creditRating", "A등급");
-            data.put("employeeCount", 267_937);
-            data.put("website", "www.samsung.com");
-            data.put("status", "활성");
+            data.put("statusCode", "ACTIVE");
+            data.put("statusLabel", "활성");
             Map<String, Object> contact = new LinkedHashMap<>();
             contact.put("phone", "02-1234-5678");
-            contact.put("fax", "02-1234-5679");
-            contact.put("email", "kim@samsung.com");
+            contact.put("email", "contact@samsung.com");
             contact.put("address", "서울시 강남구 테헤란로 123");
             data.put("contact", contact);
 
             Map<String, Object> manager = new LinkedHashMap<>();
             manager.put("name", "김철수");
-            manager.put("position", "구매팀장");
-            manager.put("department", "구매부");
             manager.put("mobile", "010-1234-5678");
-            manager.put("directPhone", "02-1234-5680");
+            manager.put("email", "kim@samsung.com");
             data.put("manager", manager);
 
             Map<String, Object> transaction = new LinkedHashMap<>();
             transaction.put("totalOrders", 45);
             transaction.put("totalAmount", 1_250_000_000L);
-            transaction.put("lastOrderDate", "2024-01-15");
-            transaction.put("paymentTerm", "30일 후 결제");
-            transaction.put("creditLimit", 5_000_000_000L);
-            transaction.put("taxType", "일반과세");
             data.put("transaction", transaction);
 
             data.put("note", "주요 고객사, 정기 거래처");
         } else {
             // 기타 id는 패턴화된 더미 데이터
-            int idx = customerId.intValue();
-            data.put("customerId", customerId);
+            int idx = cusId.intValue();
+            data.put("customerId", cusId);
             data.put("customerCode", String.format("C-%03d", idx));
             String[] companies = {"LG화학", "현대자동차", "SK하이닉스", "네이버", "카카오"};
             data.put("companyName", companies[(idx - 2) % companies.length]);
             data.put("businessNumber", String.format("%03d-%02d-%05d", 100 + idx, 10 + (idx % 50), 10000 + idx));
-            data.put("ceo", "홍길동");
-            data.put("establishmentDate", "2000-01-01");
-            data.put("industry", "제조/IT");
-            data.put("creditRating", "B등급");
-            data.put("employeeCount", 10_000 + idx);
-            data.put("website", "www.example.com");
-            data.put("status", (idx % 2 == 0) ? "활성" : "비활성");
+            String code = (idx % 2 == 0) ? "ACTIVE" : "INACTIVE";
+            data.put("statusCode", code);
+            data.put("statusLabel", code.equals("ACTIVE") ? "활성" : "비활성");
             Map<String, Object> contact = new LinkedHashMap<>();
             contact.put("phone", "02-0000-0000");
-            contact.put("fax", "02-0000-0001");
             contact.put("email", "info@example.com");
             contact.put("address", "서울시 중구 세종대로 1");
             data.put("contact", contact);
 
             Map<String, Object> manager = new LinkedHashMap<>();
             manager.put("name", "관리자");
-            manager.put("position", "담당");
-            manager.put("department", "영업부");
             manager.put("mobile", "010-0000-0000");
-            manager.put("directPhone", "02-0000-0002");
+            manager.put("email", "manager@example.com");
             data.put("manager", manager);
 
             Map<String, Object> transaction = new LinkedHashMap<>();
             transaction.put("totalOrders", 10 + (idx % 20));
             transaction.put("totalAmount", 100_000_000L + (idx * 1_000_000L));
-            transaction.put("lastOrderDate", "2024-01-10");
-            transaction.put("paymentTerm", "30일 후 결제");
-            transaction.put("creditLimit", 1_000_000_000L);
-            transaction.put("taxType", "일반과세");
             data.put("transaction", transaction);
 
             data.put("note", "비고 없음");
@@ -1058,6 +1037,322 @@ import java.util.stream.Collectors;
         }
 
         return ResponseEntity.ok(ApiResponse.success(null, "고객사 정보가 삭제되었습니다.", HttpStatus.OK));
+    }
+
+    // -------- Sales Orders (R) --------
+    @GetMapping("/orders")
+    @Operation(
+            summary = "주문서 목록 조회",
+            description = "견적서 승인에 따라 자동 생성된 주문서 목록을 조회합니다. 기간/상태/키워드(주문번호, 고객사명, 고객명) 필터를 지원합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1001,\n        \"soNumber\": \"SO-2024-001\",\n        \"customerId\": 301,\n        \"customerName\": \"(주)대한제조\",\n        \"contactName\": \"김영수\",\n        \"orderDate\": \"2024-01-15\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PRODUCTION\",\n        \"statusLabel\": \"생산중\",\n        \"actions\": [\"view\"]\n      },\n      {\n        \"id\": 1002,\n        \"soNumber\": \"SO-2024-002\",\n        \"customerId\": 302,\n        \"customerName\": \"(주)테크솔루션\",\n        \"contactName\": \"박민수\",\n        \"orderDate\": \"2024-01-17\",\n        \"deliveryDate\": \"2024-01-30\",\n        \"totalAmount\": 8900000,\n        \"statusCode\": \"DELIVERING\",\n        \"statusLabel\": \"배송중\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 2, \"totalPages\": 1, \"hasNext\": false }\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"인증이 필요합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"주문 목록 조회 권한이 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [ { \"field\": \"startDate\", \"reason\": \"INVALID_DATE_FORMAT(YYYY-MM-DD)\" } ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"주문 목록 조회 중 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> getSalesOrders(
+            @Parameter(description = "검색 시작일(YYYY-MM-DD)")
+            @RequestParam(name = "startDate", required = false) String startDate,
+            @Parameter(description = "검색 종료일(YYYY-MM-DD)")
+            @RequestParam(name = "endDate", required = false) String endDate,
+            @Parameter(description = "주문번호/고객사명/고객명 검색 키워드")
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @Parameter(description = "상태: ALL, MATERIAL_PREPARATION, PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED")
+            @RequestParam(name = "status", required = false) String status,
+            @Parameter(description = "페이지 번호(0-base)")
+            @RequestParam(name = "page", required = false) Integer page,
+            @Parameter(description = "페이지 크기(최대 200)")
+            @RequestParam(name = "size", required = false) Integer size,
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        // 인증 체크
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+        String token = authorization.trim().toUpperCase(Locale.ROOT);
+        if (token.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+        // 권한 체크: SD_VIEWER, SALES_MANAGER, ADMIN
+        if (!(token.contains("SD_VIEWER") || token.contains("SALES_MANAGER") || token.contains("ADMIN"))) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
+        }
+
+        // 422 검증
+        List<Map<String, String>> errors = new ArrayList<>();
+        java.time.LocalDate from = null;
+        java.time.LocalDate to = null;
+        if (startDate != null) {
+            try { from = java.time.LocalDate.parse(startDate); } catch (Exception e) {
+                errors.add(Map.of("field", "startDate", "reason", "INVALID_DATE_FORMAT(YYYY-MM-DD)"));
+            }
+        }
+        if (endDate != null) {
+            try { to = java.time.LocalDate.parse(endDate); } catch (Exception e) {
+                errors.add(Map.of("field", "endDate", "reason", "INVALID_DATE_FORMAT(YYYY-MM-DD)"));
+            }
+        }
+        if (from != null && to != null && from.isAfter(to)) {
+            errors.add(Map.of("field", "startDate/endDate", "reason", "FROM_AFTER_TO"));
+        }
+        if (status != null) {
+            var allowed = java.util.Set.of("ALL", "MATERIAL_PREPARATION", "PRODUCTION", "READY_FOR_SHIPMENT", "DELIVERING", "DELIVERED");
+            if (!allowed.contains(status)) {
+                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ALL, MATERIAL_PREPARATION, PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED"));
+            }
+        }
+        if (page != null && page < 0) {
+            errors.add(Map.of("field", "page", "reason", "MIN_0"));
+        }
+        if (size != null && size > 200) {
+            errors.add(Map.of("field", "size", "reason", "MAX_200"));
+        }
+        if (!errors.isEmpty()) {
+            throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
+        }
+
+        int pageIndex = (page == null || page < 0) ? 0 : page;
+        int pageSize = (size == null || size < 1) ? 10 : size;
+
+        // 목업 데이터 생성(50건) 및 상세 ID 연결: id=soId(1201~1250)
+        List<Map<String, Object>> all = new ArrayList<>();
+        String[] customers = {"(주)테크솔루션","(주)대한제조","현대기공","포스코엠텍","세아베스틸","네오머티리얼","스마트팩","그린테크","동방기계","에이치파워"};
+        String[] contacts = {"김영수","박민수","이주연","최은정","홍길동","정우성","김하늘","박서준","한소라","장나라"};
+        String[] codes = {"MATERIAL_PREPARATION","PRODUCTION","READY_FOR_SHIPMENT","DELIVERING","DELIVERED"};
+        java.time.LocalDate baseOrder = java.time.LocalDate.of(2024, 1, 15);
+        for (int i = 0; i < 50; i++) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            int soSeq = 1201 + i;
+            row.put("id", soSeq);
+            row.put("soNumber", String.format("SO-2024-%03d", i + 1));
+            row.put("customerId", 301 + (i % 50));
+            row.put("customerName", customers[i % customers.length]);
+            row.put("contactName", contacts[i % contacts.length]);
+            java.time.LocalDate od = baseOrder.plusDays(i % 20);
+            java.time.LocalDate dd = od.plusDays(10 + (i % 5));
+            row.put("orderDate", od.toString());
+            row.put("deliveryDate", dd.toString());
+            row.put("totalAmount", 15_000_000L - (i * 120_000L));
+            String statusCode = codes[i % codes.length];
+            row.put("statusCode", statusCode);
+            String statusLabel = switch (statusCode) {
+                case "MATERIAL_PREPARATION" -> "자재 준비중";
+                case "PRODUCTION" -> "생산중";
+                case "READY_FOR_SHIPMENT" -> "출하 준비 완료";
+                case "DELIVERING" -> "배송중";
+                case "DELIVERED" -> "배송완료";
+                default -> "";
+            };
+            row.put("statusLabel", statusLabel);
+            row.put("actions", List.of("view"));
+            all.add(row);
+        }
+
+        // 필터 적용
+        List<Map<String, Object>> filtered = all;
+        if (status != null && !status.equalsIgnoreCase("ALL")) {
+            final String st = status.toUpperCase(Locale.ROOT);
+            filtered = filtered.stream().filter(m -> st.equals(String.valueOf(m.get("statusCode")))).toList();
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            final String kw = keyword.toLowerCase(Locale.ROOT);
+            filtered = filtered.stream().filter(m -> {
+                String so = String.valueOf(m.get("soNumber")).toLowerCase(Locale.ROOT);
+                String cn = String.valueOf(m.get("customerName")).toLowerCase(Locale.ROOT);
+                String pn = String.valueOf(m.get("contactName")).toLowerCase(Locale.ROOT);
+                return so.contains(kw) || cn.contains(kw) || pn.contains(kw);
+            }).toList();
+        }
+        if (from != null) {
+            final java.time.LocalDate min = from;
+            filtered = filtered.stream()
+                    .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))).isBefore(min))
+                    .toList();
+        }
+        if (to != null) {
+            final java.time.LocalDate max = to;
+            filtered = filtered.stream()
+                    .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))).isAfter(max))
+                    .toList();
+        }
+
+        // 정렬: orderDate desc, id asc 보조
+        filtered = filtered.stream()
+                .sorted(java.util.Comparator
+                        .comparing((Map<String, Object> m) -> java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))))
+                        .reversed()
+                        .thenComparing(m -> ((Number) m.get("id")).longValue()))
+                .toList();
+
+        int total = filtered.size();
+        int fromIdx = Math.min(pageIndex * pageSize, total);
+        int toIdx2 = Math.min(fromIdx + pageSize, total);
+        List<Map<String, Object>> pageContent = filtered.subList(fromIdx, toIdx2);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("content", pageContent);
+        data.put("page", PageResponseUtils.buildPage(pageIndex, pageSize, total));
+
+        return ResponseEntity.ok(ApiResponse.success(data, "주문 목록 조회에 성공했습니다.", HttpStatus.OK));
+    }
+
+    // -------- Sales Order Detail (R) --------
+    @GetMapping("/orders/{soId}")
+    @Operation(
+            summary = "주문서 상세 조회",
+            description = "주문서 상세 정보를 조회합니다. 주문 정보, 고객 정보, 배송 정보, 품목, 총액, 메모를 포함합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문서 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"order\": {\n      \"soId\": 1201,\n      \"soNumber\": \"SO-2024-001\",\n      \"orderDate\": \"2024-01-15\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"statusCode\": \"IN_PRODUCTION\",\n      \"statusLabel\": \"생산중\",\n      \"paymentTerms\": \"월말 정산\",\n      \"totalAmount\": 15500000,\n      \"createdAt\": \"2024-01-15T03:00:00Z\",\n      \"updatedAt\": \"2024-01-15T03:05:00Z\"\n    },\n    \"customer\": {\n      \"customerId\": 301,\n      \"customerName\": \"(주)테크솔루션\",\n      \"contactName\": \"김영수\",\n      \"contactPhone\": \"02-1234-5678\",\n      \"contactEmail\": \"techsolution@company.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"shipping\": {\n      \"deliveryAddress\": \"경기도 성남시 분당구 판교역로 166\"\n    },\n    \"items\": [\n      { \"productName\": \"산업용 모터 5HP\", \"spec\": \"\", \"quantity\": 5, \"unit\": \"개\", \"unitPrice\": 850000, \"amount\": 4250000 },\n      { \"productName\": \"제어판넬\", \"spec\": \"\", \"quantity\": 2, \"unit\": \"개\", \"unitPrice\": 1200000, \"amount\": 2400000 }\n    ],\n    \"memo\": \"긴급 주문 - 우선 처리 요청\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"인증이 필요합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"주문서 상세 조회 권한이 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "리소스 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"해당 주문서를 찾을 수 없습니다: soId=1201\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"주문서 상세 조회 중 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> getSalesOrderDetail(
+            @Parameter(description = "주문서 ID")
+            @org.springframework.web.bind.annotation.PathVariable("soId") Long soId,
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        // 인증 체크
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+        String token = authorization.trim().toUpperCase(Locale.ROOT);
+        if (token.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+        // 권한 체크: SD_VIEWER, SALES_MANAGER, ADMIN
+        if (!(token.contains("SD_VIEWER") || token.contains("SALES_MANAGER") || token.contains("ADMIN"))) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
+        }
+
+        // 유효 범위: 1201~1250 (목업)
+        if (soId == null || soId < 1201L || soId > 1250L) {
+            throw new BusinessException(ErrorCode.ORDER_NOT_FOUND, "soId=" + soId);
+        }
+
+        int idx = (int)(soId - 1201);
+        String[] customers = {"(주)테크솔루션","(주)대한제조","현대기공","포스코엠텍","세아베스틸","네오머티리얼","스마트팩","그린테크","동방기계","에이치파워"};
+        String[] contacts = {"김영수","박민수","이주연","최은정","홍길동","정우성","김하늘","박서준","한소라","장나라"};
+
+        // 상태코드(상세): IN_PRODUCTION 포함
+        String[] codes = {"IN_PRODUCTION","DELIVERING","MATERIAL_PREPARATION","READY_FOR_SHIPMENT","DELIVERED"};
+
+        Map<String, Object> order = new LinkedHashMap<>();
+        order.put("soId", soId);
+        order.put("soNumber", String.format("SO-2024-%03d", idx + 1));
+        java.time.LocalDate od = java.time.LocalDate.of(2024,1,15).plusDays(idx % 20);
+        java.time.LocalDate dd = od.plusDays(10 + (idx % 5));
+        order.put("orderDate", od.toString());
+        order.put("deliveryDate", dd.toString());
+        String code = codes[idx % codes.length];
+        order.put("statusCode", code);
+        String label = switch (code) {
+            case "MATERIAL_PREPARATION" -> "자재 준비중";
+            case "IN_PRODUCTION" -> "생산중";
+            case "READY_FOR_SHIPMENT" -> "출하 준비 완료";
+            case "DELIVERING" -> "배송중";
+            case "DELIVERED" -> "배송완료";
+            default -> "";
+        };
+        order.put("statusLabel", label);
+        order.put("paymentTerms", "월말 정산");
+        order.put("totalAmount", 15_500_000L - (idx * 350_000L));
+        java.time.Instant createdAt = od.atTime(3,0).atZone(java.time.ZoneOffset.UTC).toInstant();
+        order.put("createdAt", createdAt);
+        order.put("updatedAt", createdAt.plusSeconds(300));
+
+        Map<String, Object> customer = new LinkedHashMap<>();
+        customer.put("customerId", 301 + idx);
+        customer.put("customerName", customers[idx]);
+        customer.put("contactName", contacts[idx]);
+        customer.put("contactPhone", "02-1234-5678");
+        customer.put("contactEmail", "contact@example.com");
+        customer.put("address", "서울시 강남구 테헤란로 123");
+
+        Map<String, Object> shipping = new LinkedHashMap<>();
+        shipping.put("deliveryAddress", "경기도 성남시 분당구 판교역로 166");
+
+        java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
+        Map<String, Object> it1 = new LinkedHashMap<>();
+        it1.put("productName", "산업용 모터 5HP");
+        it1.put("spec", "");
+        it1.put("quantity", 5);
+        it1.put("unit", "개");
+        it1.put("unitPrice", 850_000);
+        it1.put("amount", 4_250_000);
+        items.add(it1);
+
+        Map<String, Object> it2 = new LinkedHashMap<>();
+        it2.put("productName", "제어판넬");
+        it2.put("spec", "");
+        it2.put("quantity", 2);
+        it2.put("unit", "개");
+        it2.put("unitPrice", 1_200_000);
+        it2.put("amount", 2_400_000);
+        items.add(it2);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("order", order);
+        data.put("customer", customer);
+        data.put("shipping", shipping);
+        data.put("items", items);
+        data.put("memo", "긴급 주문 - 우선 처리 요청");
+
+        return ResponseEntity.ok(ApiResponse.success(data, "주문서 상세 정보를 조회했습니다.", HttpStatus.OK));
     }
 
     // -------- Analytics (R) - week params (kept for tests) --------

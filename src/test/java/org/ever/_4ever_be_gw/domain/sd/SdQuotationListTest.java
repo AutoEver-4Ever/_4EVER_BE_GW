@@ -24,7 +24,7 @@ class SdQuotationListTest {
     private MockMvc mockMvc;
 
     @Test
-    @DisplayName("견적 목록 기본 조회 성공(10건 목업, 페이지 메타 포함)")
+    @DisplayName("견적 목록 기본 조회 성공(페이지 메타 포함)")
     void getQuotations_success_default() throws Exception {
         mockMvc.perform(get("/api/business/sd/quotations")
                         .servletPath("/api")
@@ -41,8 +41,8 @@ class SdQuotationListTest {
                 .andExpect(jsonPath("$.data.items[0].customerName").exists())
                 .andExpect(jsonPath("$.data.page.number").value(0))
                 .andExpect(jsonPath("$.data.page.size").value(10))
-                .andExpect(jsonPath("$.data.page.totalElements").value(57))
-                .andExpect(jsonPath("$.data.page.totalPages").value(6))
+                .andExpect(jsonPath("$.data.page.totalElements").value(50))
+                .andExpect(jsonPath("$.data.page.totalPages").value(5))
                 .andExpect(jsonPath("$.data.page.hasNext").value(true));
     }
 

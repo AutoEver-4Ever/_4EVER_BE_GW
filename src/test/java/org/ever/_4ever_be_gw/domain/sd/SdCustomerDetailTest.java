@@ -26,7 +26,7 @@ class SdCustomerDetailTest {
     @Test
     @DisplayName("고객사 상세 조회 성공(1~10 중 1)")
     void getCustomerDetail_success() throws Exception {
-        mockMvc.perform(get("/api/business/sd/customers/{customerId}", 1L)
+        mockMvc.perform(get("/api/business/sd/customers/{cusId}", 1L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -42,7 +42,7 @@ class SdCustomerDetailTest {
     @Test
     @DisplayName("고객사 상세 권한 없음 403(모킹)")
     void getCustomerDetail_forbidden() throws Exception {
-        mockMvc.perform(get("/api/business/sd/customers/{customerId}", 403001L)
+        mockMvc.perform(get("/api/business/sd/customers/{cusId}", 403001L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
@@ -54,7 +54,7 @@ class SdCustomerDetailTest {
     @Test
     @DisplayName("고객사 상세 미존재 404")
     void getCustomerDetail_notFound() throws Exception {
-        mockMvc.perform(get("/api/business/sd/customers/{customerId}", 999L)
+        mockMvc.perform(get("/api/business/sd/customers/{cusId}", 999L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
@@ -66,7 +66,7 @@ class SdCustomerDetailTest {
     @Test
     @DisplayName("고객사 상세 서버 오류 500(모킹)")
     void getCustomerDetail_serverError() throws Exception {
-        mockMvc.perform(get("/api/business/sd/customers/{customerId}", 500001L)
+        mockMvc.perform(get("/api/business/sd/customers/{cusId}", 500001L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
@@ -75,4 +75,3 @@ class SdCustomerDetailTest {
                 .andExpect(jsonPath("$.message").value("요청 처리 중 알 수 없는 오류가 발생했습니다."));
     }
 }
-
