@@ -909,4 +909,98 @@ public class ProductionController {
 
         return ResponseEntity.ok(ApiResponse.success(response, "작업 지시 상세를 조회했습니다.", HttpStatus.OK));
     }
+
+
+
+
+
+
+    @GetMapping("/mes/work-orders/summary")
+    @Operation(
+            summary = "생산관리 페이지 카드뷰 데이터 조회",
+            description = "생산관리 페이지의 요약 데이터를 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{ \"status\": 200, \"success\": true, \"message\": \"요약 지표를 조회했습니다.\", \"data\": { \"referenceDate\": \"2025-10-08\", \"generatedAt\": \"2025-10-08T23:30:00+09:00\", \"compare\": { \"inProgress\": { \"prevDay\": { \"delta\": 1, \"pct\": 9.1 }, \"prevMonth\": { \"delta\": 2, \"pct\": 20.0 }, \"prevYear\": { \"delta\": -3, \"pct\": -20.0 } }, \"startedThisMonth\": { \"prevDay\": { \"delta\": 12, \"pct\": 8.3 }, \"prevMonth\": { \"delta\": 23, \"pct\": 17.3 }, \"prevYear\": { \"delta\": 9, \"pct\": 6.1 } }, \"completedThisMonth\": { \"prevDay\": { \"delta\": 5, \"pct\": 6.0 }, \"prevMonth\": { \"delta\": 12, \"pct\": 15.6 }, \"prevYear\": { \"delta\": 4, \"pct\": 4.7 } } } } }")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<MesWorkOrderSummaryDto>> getMesWorkOrderSummary() {
+        MesWorkOrderSummaryDto.CompareValueDto prevDayInProgress = MesWorkOrderSummaryDto.CompareValueDto.builder()
+                .delta(1)
+                .pct(9.1)
+                .build();
+        MesWorkOrderSummaryDto.CompareValueDto prevMonthInProgress = MesWorkOrderSummaryDto.CompareValueDto.builder()
+                .delta(2)
+                .pct(20.0)
+                .build();
+        MesWorkOrderSummaryDto.CompareValueDto prevYearInProgress = MesWorkOrderSummaryDto.CompareValueDto.builder()
+                .delta(-3)
+                .pct(-20.0)
+                .build();
+
+        MesWorkOrderSummaryDto.CompareItemDto inProgress = MesWorkOrderSummaryDto.CompareItemDto.builder()
+                .prevDay(prevDayInProgress)
+                .prevMonth(prevMonthInProgress)
+                .prevYear(prevYearInProgress)
+                .build();
+
+        MesWorkOrderSummaryDto.CompareValueDto prevDayStarted = MesWorkOrderSummaryDto.CompareValueDto.builder()
+                .delta(12)
+                .pct(8.3)
+                .build();
+        MesWorkOrderSummaryDto.CompareValueDto prevMonthStarted = MesWorkOrderSummaryDto.CompareValueDto.builder()
+                .delta(23)
+                .pct(17.3)
+                .build();
+        MesWorkOrderSummaryDto.CompareValueDto prevYearStarted = MesWorkOrderSummaryDto.CompareValueDto.builder()
+                .delta(9)
+                .pct(6.1)
+                .build();
+
+        MesWorkOrderSummaryDto.CompareItemDto startedThisMonth = MesWorkOrderSummaryDto.CompareItemDto.builder()
+                .prevDay(prevDayStarted)
+                .prevMonth(prevMonthStarted)
+                .prevYear(prevYearStarted)
+                .build();
+
+        MesWorkOrderSummaryDto.CompareValueDto prevDayCompleted = MesWorkOrderSummaryDto.CompareValueDto.builder()
+                .delta(5)
+                .pct(6.0)
+                .build();
+        MesWorkOrderSummaryDto.CompareValueDto prevMonthCompleted = MesWorkOrderSummaryDto.CompareValueDto.builder()
+                .delta(12)
+                .pct(15.6)
+                .build();
+        MesWorkOrderSummaryDto.CompareValueDto prevYearCompleted = MesWorkOrderSummaryDto.CompareValueDto.builder()
+                .delta(4)
+                .pct(4.7)
+                .build();
+
+        MesWorkOrderSummaryDto.CompareItemDto completedThisMonth = MesWorkOrderSummaryDto.CompareItemDto.builder()
+                .prevDay(prevDayCompleted)
+                .prevMonth(prevMonthCompleted)
+                .prevYear(prevYearCompleted)
+                .build();
+
+        MesWorkOrderSummaryDto.CompareSummaryDto compareSummary = MesWorkOrderSummaryDto.CompareSummaryDto.builder()
+                .inProgress(inProgress)
+                .startedThisMonth(startedThisMonth)
+                .completedThisMonth(completedThisMonth)
+                .build();
+
+        MesWorkOrderSummaryDto response = MesWorkOrderSummaryDto.builder()
+                .referenceDate("2025-10-08")
+                .generatedAt("2025-10-08T23:30:00+09:00")
+                .compare(compareSummary)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(response, "요약 지표를 조회했습니다.", HttpStatus.OK));
+    }
+
 }
