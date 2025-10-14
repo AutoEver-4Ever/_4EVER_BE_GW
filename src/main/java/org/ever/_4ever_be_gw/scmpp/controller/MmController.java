@@ -121,7 +121,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서 목록입니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 102345,\n        \"prNumber\": \"100002345\",\n        \"requesterId\": 123,\n        \"requesterName\": \"홍길동\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MRP\",\n        \"originRefId\": \"MRP-2025-10-01-00123\",\n        \"createdAt\": \"2025-10-05T12:30:45Z\",\n        \"createdBy\": 123,\n        \"itemCount\": 2,\n        \"hasPreferredVendor\": true\n      },\n      {\n        \"id\": 102346,\n        \"prNumber\": \"100002346\",\n        \"requesterId\": 124,\n        \"requesterName\": \"김민수\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MANUAL\",\n        \"originRefId\": null,\n        \"createdAt\": \"2025-10-05T12:35:02Z\",\n        \"createdBy\": 124,\n        \"itemCount\": 1,\n        \"hasPreferredVendor\": false\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 257,\n      \"totalPages\": 13,\n      \"hasNext\": true\n    }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서 목록입니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1,\n        \"prNumber\": \"100000001\",\n        \"requesterId\": 123,\n        \"requesterName\": \"홍길동\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MRP\",\n        \"originRefId\": \"MRP-2025-10-01-00123\",\n        \"createdAt\": \"2025-10-05T12:30:45Z\",\n        \"createdBy\": 123,\n        \"itemCount\": 2,\n        \"hasPreferredVendor\": true\n      },\n      {\n        \"id\": 2,\n        \"prNumber\": \"100000002\",\n        \"requesterId\": 124,\n        \"requesterName\": \"김민수\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MANUAL\",\n        \"originRefId\": null,\n        \"createdAt\": \"2025-10-05T12:35:02Z\",\n        \"createdBy\": 124,\n        \"itemCount\": 1,\n        \"hasPreferredVendor\": false\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 50,\n      \"totalPages\": 3,\n      \"hasNext\": true\n    }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "403",
@@ -192,10 +192,10 @@ public class MmController {
             throw new BusinessException(ErrorCode.FORBIDDEN_RANGE);
         }
 
-        // 성공 응답 (목업) - 10개
+        // 성공 응답 (목업) - 50개
         java.util.List<Map<String, Object>> content = new java.util.ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            final long id = 102345L + i;
+        for (int i = 0; i < 50; i++) {
+            final long id = 1L + i; // 상세와 정렬을 맞추기 위해 1~50 사용
             final long requesterId = 123L + (i % 5);
             final String requesterNameVal = switch (i % 5) {
                 case 0 -> "홍길동";
@@ -212,7 +212,7 @@ public class MmController {
 
             Map<String, Object> row = new java.util.LinkedHashMap<>();
             row.put("id", id);
-            row.put("prNumber", String.format("%09d", 100002345 + i));
+            row.put("prNumber", String.format("%09d", 100000001 + i));
             row.put("requesterId", requesterId);
             row.put("requesterName", requesterNameVal);
             long deptId = (i % 2 == 0) ? 12L : 15L;
@@ -243,11 +243,22 @@ public class MmController {
                     .toList();
         }
 
-        Map<String, Object> pageMeta = PageResponseUtils.buildPage(p, s, 257L);
+        int total = filtered.size();
+        int fromIdx = Math.min(p * s, total);
+        int toIdx = Math.min(fromIdx + s, total);
+        java.util.List<Map<String, Object>> pageContent = filtered.subList(fromIdx, toIdx);
+
+        org.ever._4ever_be_gw.common.dto.PageDto pageDto = org.ever._4ever_be_gw.common.dto.PageDto.builder()
+                .number(p)
+                .size(s)
+                .totalElements(total)
+                .totalPages(s == 0 ? 0 : (int) Math.ceil((double) total / s))
+                .hasNext(p + 1 < (s == 0 ? 0 : (int) Math.ceil((double) total / s)))
+                .build();
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("content", filtered);
-        data.put("page", pageMeta);
+        data.put("content", pageContent);
+        data.put("page", pageDto);
 
         return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "구매요청서 목록입니다.", HttpStatus.OK
@@ -380,8 +391,8 @@ public class MmController {
         if (Long.valueOf(403001L).equals(purchaseId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN_PURCHASE_ACCESS);
         }
-        // 1~10만 유효, 그 외는 404 처리
-        if (purchaseId == null || purchaseId < 1 || purchaseId > 10) {
+        // 1~50만 유효, 그 외는 404 처리
+        if (purchaseId == null || purchaseId < 1 || purchaseId > 50) {
             throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "purchaseId=" + purchaseId);
         }
 
@@ -877,7 +888,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 목록 조회에 성공했습니다.\",\n  \"data\": [\n    {\n      \"id\": 1001,\n      \"poNumber\": \"PO-2024-001\",\n      \"supplierName\": \"대한철강\",\n      \"itemsSummary\": \"강판 500kg, 알루미늄 300kg\",\n      \"totalAmount\": 5000000,\n      \"orderDate\": \"2024-01-18\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"status\": \"APPROVED\"\n    }\n  ]\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1001,\n        \"poNumber\": \"PO-2024-001\",\n        \"supplierName\": \"대한철강\",\n        \"itemsSummary\": \"강판 500kg, 알루미늄 300kg\",\n        \"totalAmount\": 5000000,\n        \"orderDate\": \"2024-01-18\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"status\": \"APPROVED\"\n      }\n    ],\n    \"page\": { \n      \"number\": 0, \n      \"size\": 10, \n      \"totalElements\": 50, \n      \"totalPages\": 5, \n      \"hasNext\": true \n    }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -975,28 +986,22 @@ public class MmController {
         }
 
         java.util.List<Map<String, Object>> all = new java.util.ArrayList<>();
-        String[][] base = new String[][]{
-                {"PO-2024-001","대한철강","강판 500kg, 알루미늄 300kg","2024-01-18","2024-01-25","APPROVED"},
-                {"PO-2024-002","한국알루미늄","알루미늄 시트 200매","2024-01-17","2024-01-24","PENDING"},
-                {"PO-2024-003","포스코","고강도 스틸 1톤","2024-01-16","2024-01-23","REJECTED"},
-                {"PO-2024-004","효성중공업","볼트 1000개","2024-01-15","2024-01-22","APPROVED"},
-                {"PO-2024-005","현대제철","스테인리스 파이프 200개","2024-01-14","2024-01-21","PENDING"},
-                {"PO-2024-006","두산중공업","알루미늄 판재 100매","2024-01-13","2024-01-20","DELIVERED"},
-                {"PO-2024-007","세아베스틸","스틸 코일 3톤","2024-01-12","2024-01-19","REJECTED"},
-                {"PO-2024-008","KG동부제철","강철 빔 50개","2024-01-11","2024-01-18","PENDING"},
-                {"PO-2024-009","동국제강","철판 2톤","2024-01-10","2024-01-17","APPROVED"},
-                {"PO-2024-010","티엠씨메탈","알루미늄 봉 100개","2024-01-09","2024-01-16","DELIVERED"}
-        };
-        for (int i = 0; i < base.length; i++) {
+        String[] suppliers = {"대한철강","한국알루미늄","포스코","효성중공업","현대제철","두산중공업","세아베스틸","KG동부제철","동국제강","티엠씨메탈"};
+        String[] itemsSummary = {"강판 500kg, 알루미늄 300kg","알루미늄 시트 200매","고강도 스틸 1톤","볼트 1000개","스테인리스 파이프 200개","알루미늄 판재 100매","스틸 코일 3톤","강철 빔 50개","철판 2톤","알루미늄 봉 100개"};
+        String[] statusList = {"APPROVED","PENDING","REJECTED","APPROVED","PENDING","DELIVERED","REJECTED","PENDING","APPROVED","DELIVERED"};
+        java.time.LocalDate baseDate = java.time.LocalDate.of(2024,1,18);
+        for (int i = 0; i < 50; i++) {
+            int idx = i % 10;
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("id", 1001 + i);
-            row.put("poNumber", base[i][0]);
-            row.put("supplierName", base[i][1]);
-            row.put("itemsSummary", base[i][2]);
+            row.put("poNumber", String.format("PO-2024-%03d", i + 1));
+            row.put("supplierName", suppliers[idx]);
+            row.put("itemsSummary", itemsSummary[idx]);
+            java.time.LocalDate od = baseDate.minusDays(idx);
+            row.put("orderDate", od.toString());
+            row.put("deliveryDate", od.plusDays(7).toString());
             row.put("totalAmount", 5_000_000 - (i * 120_000));
-            row.put("orderDate", base[i][3]);
-            row.put("deliveryDate", base[i][4]);
-            row.put("status", base[i][5]);
+            row.put("status", statusList[idx]);
             all.add(row);
         }
 
@@ -1046,7 +1051,19 @@ public class MmController {
         int toIdx = Math.min(fromIdx + pageSize, total);
         java.util.List<Map<String, Object>> pageContent = filtered.subList(fromIdx, toIdx);
 
-        return ResponseEntity.ok(ApiResponse.success(pageContent, "발주서 목록 조회에 성공했습니다.", HttpStatus.OK));
+        org.ever._4ever_be_gw.common.dto.PageDto pageDto = org.ever._4ever_be_gw.common.dto.PageDto.builder()
+                .number(pageIndex)
+                .size(pageSize)
+                .totalElements(total)
+                .totalPages(pageSize == 0 ? 0 : (int) Math.ceil((double) total / pageSize))
+                .hasNext(pageIndex + 1 < (pageSize == 0 ? 0 : (int) Math.ceil((double) total / pageSize)))
+                .build();
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("content", pageContent);
+        data.put("page", pageDto);
+
+        return ResponseEntity.ok(ApiResponse.success(data, "발주서 목록 조회에 성공했습니다.", HttpStatus.OK));
     }
 
     // ---------------- Purchase Order Detail ----------------
@@ -1094,14 +1111,14 @@ public class MmController {
         if (purchaseId == null) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + null);
         }
-        boolean classicRange = purchaseId >= 1L && purchaseId <= 10L;
-        boolean poIdRange = purchaseId >= 1001L && purchaseId <= 1010L;
-        if (!classicRange && !poIdRange) {
+        boolean poIdRange = purchaseId >= 1001L && purchaseId <= 1050L;
+        if (!poIdRange) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + purchaseId);
         }
 
-        // 목업 데이터 생성 (두 범위 모두 0~9 인덱스로 매핑)
-        int idx = classicRange ? (int)(purchaseId - 1) : (int)(purchaseId - 1001);
+        // 목업 데이터 생성 (0~49 인덱스, 표시용 데이터는 10개 템플릿을 순환)
+        int idxFull = (int)(purchaseId - 1001);
+        int idx = idxFull % 10;
         String[] suppliers = {"대한철강","한국알루미늄","포스코","효성중공업","현대제철","두산중공업","세아베스틸","KG동부제철","동국제강","티엠씨메탈"};
         long[] supplierIds = {501,502,503,504,505,506,507,508,509,510};
         String[] supplierCodes = {"SUP001","SUP002","SUP003","SUP004","SUP005","SUP006","SUP007","SUP008","SUP009","SUP010"};
@@ -1112,7 +1129,7 @@ public class MmController {
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", purchaseId);
-        data.put("poNumber", String.format("PO-2024-%03d", 1 + idx));
+        data.put("poNumber", String.format("PO-2024-%03d", 1 + idxFull));
         data.put("supplierId", supplierIds[idx]);
         data.put("supplierCode", supplierCodes[idx]);
         data.put("supplierName", suppliers[idx]);
@@ -1167,7 +1184,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"vendorId\": 1,\n        \"vendorCode\": \"SUP001\",\n        \"companyName\": \"한국철강\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@koreasteel.com\",\n        \"category\": \"원자재\",\n        \"leadTimeDays\": 3,\n        \"leadTimeLabel\": \"3일\",\n        \"statusCode\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"actions\": [\"view\"],\n        \"createdAt\": \"2025-10-07T00:00:00Z\",\n        \"updatedAt\": \"2025-10-07T00:00:00Z\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 5,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"vendorId\": 1,\n        \"vendorCode\": \"SUP001\",\n        \"companyName\": \"한국철강\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@koreasteel.com\",\n        \"category\": \"원자재\",\n        \"leadTimeDays\": 3,\n        \"leadTimeLabel\": \"3일\",\n        \"statusCode\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"actions\": [\"view\"],\n        \"createdAt\": \"2025-10-07T00:00:00Z\",\n        \"updatedAt\": \"2025-10-07T00:00:00Z\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 50,\n      \"totalPages\": 5,\n      \"hasNext\": true\n    }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1223,81 +1240,32 @@ public class MmController {
         }
 
         java.util.List<Map<String, Object>> allVendors = new java.util.ArrayList<>();
-        allVendors.add(new LinkedHashMap<>() {{
-            put("vendorId", 1);
-            put("vendorCode", "SUP001");
-            put("companyName", "한국철강");
-            put("contactPhone", "02-1234-5678");
-            put("contactEmail", "contact@koreasteel.com");
-            put("category", "원자재");
-            put("leadTimeDays", 3);
-            put("leadTimeLabel", "3일");
-            put("statusCode", "ACTIVE");
-            put("statusLabel", "활성");
-            put("actions", java.util.List.of("view"));
-            put("createdAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
-            put("updatedAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
-        }});
-        allVendors.add(new LinkedHashMap<>() {{
-            put("vendorId", 2);
-            put("vendorCode", "SUP002");
-            put("companyName", "대한전자부품");
-            put("contactPhone", "031-987-6543");
-            put("contactEmail", "sales@dahanelec.com");
-            put("category", "전자부품");
-            put("leadTimeDays", 1);
-            put("leadTimeLabel", "1일");
-            put("statusCode", "ACTIVE");
-            put("statusLabel", "활성");
-            put("actions", java.util.List.of("view"));
-            put("createdAt", java.time.Instant.parse("2025-09-15T00:00:00Z"));
-            put("updatedAt", java.time.Instant.parse("2025-09-20T00:00:00Z"));
-        }});
-        allVendors.add(new LinkedHashMap<>() {{
-            put("vendorId", 3);
-            put("vendorCode", "SUP003");
-            put("companyName", "글로벌화학");
-            put("contactPhone", "051-555-0123");
-            put("contactEmail", "info@globalchem.co.kr");
-            put("category", "원자재");
-            put("leadTimeDays", 5);
-            put("leadTimeLabel", "5일");
-            put("statusCode", "INACTIVE");
-            put("statusLabel", "비활성");
-            put("actions", java.util.List.of("view"));
-            put("createdAt", java.time.Instant.parse("2025-08-02T00:00:00Z"));
-            put("updatedAt", java.time.Instant.parse("2025-09-01T00:00:00Z"));
-        }});
-        allVendors.add(new LinkedHashMap<>() {{
-            put("vendorId", 4);
-            put("vendorCode", "SUP004");
-            put("companyName", "한빛소재");
-            put("contactPhone", "02-3456-7890");
-            put("contactEmail", "info@hanbits.com");
-            put("category", "부품");
-            put("leadTimeDays", 2);
-            put("leadTimeLabel", "2일");
-            put("statusCode", "ACTIVE");
-            put("statusLabel", "활성");
-            put("actions", java.util.List.of("view"));
-            put("createdAt", java.time.Instant.parse("2025-07-10T00:00:00Z"));
-            put("updatedAt", java.time.Instant.parse("2025-07-20T00:00:00Z"));
-        }});
-        allVendors.add(new LinkedHashMap<>() {{
-            put("vendorId", 5);
-            put("vendorCode", "SUP005");
-            put("companyName", "스마트로지스틱스");
-            put("contactPhone", "02-9999-1111");
-            put("contactEmail", "service@smartlogistics.kr");
-            put("category", "기타");
-            put("leadTimeDays", 0);
-            put("leadTimeLabel", "당일 배송");
-            put("statusCode", "ACTIVE");
-            put("statusLabel", "활성");
-            put("actions", java.util.List.of("view"));
-            put("createdAt", java.time.Instant.parse("2025-08-02T00:00:00Z"));
-            put("updatedAt", java.time.Instant.parse("2025-09-01T00:00:00Z"));
-        }});
+        String[] codes = {"SUP001","SUP002","SUP003","SUP004","SUP005","SUP006","SUP007","SUP008","SUP009","SUP010"};
+        String[] names = {"한국철강","대한전자부품","글로벌화학","한빛소재","스마트로지스틱스","태성테크","광명산업","한성전자","그린케미칼","아주금속"};
+        String[] categories = {"원자재","전자부품","원자재","부품","기타","전자부품","원자재","부품","원자재","원자재"};
+        int[] leadDays = {3,1,5,2,0,7,6,2,9,10};
+        String[] phones = {"02-1234-5678","031-987-6543","051-555-0123","02-3456-7890","02-9999-1111","02-7777-8888","031-3333-4444","02-2222-1111","051-777-0000","032-101-2020"};
+        String[] emails = {"contact@koreasteel.com","sales@dahanelec.com","info@globalchem.co.kr","info@hanbits.com","service@smartlogistics.kr","sales@taesung.com","contact@kwangmyung.co.kr","info@hanseong.com","sales@greenchem.co.kr","contact@ajumetal.co.kr"};
+        String[] statusCodeArr = {"ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE"};
+        String[] statusLabelArr = {"활성","활성","비활성","활성","활성","비활성","활성","활성","비활성","활성"};
+        for (int i = 0; i < 50; i++) {
+            int idx = i % 10;
+            Map<String, Object> v = new LinkedHashMap<>();
+            v.put("vendorId", 1 + i);
+            v.put("vendorCode", codes[idx]);
+            v.put("companyName", names[idx]);
+            v.put("contactPhone", phones[idx]);
+            v.put("contactEmail", emails[idx]);
+            v.put("category", categories[idx]);
+            v.put("leadTimeDays", leadDays[idx]);
+            v.put("leadTimeLabel", leadDays[idx] == 0 ? "당일 배송" : leadDays[idx] + "일");
+            v.put("statusCode", statusCodeArr[idx]);
+            v.put("statusLabel", statusLabelArr[idx]);
+            v.put("actions", java.util.List.of("view"));
+            v.put("createdAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
+            v.put("updatedAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
+            allVendors.add(v);
+        }
         // 상태/카테고리 필터 적용
         java.util.List<Map<String, Object>> filtered = allVendors;
         if (status != null) {
@@ -1320,9 +1288,17 @@ public class MmController {
         int toIdx = Math.min(fromIdx + s, total);
         java.util.List<Map<String, Object>> content = filtered.subList(fromIdx, toIdx);
 
+        org.ever._4ever_be_gw.common.dto.PageDto pageDto = org.ever._4ever_be_gw.common.dto.PageDto.builder()
+                .number(pageIndex)
+                .size(s)
+                .totalElements(total)
+                .totalPages(s == 0 ? 0 : (int) Math.ceil((double) total / s))
+                .hasNext(pageIndex + 1 < (s == 0 ? 0 : (int) Math.ceil((double) total / s)))
+                .build();
+
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("content", content);
-        data.put("page", PageResponseUtils.buildPage(pageIndex, s, total));
+        data.put("page", pageDto);
 
         return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "공급업체 목록을 조회했습니다.", HttpStatus.OK
@@ -1472,24 +1448,24 @@ public class MmController {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_APPROVAL_FORBIDDEN);
         }
 
-        // 유효한 발주서 ID 범위 (목업 데이터 기준: 1001~1010)
-        if (poId == null || poId < 1001L || poId > 1010L) {
+        // 유효한 발주서 ID 범위 (목업 데이터 기준: 1001~1050)
+        if (poId == null || poId < 1001L || poId > 1050L) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + poId);
         }
 
         // 현재 상태 확인: PENDING만 승인 가능
-        // 목록 목업의 상태 매핑을 그대로 사용: 1002,1005,1008만 PENDING
-        java.util.Set<Long> pendingIds = java.util.Set.of(1002L, 1005L, 1008L);
-        if (!pendingIds.contains(poId)) {
+        // 규칙: (poId-1001) % 5 in {1,4} → PENDING (목록 생성 규칙과 일치)
+        int mod = (int)((poId - 1001) % 5);
+        boolean isPending = (mod == 1 || mod == 4);
+        if (!isPending) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_INVALID_TRANSITION);
         }
 
-        String[] poNumbers = {"PO-2024-001","PO-2024-002","PO-2024-003","PO-2024-004","PO-2024-005","PO-2024-006","PO-2024-007","PO-2024-008","PO-2024-009","PO-2024-010"};
-        int idx = (int)(poId - 1001);
+        int idxFull = (int)(poId - 1001);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", poId);
-        data.put("poNumber", poNumbers[idx]);
+        data.put("poNumber", String.format("PO-2024-%03d", idxFull + 1));
         data.put("statusCode", "APPROVED");
         data.put("statusLabel", "승인");
         data.put("approvedAt", java.time.Instant.parse("2025-10-07T09:15:00Z"));
@@ -1567,7 +1543,7 @@ public class MmController {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_REJECTION_FORBIDDEN);
         }
 
-        if (poId == null || poId < 1001L || poId > 1010L) {
+        if (poId == null || poId < 1001L || poId > 1050L) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + poId);
         }
 
@@ -1575,12 +1551,11 @@ public class MmController {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_REJECTION_REASON_REQUIRED);
         }
 
-        String[] poNumbers = {"PO-2024-001","PO-2024-002","PO-2024-003","PO-2024-004","PO-2024-005","PO-2024-006","PO-2024-007","PO-2024-008","PO-2024-009","PO-2024-010"};
-        int idx = (int)(poId - 1001);
+        int idxFull = (int)(poId - 1001);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", poId);
-        data.put("poNumber", poNumbers[idx]);
+        data.put("poNumber", String.format("PO-2024-%03d", idxFull + 1));
         data.put("statusCode", "REJECTED");
         data.put("statusLabel", "반려");
         data.put("rejectedAt", java.time.Instant.parse("2025-10-14T10:00:00Z"));
@@ -1639,7 +1614,7 @@ public class MmController {
         if (vendorId != null && vendorId == 500001L) {
             throw new BusinessException(ErrorCode.VENDOR_PROCESSING_ERROR);
         }
-        if (vendorId == null || vendorId < 1 || vendorId > 10) {
+        if (vendorId == null || vendorId < 1 || vendorId > 50) {
             throw new BusinessException(ErrorCode.VENDOR_NOT_FOUND);
         }
 
