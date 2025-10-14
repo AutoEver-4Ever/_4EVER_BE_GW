@@ -830,4 +830,83 @@ public class ProductionController {
 
         return ResponseEntity.ok(ApiResponse.success(response, "성공적으로 조회했습니다.", HttpStatus.OK));
     }
+
+    @GetMapping("/mes/work-orders/{mesId}")
+    @Operation(
+            summary = "MES 작업 상세 조회",
+            description = "MES 작업 상세 정보를 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{ \"status\": 200, \"success\": true, \"message\": \"작업 지시 상세를 조회했습니다.\", \"data\": { \"workOrderId\": 1001, \"workOrderCode\": \"WO-2024-001\", \"productId\": 1, \"productName\": \"산업용 모터 5HP\", \"quantity\": 50, \"unit\": \"EA\", \"progressPercent\": 65, \"status\": { \"code\": \"IN_PROGRESS\", \"label\": \"진행중\" }, \"plan\": { \"startDate\": \"2024-01-15\", \"dueDate\": \"2024-02-10\" }, \"currentOperation\": \"OP30\", \"operations\": [ { \"operationCode\": \"OP10\", \"operationName\": \"재료 준비\", \"sequence\": 1, \"status\": { \"code\": \"DONE\", \"label\": \"완료\" }, \"startedAt\": \"09:00\", \"finishedAt\": \"10:30\", \"durationHours\": 3.5, \"assignee\": { \"id\": 501, \"name\": \"김작업\" } }, { \"operationCode\": \"OP20\", \"operationName\": \"가공\", \"sequence\": 2, \"status\": { \"code\": \"DONE\", \"label\": \"완료\" }, \"startedAt\": \"10:30\", \"finishedAt\": \"14:00\", \"durationHours\": 3.5, \"assignee\": { \"id\": 501, \"name\": \"김작업\" } }, { \"operationCode\": \"OP30\", \"operationName\": \"조립\", \"sequence\": 3, \"status\": { \"code\": \"IN_PROGRESS\", \"label\": \"진행중\" }, \"startedAt\": \"14:00\", \"finishedAt\": null, \"durationHours\": null, \"assignee\": { \"id\": 501, \"name\": \"김작업\" } }, { \"operationCode\": \"OP40\", \"operationName\": \"테스트\", \"sequence\": 4, \"status\": { \"code\": \"PENDING\", \"label\": \"대기\" }, \"startedAt\": null, \"finishedAt\": null, \"durationHours\": null, \"assignee\": { \"id\": 501, \"name\": \"김작업\" } } ] } }")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<MesWorkOrderDetailDto>> getMesWorkOrderDetail(
+            @Parameter(name = "mesId", description = "MES 작업 ID")
+            @PathVariable Long mesId
+    ) {
+        List<MesWorkOrderDetailDto.OperationDto> operations = Arrays.asList(
+                MesWorkOrderDetailDto.OperationDto.builder()
+                        .operationCode("OP10")
+                        .operationName("재료 준비")
+                        .sequence(1)
+                        .status(MesWorkOrderDetailDto.StatusInfo.builder().code("DONE").label("완료").build())
+                        .startedAt("09:00")
+                        .finishedAt("10:30")
+                        .durationHours(3.5)
+                        .assignee(MesWorkOrderDetailDto.AssigneeDto.builder().id(501L).name("김작업").build())
+                        .build(),
+                MesWorkOrderDetailDto.OperationDto.builder()
+                        .operationCode("OP20")
+                        .operationName("가공")
+                        .sequence(2)
+                        .status(MesWorkOrderDetailDto.StatusInfo.builder().code("DONE").label("완료").build())
+                        .startedAt("10:30")
+                        .finishedAt("14:00")
+                        .durationHours(3.5)
+                        .assignee(MesWorkOrderDetailDto.AssigneeDto.builder().id(501L).name("김작업").build())
+                        .build(),
+                MesWorkOrderDetailDto.OperationDto.builder()
+                        .operationCode("OP30")
+                        .operationName("조립")
+                        .sequence(3)
+                        .status(MesWorkOrderDetailDto.StatusInfo.builder().code("IN_PROGRESS").label("진행중").build())
+                        .startedAt("14:00")
+                        .finishedAt(null)
+                        .durationHours(null)
+                        .assignee(MesWorkOrderDetailDto.AssigneeDto.builder().id(501L).name("김작업").build())
+                        .build(),
+                MesWorkOrderDetailDto.OperationDto.builder()
+                        .operationCode("OP40")
+                        .operationName("테스트")
+                        .sequence(4)
+                        .status(MesWorkOrderDetailDto.StatusInfo.builder().code("PENDING").label("대기").build())
+                        .startedAt(null)
+                        .finishedAt(null)
+                        .durationHours(null)
+                        .assignee(MesWorkOrderDetailDto.AssigneeDto.builder().id(501L).name("김작업").build())
+                        .build()
+        );
+
+        MesWorkOrderDetailDto response = MesWorkOrderDetailDto.builder()
+                .workOrderId(1001L)
+                .workOrderCode("WO-2024-001")
+                .productId(1L)
+                .productName("산업용 모터 5HP")
+                .quantity(50)
+                .unit("EA")
+                .progressPercent(65)
+                .status(MesWorkOrderDetailDto.StatusInfo.builder().code("IN_PROGRESS").label("진행중").build())
+                .plan(MesWorkOrderDetailDto.PlanInfo.builder().startDate("2024-01-15").dueDate("2024-02-10").build())
+                .currentOperation("OP30")
+                .operations(operations)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(response, "작업 지시 상세를 조회했습니다.", HttpStatus.OK));
+    }
 }
