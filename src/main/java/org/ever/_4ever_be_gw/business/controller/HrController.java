@@ -35,6 +35,49 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "HR Management", description = "인사 관리 API")
 public class HrController {
 
+    // ==================== 인적자원 통계 ====================
+
+    @GetMapping("/employee/statistics")
+    @Operation(
+        summary = "인적자원 통계",
+        description = "기간별 인적자원 통계 정보를 조회합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"대시보드 정보를 성공적으로 조회했습니다.\",\n  \"data\": {\n    \"totalEmployeeCount\": 100,\n    \"newEmployeeCount\": 10,\n    \"ongoingProgramCount\": 15,\n    \"completedProgramCount\": 5\n  }\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> getEmployeeStatistics(
+        @Parameter(description = "검색 기간: WEEK, MONTH, QUARTER, YEAR", example = "MONTH")
+        @RequestParam(name = "period", required = false, defaultValue = "MONTH") String period
+    ) {
+        // 기간 검증
+        List<Map<String, String>> errors = new ArrayList<>();
+        if (period != null) {
+            var allowedPeriods = Set.of("WEEK", "MONTH", "QUARTER", "YEAR");
+            if (!allowedPeriods.contains(period)) {
+                errors.add(Map.of("field", "period", "reason", 
+                    "ALLOWED_VALUES: WEEK, MONTH, QUARTER, YEAR"));
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
+        }
+
+        // 요청 데이터 로깅
+        System.out.println("인적자원 통계 조회 요청 - 기간: " + period);
+
+        // Mock 데이터 생성
+        Map<String, Object> data = generateEmployeeStatisticsMock(period);
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "대시보드 정보를 성공적으로 조회했습니다.", HttpStatus.OK
+        ));
+    }
+
     // ==================== 직원 관리 ====================
 
     @PostMapping("/employee/signup")
@@ -454,6 +497,48 @@ public class HrController {
     }
 
     // ==================== Mock 데이터 생성 메서드들 ====================
+
+    // ==================== 인적자원 통계 Mock 데이터 생성 ====================
+
+    private Map<String, Object> generateEmployeeStatisticsMock(String period) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        
+        // 기간별로 다른 Mock 데이터 생성
+        switch (period.toUpperCase()) {
+            case "WEEK":
+                data.put("totalEmployeeCount", 100);
+                data.put("newEmployeeCount", 2);
+                data.put("ongoingProgramCount", 8);
+                data.put("completedProgramCount", 3);
+                break;
+            case "MONTH":
+                data.put("totalEmployeeCount", 100);
+                data.put("newEmployeeCount", 10);
+                data.put("ongoingProgramCount", 15);
+                data.put("completedProgramCount", 5);
+                break;
+            case "QUARTER":
+                data.put("totalEmployeeCount", 100);
+                data.put("newEmployeeCount", 25);
+                data.put("ongoingProgramCount", 35);
+                data.put("completedProgramCount", 12);
+                break;
+            case "YEAR":
+                data.put("totalEmployeeCount", 100);
+                data.put("newEmployeeCount", 45);
+                data.put("ongoingProgramCount", 60);
+                data.put("completedProgramCount", 28);
+                break;
+            default:
+                data.put("totalEmployeeCount", 100);
+                data.put("newEmployeeCount", 10);
+                data.put("ongoingProgramCount", 15);
+                data.put("completedProgramCount", 5);
+                break;
+        }
+        
+        return data;
+    }
 
     // ==================== 직원 정보(Employee) Mock 데이터 생성 메서드들 ====================
 
