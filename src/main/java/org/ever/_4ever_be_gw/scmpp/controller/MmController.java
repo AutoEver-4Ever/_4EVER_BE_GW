@@ -1088,35 +1088,41 @@ public class MmController {
             }
     )
     public ResponseEntity<ApiResponse<Object>> getPurchaseOrderDetail(
-            @Parameter(description = "발주서 ID", example = "1")
+            @Parameter(description = "발주서 ID", example = "1001")
             @PathVariable("purchaseId") Long purchaseId
     ) {
-        // 1~10만 존재
-        if (purchaseId == null || purchaseId < 1 || purchaseId > 10) {
+        // 유효 범위: 1001 ~ 1010
+        if (purchaseId == null || purchaseId < 1001L || purchaseId > 1010L) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + purchaseId);
         }
 
         // 목업 데이터 생성
-        int idx = (int)((purchaseId - 1) % 10);
+        int idx = (int)((purchaseId - 1001) % 10);
         String[] suppliers = {"대한철강","한국알루미늄","포스코","효성중공업","현대제철","두산중공업","세아베스틸","KG동부제철","동국제강","티엠씨메탈"};
+        long[] supplierIds = {501,502,503,504,505,506,507,508,509,510};
+        String[] supplierCodes = {"SUP001","SUP002","SUP003","SUP004","SUP005","SUP006","SUP007","SUP008","SUP009","SUP010"};
         String[] orderDates = {"2024-01-18","2024-01-17","2024-01-16","2024-01-15","2024-01-14","2024-01-13","2024-01-12","2024-01-11","2024-01-10","2024-01-09"};
         String[] deliveryDates = {"2024-01-25","2024-01-24","2024-01-23","2024-01-22","2024-01-21","2024-01-20","2024-01-19","2024-01-18","2024-01-17","2024-01-16"};
-        String[] statuses = {"승인됨","대기중","반려","승인됨","대기중","승인됨","반려","대기중","승인됨","대기중"};
+        String[] statusCodes = {"APPROVED","PENDING","REJECTED","APPROVED","PENDING","APPROVED","REJECTED","PENDING","APPROVED","PENDING"};
+        String[] statusLabels = {"승인","대기","반려","승인","대기","승인","반려","대기","승인","대기"};
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", purchaseId);
         data.put("poNumber", String.format("PO-2024-%03d", 1 + idx));
+        data.put("supplierId", supplierIds[idx]);
+        data.put("supplierCode", supplierCodes[idx]);
         data.put("supplierName", suppliers[idx]);
         data.put("supplierContact", "02-1234-5678");
         data.put("supplierEmail", "order@steel.co.kr");
         data.put("orderDate", orderDates[idx]);
-        data.put("deliveryDate", deliveryDates[idx]);
-        data.put("status", statuses[idx]);
+        data.put("requestedDeliveryDate", deliveryDates[idx]);
+        data.put("statusCode", statusCodes[idx]);
+        data.put("statusLabel", statusLabels[idx]);
 
+        // 품목
         java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
         Map<String, Object> item1 = new LinkedHashMap<>();
         item1.put("itemName", "강판");
-        item1.put("spec", "SS400 10mm");
         item1.put("quantity", 500);
         item1.put("unit", "kg");
         item1.put("unitPrice", 8000);
@@ -1125,7 +1131,6 @@ public class MmController {
 
         Map<String, Object> item2 = new LinkedHashMap<>();
         item2.put("itemName", "알루미늄");
-        item2.put("spec", "A6061 5mm");
         item2.put("quantity", 300);
         item2.put("unit", "kg");
         item2.put("unitPrice", 3333);
@@ -1134,11 +1139,14 @@ public class MmController {
 
         data.put("items", items);
         data.put("totalAmount", 5_000_000);
-        data.put("deliveryAddress", "경기도 안산시 단원구 공장로 456");
-        data.put("requestedDeliveryDate", deliveryDates[idx]);
-        data.put("specialInstructions", "오전 배송 요청");
-        data.put("paymentTerms", "월말 결제");
         data.put("memo", "1월 생산용 원자재 주문");
+
+        // 생성/수정 일시 (orderDate 기준 09:00Z와 +5분)
+        java.time.LocalDate od = java.time.LocalDate.parse(orderDates[idx]);
+        java.time.Instant createdAt = od.atTime(9,0).atZone(java.time.ZoneOffset.UTC).toInstant();
+        java.time.Instant updatedAt = createdAt.plusSeconds(300);
+        data.put("createdAt", createdAt);
+        data.put("updatedAt", updatedAt);
 
         return ResponseEntity.ok(ApiResponse.<Object>success(
                 data, "발주서 상세 정보 조회에 성공했습니다.", HttpStatus.OK
