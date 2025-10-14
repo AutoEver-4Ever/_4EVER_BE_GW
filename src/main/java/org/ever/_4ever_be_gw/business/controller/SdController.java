@@ -150,7 +150,7 @@ import java.util.stream.Collectors;
             @RequestParam(name = "search", required = false) String search,
             @Parameter(description = "정렬 필드,정렬방향")
             @RequestParam(name = "sort", required = false) String sort,
-            @Parameter(description = "페이지 번호(1-base)")
+            @Parameter(description = "페이지 번호(0-base)")
             @RequestParam(name = "page", required = false) Integer page,
             @Parameter(description = "페이지 크기(최대 200)")
             @RequestParam(name = "size", required = false) Integer size
@@ -184,7 +184,7 @@ import java.util.stream.Collectors;
 
         // 기본값 처리
         String effectiveSort = (sort == null || sort.isBlank()) ? "quotationDate,desc" : sort;
-        int pageIndex = (page == null || page < 1) ? 0 : page - 1;
+        int pageIndex = (page == null || page < 0) ? 0 : page;
         int s = (size == null || size < 1) ? 10 : size;
 
         // 500 모킹 트리거
@@ -659,7 +659,7 @@ import java.util.stream.Collectors;
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "검색 키워드")
             @RequestParam(name = "keyword", required = false) String keyword,
-            @Parameter(description = "페이지 번호(1-base)")
+            @Parameter(description = "페이지 번호(0-base)")
             @RequestParam(name = "page", required = false) Integer page,
             @Parameter(description = "페이지 크기(최대 200)")
             @RequestParam(name = "size", required = false) Integer size
@@ -681,8 +681,8 @@ import java.util.stream.Collectors;
                 errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ACTIVE, DEACTIVE"));
             }
         }
-        if (page != null && page < 1) {
-            errors.add(Map.of("field", "page", "reason", "MIN_1"));
+        if (page != null && page < 0) {
+            errors.add(Map.of("field", "page", "reason", "MIN_0"));
         }
         if (size != null && size > 200) {
             errors.add(Map.of("field", "size", "reason", "MAX_200"));
@@ -691,7 +691,7 @@ import java.util.stream.Collectors;
             throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        int pageIndex = (page == null || page < 1) ? 0 : page - 1;
+        int pageIndex = (page == null || page < 0) ? 0 : page;
         int s = (size == null || size < 1) ? 10 : size;
 
         // 목업 데이터 준비(최소 10건)
@@ -738,7 +738,9 @@ import java.util.stream.Collectors;
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("customers", customers);
-        data.put("page", PageResponseUtils.buildPage(pageIndex, s, total));
+        Map<String, Object> pageMeta2 = PageResponseUtils.buildPage(pageIndex, s, total);
+        pageMeta2.put("number", pageIndex + 1);
+        data.put("page", pageMeta2);
 
         return ResponseEntity.ok(ApiResponse.success(data, "고객사 목록을 조회했습니다.", HttpStatus.OK));
     }
