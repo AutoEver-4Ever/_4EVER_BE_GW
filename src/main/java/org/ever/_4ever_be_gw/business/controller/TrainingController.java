@@ -326,6 +326,7 @@ public class TrainingController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("programId", programId);
         data.put("programName", "신입사원 온보딩");
+        data.put("programDescription", "신입사원을 위한 기본 교육 프로그램입니다.");
         data.put("category", "BASIC_TRAINING");
         data.put("trainingHour", 4);
         data.put("isOnline", true);
