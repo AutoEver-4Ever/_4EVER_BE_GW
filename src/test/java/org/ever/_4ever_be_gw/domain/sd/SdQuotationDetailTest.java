@@ -24,7 +24,7 @@ class SdQuotationDetailTest {
     private MockMvc mockMvc;
 
     @Test
-    @DisplayName("견적 상세 조회 성공(12001~12010)")
+    @DisplayName("견적 상세 조회 성공(12001~12050)")
     void getQuotationDetail_success() throws Exception {
         mockMvc.perform(get("/api/business/sd/quotations/{quotationId}", 12001L)
                         .servletPath("/api")
@@ -53,13 +53,13 @@ class SdQuotationDetailTest {
     @Test
     @DisplayName("견적 상세 미존재 404(범위 밖)")
     void getQuotationDetail_notFound() throws Exception {
-        mockMvc.perform(get("/api/business/sd/quotations/{quotationId}", 12011L)
+        mockMvc.perform(get("/api/business/sd/quotations/{quotationId}", 12051L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("해당 견적을 찾을 수 없습니다: quotationId=12011"));
+                .andExpect(jsonPath("$.message").value("해당 견적을 찾을 수 없습니다: quotationId=12051"));
     }
 
     @Test
@@ -74,4 +74,3 @@ class SdQuotationDetailTest {
                 .andExpect(jsonPath("$.message").value("서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요."));
     }
 }
-
