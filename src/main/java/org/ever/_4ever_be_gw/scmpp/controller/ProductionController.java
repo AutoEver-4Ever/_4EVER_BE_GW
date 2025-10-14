@@ -699,4 +699,65 @@ public class ProductionController {
 
         return ResponseEntity.ok(ApiResponse.success(response, "견적 시뮬레이션이 성공적으로 완료되었습니다.", HttpStatus.OK));
     }
+
+    @GetMapping("/quotations/{quotationId}/preview")
+    @Operation(
+            summary = "제안납기 확정 프리뷰",
+            description = "제안 납기 계획 프리뷰를 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{ \"status\": 200, \"success\": true, \"message\": \"제안 납기 계획을 조회했습니다.\", \"data\": { \"quotationCode\": \"Q-2024-001\", \"customerName\": \"현대자동차\", \"productName\": \"도어패널\", \"confirmedDueDate\": \"2024-03-10\", \"weeks\": [ { \"week\": \"2024-02-3W\", \"demand\": 0, \"requiredStock\": 0, \"productionQty\": 300, \"mps\": 300 }, { \"week\": \"2024-02-4W\", \"demand\": 500, \"requiredStock\": 500, \"productionQty\": 200, \"mps\": 200 }, { \"week\": \"2024-03-1W\", \"demand\": 0, \"requiredStock\": 0, \"productionQty\": 0, \"mps\": 0 }, { \"week\": \"2024-03-2W\", \"demand\": 0, \"requiredStock\": 0, \"productionQty\": 0, \"mps\": 0 } ] } }")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<DueDatePreviewDto>> getQuotationPreview(
+            @Parameter(name = "quotationId", description = "견적 ID")
+            @PathVariable Long quotationId
+    ) {
+        List<DueDatePreviewDto.WeekPlanDto> weeks = Arrays.asList(
+                DueDatePreviewDto.WeekPlanDto.builder()
+                        .week("2024-02-3W")
+                        .demand(0)
+                        .requiredStock(0)
+                        .productionQty(300)
+                        .mps(300)
+                        .build(),
+                DueDatePreviewDto.WeekPlanDto.builder()
+                        .week("2024-02-4W")
+                        .demand(500)
+                        .requiredStock(500)
+                        .productionQty(200)
+                        .mps(200)
+                        .build(),
+                DueDatePreviewDto.WeekPlanDto.builder()
+                        .week("2024-03-1W")
+                        .demand(0)
+                        .requiredStock(0)
+                        .productionQty(0)
+                        .mps(0)
+                        .build(),
+                DueDatePreviewDto.WeekPlanDto.builder()
+                        .week("2024-03-2W")
+                        .demand(0)
+                        .requiredStock(0)
+                        .productionQty(0)
+                        .mps(0)
+                        .build()
+        );
+
+        DueDatePreviewDto response = DueDatePreviewDto.builder()
+                .quotationCode("Q-2024-001")
+                .customerName("현대자동차")
+                .productName("도어패널")
+                .confirmedDueDate("2024-03-10")
+                .weeks(weeks)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(response, "제안 납기 계획을 조회했습니다.", HttpStatus.OK));
+    }
 }
