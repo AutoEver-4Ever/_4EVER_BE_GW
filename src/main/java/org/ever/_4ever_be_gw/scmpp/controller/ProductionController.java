@@ -252,4 +252,27 @@ public class ProductionController {
 
         return ResponseEntity.ok(ApiResponse.success(response, "BOM이 성공적으로 수정되었습니다.", HttpStatus.OK));
     }
+
+    @DeleteMapping("/boms/{bomId}")
+    @Operation(
+            summary = "BOM 삭제",
+            description = "BOM을 삭제합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"BOM이 성공적으로 삭제되었습니다.\",\n  \"data\": null\n}")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Void>> deleteBom(
+            @Parameter(name = "bomId", description = "BOM ID")
+            @PathVariable Long bomId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(null, "BOM이 성공적으로 삭제되었습니다.", HttpStatus.OK));
+    }
+
 }
