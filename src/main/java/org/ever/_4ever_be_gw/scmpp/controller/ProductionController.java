@@ -42,4 +42,65 @@ public class ProductionController {
 
         return ResponseEntity.ok(ApiResponse.success(response, "BOM이 성공적으로 생성되었습니다.", HttpStatus.OK));
     }
+
+
+
+    @GetMapping("/boms")
+    @Operation(
+            summary = "BOM 목록 조회",
+            description = "BOM 목록을 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"BOM 목록 조회 성공\",\n  \"data\": {\n    \"content\": [\n      {\n        \"bomId\": 1,\n        \"bomCode\": \"BOM-001\",\n        \"productId\": 1,\n        \"productCode\": \"PRD-001\",\n        \"productName\": \"스마트폰 케이스\",\n        \"version\": \"v1.2\",\n        \"status\": \"활성\",\n        \"lastModifiedAt\": \"2024-01-20T00:00:00Z\"\n      },\n      {\n        \"bomId\": 2,\n        \"bomCode\": \"BOM-002\",\n        \"productId\": 2,\n        \"productCode\": \"PRD-002\",\n        \"productName\": \"무선 이어폰\",\n        \"version\": \"v2.0\",\n        \"status\": \"활성\",\n        \"lastModifiedAt\": \"2024-01-18T00:00:00Z\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 2,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getBomList(
+            @Parameter(name = "page", description = "페이지 번호")
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @Parameter(name = "size", description = "페이지 크기")
+            @RequestParam(required = false, defaultValue = "10") int size
+    ) {
+        List<BomListItemDto> items = Arrays.asList(
+                BomListItemDto.builder()
+                        .bomId(1L)
+                        .bomCode("BOM-001")
+                        .productId(1L)
+                        .productCode("PRD-001")
+                        .productName("스마트폰 케이스")
+                        .version("v1.2")
+                        .status("활성")
+                        .lastModifiedAt(LocalDateTime.parse("2024-01-20T00:00:00"))
+                        .build(),
+                BomListItemDto.builder()
+                        .bomId(2L)
+                        .bomCode("BOM-002")
+                        .productId(2L)
+                        .productCode("PRD-002")
+                        .productName("무선 이어폰")
+                        .version("v2.0")
+                        .status("활성")
+                        .lastModifiedAt(LocalDateTime.parse("2024-01-18T00:00:00"))
+                        .build()
+        );
+
+        PageDto pageInfo = PageDto.builder()
+                .number(page)
+                .size(size)
+                .totalElements(2)
+                .totalPages(1)
+                .hasNext(false)
+                .build();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", items);
+        response.put("page", pageInfo);
+
+        return ResponseEntity.ok(ApiResponse.success(response, "BOM 목록 조회 성공", HttpStatus.OK));
+    }
 }
