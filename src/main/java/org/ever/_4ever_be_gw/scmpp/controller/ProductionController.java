@@ -634,4 +634,69 @@ public class ProductionController {
 
         return ResponseEntity.ok(ApiResponse.success(response, "제품별 MPS 조회에 성공했습니다.", HttpStatus.OK));
     }
+
+    @GetMapping("/quotations/{quotationId}/simulate")
+    @Operation(
+            summary = "견적에 대한 ATP + MPS + MRP 시뮬레이션 실행",
+            description = "견적에 대한 ATP(Available to Promise), MPS, MRP 시뮬레이션을 실행합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 시뮬레이션이 성공적으로 완료되었습니다.\",\n  \"data\": {\n    \"quotationId\": 1,\n    \"quotationCode\": \"Q-2024-001\",\n    \"customerId\": 1,\n    \"customerName\": \"현대자동차\",\n    \"productId\": 1,\n    \"productName\": \"도어패널\",\n    \"requestQty\": 500,\n    \"requestDueDate\": \"2024-02-15\",\n    \"simulation\": {\n      \"status\": \"FAIL\",\n      \"availableQty\": 130,\n      \"suggestedDueDate\": \"2024-03-10\",\n      \"generatedAt\": \"2025-10-08T12:00:00Z\"\n    },\n    \"shortages\": [\n      {\n        \"itemId\": 1,\n        \"itemName\": \"스테인리스 스틸\",\n        \"requiredQty\": 100,\n        \"stockQty\": 50,\n        \"shortQty\": 50\n      },\n      {\n        \"itemId\": 2,\n        \"itemName\": \"구리선\",\n        \"requiredQty\": 200,\n        \"stockQty\": 150,\n        \"shortQty\": 50\n      },\n      {\n        \"itemId\": 3,\n        \"itemName\": \"베어링\",\n        \"requiredQty\": 50,\n        \"stockQty\": 30,\n        \"shortQty\": 20\n      }\n    ]\n  }\n}")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<QuotationSimulationDto>> simulateQuotation(
+            @Parameter(name = "quotationId", description = "견적 ID")
+            @PathVariable Long quotationId,
+            @RequestParam(required = false) Boolean forceRecalculate
+    ) {
+        List<QuotationSimulationDto.ShortageItemDto> shortages = Arrays.asList(
+                QuotationSimulationDto.ShortageItemDto.builder()
+                        .itemId(1L)
+                        .itemName("스테인리스 스틸")
+                        .requiredQty(100)
+                        .stockQty(50)
+                        .shortQty(50)
+                        .build(),
+                QuotationSimulationDto.ShortageItemDto.builder()
+                        .itemId(2L)
+                        .itemName("구리선")
+                        .requiredQty(200)
+                        .stockQty(150)
+                        .shortQty(50)
+                        .build(),
+                QuotationSimulationDto.ShortageItemDto.builder()
+                        .itemId(3L)
+                        .itemName("베어링")
+                        .requiredQty(50)
+                        .stockQty(30)
+                        .shortQty(20)
+                        .build()
+        );
+
+        QuotationSimulationDto response = QuotationSimulationDto.builder()
+                .quotationId(quotationId)
+                .quotationCode("Q-2024-001")
+                .customerId(1L)
+                .customerName("현대자동차")
+                .productId(1L)
+                .productName("도어패널")
+                .requestQty(500)
+                .requestDueDate("2024-02-15")
+                .simulation(QuotationSimulationDto.SimulationResultDto.builder()
+                        .status("FAIL")
+                        .availableQty(130)
+                        .suggestedDueDate("2024-03-10")
+                        .generatedAt("2025-10-08T12:00:00Z")
+                        .build())
+                .shortages(shortages)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(response, "견적 시뮬레이션이 성공적으로 완료되었습니다.", HttpStatus.OK));
+    }
 }
