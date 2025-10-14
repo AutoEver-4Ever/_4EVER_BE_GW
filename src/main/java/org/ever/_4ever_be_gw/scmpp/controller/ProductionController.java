@@ -760,4 +760,74 @@ public class ProductionController {
 
         return ResponseEntity.ok(ApiResponse.success(response, "제안 납기 계획을 조회했습니다.", HttpStatus.OK));
     }
+
+    @GetMapping("/mes/work-orders")
+    @Operation(
+            summary = "MES 작업 목록 조회",
+            description = "MES(Manufacturing Execution System) 작업 목록을 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{ \"status\": 200, \"success\": true, \"message\": \"성공적으로 조회했습니다.\", \"data\": { \"content\": [ { \"workOrderId\": 1, \"workOrderCode\": \"WO-2024-001\", \"productId\": 1, \"productName\": \"산업용 모터 5HP\", \"quantity\": 50, \"unit\": \"EA\", \"quotationId\": 1, \"quotationCode\": \"Q-2024-001\", \"status\": \"IN_PROGRESS\", \"currentOperation\": \"OP30\", \"startDate\": \"2024-01-15\", \"endDate\": \"2024-02-10\", \"progressRate\": 65, \"operationSequence\": [\"OP10\", \"OP20\", \"OP30\", \"OP40\", \"OP50\", \"OP60\"] }, { \"workOrderId\": 2, \"workOrderCode\": \"WO-2024-002\", \"productId\": 2, \"productName\": \"알루미늄 프레임\", \"quantity\": 100, \"unit\": \"EA\", \"quotationId\": 2, \"quotationCode\": \"Q-2024-002\", \"status\": \"PLANNED\", \"currentOperation\": \"OP10\", \"startDate\": \"2024-01-20\", \"endDate\": \"2024-02-15\", \"progressRate\": 0, \"operationSequence\": [\"OP10\", \"OP20\", \"OP30\", \"OP40\", \"OP50\", \"OP60\"] } ], \"page\": 0, \"size\": 20, \"totalElements\": 2, \"totalPages\": 1 } }")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMesWorkOrders(
+            @Parameter(name = "status", description = "작업 상태")
+            @RequestParam(required = false) String status,
+            @Parameter(name = "quotationId", description = "견적 ID")
+            @RequestParam(required = false) Long quotationId,
+            @Parameter(name = "page", description = "페이지 번호")
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @Parameter(name = "size", description = "페이지 크기")
+            @RequestParam(required = false, defaultValue = "20") int size
+    ) {
+        List<MesWorkOrderDto> items = Arrays.asList(
+                MesWorkOrderDto.builder()
+                        .workOrderId(1L)
+                        .workOrderCode("WO-2024-001")
+                        .productId(1L)
+                        .productName("산업용 모터 5HP")
+                        .quantity(50)
+                        .unit("EA")
+                        .quotationId(1L)
+                        .quotationCode("Q-2024-001")
+                        .status("IN_PROGRESS")
+                        .currentOperation("OP30")
+                        .startDate("2024-01-15")
+                        .endDate("2024-02-10")
+                        .progressRate(65)
+                        .operationSequence(Arrays.asList("OP10", "OP20", "OP30", "OP40", "OP50", "OP60"))
+                        .build(),
+                MesWorkOrderDto.builder()
+                        .workOrderId(2L)
+                        .workOrderCode("WO-2024-002")
+                        .productId(2L)
+                        .productName("알루미늄 프레임")
+                        .quantity(100)
+                        .unit("EA")
+                        .quotationId(2L)
+                        .quotationCode("Q-2024-002")
+                        .status("PLANNED")
+                        .currentOperation("OP10")
+                        .startDate("2024-01-20")
+                        .endDate("2024-02-15")
+                        .progressRate(0)
+                        .operationSequence(Arrays.asList("OP10", "OP20", "OP30", "OP40", "OP50", "OP60"))
+                        .build()
+        );
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", items);
+        response.put("page", page);
+        response.put("size", size);
+        response.put("totalElements", 2);
+        response.put("totalPages", 1);
+
+        return ResponseEntity.ok(ApiResponse.success(response, "성공적으로 조회했습니다.", HttpStatus.OK));
+    }
 }
