@@ -54,6 +54,8 @@ public enum ErrorCode {
     ANALYTICS_RANGE_TOO_LARGE(1032, HttpStatus.BAD_REQUEST, "조회 기간은 최대 12주(3개월)까지만 가능합니다."),
     AUTH_TOKEN_REQUIRED(1033, HttpStatus.UNAUTHORIZED, "유효한 인증 토큰이 필요합니다."),
     BODY_VALIDATION_FAILED(1034, HttpStatus.UNPROCESSABLE_ENTITY, "요청 본문 검증에 실패했습니다."),
+    ANALYTICS_START_AFTER_END(1048, HttpStatus.CONFLICT, "startDate는 endDate보다 이후일 수 없습니다."),
+    ANALYTICS_INVALID_DATE_FORMAT(1049, HttpStatus.UNPROCESSABLE_ENTITY, "날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식을 사용하세요."),
     PURCHASE_REQUEST_UPDATE_CONFLICT(1035, HttpStatus.CONFLICT, "현재 상태에서는 수정이 허용되지 않습니다. (required: NON_STOCK & PENDING)"),
     PURCHASE_REQUEST_APPROVAL_FORBIDDEN(1036, HttpStatus.FORBIDDEN, "승인 권한이 없습니다. (required role: PR_APPROVER|PURCHASING_MANAGER|ADMIN)"),
     PURCHASE_REQUEST_INVALID_TRANSITION(1037, HttpStatus.UNPROCESSABLE_ENTITY, "해당 상태에서는 승인할 수 없습니다."),

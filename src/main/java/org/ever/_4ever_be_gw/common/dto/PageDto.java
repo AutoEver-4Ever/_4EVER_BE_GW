@@ -1,10 +1,11 @@
-package org.ever._4ever_be_gw.scmpp.dto;
+package org.ever._4ever_be_gw.common.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// 페이지네이션 공통 dto 입니다.
 @Data
 @Builder
 @NoArgsConstructor
