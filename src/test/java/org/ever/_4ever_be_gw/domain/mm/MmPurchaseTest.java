@@ -63,6 +63,36 @@ class MmPurchaseTest {
     }
 
     @Test
+    @DisplayName("구매요청 목록 - 요청자명 검색")
+    void getPurchaseRequisitions_filterByRequesterName() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions").servletPath("/api")
+                        .queryParam("requesterName", "김민수")
+                        .queryParam("sort", "createdAt,desc")
+                        .queryParam("page", "0")
+                        .queryParam("size", "20")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.content").isArray());
+    }
+
+    @Test
+    @DisplayName("구매요청 목록 - 부서 필터링")
+    void getPurchaseRequisitions_filterByDepartment() throws Exception {
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions").servletPath("/api")
+                        .queryParam("departmentId", "15")
+                        .queryParam("sort", "createdAt,asc")
+                        .queryParam("page", "0")
+                        .queryParam("size", "10")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.content").isArray());
+    }
+
+    @Test
     @DisplayName("검증 실패 시 422와 errors 배열")
     void getPurchaseRequisitions_validationErrors() throws Exception {
         mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions").servletPath("/api")
@@ -109,13 +139,9 @@ class MmPurchaseTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("발주서 목록 조회에 성공했습니다."))
-                .andExpect(jsonPath("$.data.total").value(10))
-                .andExpect(jsonPath("$.data.totalPages").value(1))
-                .andExpect(jsonPath("$.data.hasNext").value(false))
-                .andExpect(jsonPath("$.data.hasPrev").value(false))
-                .andExpect(jsonPath("$.data.orders").isArray())
-                .andExpect(jsonPath("$.data.orders[0].id").value(1001))
-                .andExpect(jsonPath("$.data.orders[9].id").value(1010));
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].id").value(1001))
+                .andExpect(jsonPath("$.data[0].status").value("APPROVED"));
     }
 
     @Test
@@ -131,7 +157,7 @@ class MmPurchaseTest {
                 .andExpect(jsonPath("$.message").value("요청 파라미터 검증에 실패했습니다."))
                 .andExpect(jsonPath("$.errors").isArray())
                 .andExpect(jsonPath("$.errors[0].field").value("status"))
-                .andExpect(jsonPath("$.errors[0].reason").value("ALLOWED_VALUES: APPROVED, PENDING, DELIVERED"));
+                .andExpect(jsonPath("$.errors[0].reason").value("ALLOWED_VALUES: APPROVED, PENDING, REJECTED, DELIVERED"));
     }
 
     @Test

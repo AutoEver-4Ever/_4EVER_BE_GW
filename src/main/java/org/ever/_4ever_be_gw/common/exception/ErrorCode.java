@@ -27,6 +27,16 @@ public enum ErrorCode {
     VENDOR_FORBIDDEN(1016, HttpStatus.FORBIDDEN, "공급업체 조회 권한이 없습니다."),
     VENDOR_NOT_FOUND(1017, HttpStatus.NOT_FOUND, "해당 공급업체를 찾을 수 없습니다."),
     VENDOR_PROCESSING_ERROR(1018, HttpStatus.INTERNAL_SERVER_ERROR, "공급업체 조회 처리 중 오류가 발생했습니다."),
+    VENDOR_CREATE_FORBIDDEN(1019, HttpStatus.FORBIDDEN, "공급업체 등록 권한이 없습니다."),
+    VENDOR_CREATE_VALIDATION_FAILED(1020, HttpStatus.UNPROCESSABLE_ENTITY, "요청 파라미터 검증에 실패했습니다."),
+    VENDOR_CREATE_PROCESSING_ERROR(1021, HttpStatus.INTERNAL_SERVER_ERROR, "공급업체 등록 처리 중 오류가 발생했습니다."),
+    VENDOR_ACCOUNT_FORBIDDEN(1022, HttpStatus.FORBIDDEN, "계정 생성 권한이 없습니다."),
+    VENDOR_ACCOUNT_ALREADY_EXISTS(1023, HttpStatus.CONFLICT, "이미 계정이 발급된 공급업체입니다."),
+    VENDOR_ACCOUNT_PROCESSING_ERROR(1024, HttpStatus.INTERNAL_SERVER_ERROR, "초대 이메일 발송 중 오류가 발생했습니다."),
+    VENDOR_UPDATE_FORBIDDEN(1025, HttpStatus.FORBIDDEN, "공급업체 수정 권한이 없습니다."),
+    VENDOR_UPDATE_VALIDATION_FAILED(1026, HttpStatus.UNPROCESSABLE_ENTITY, "요청 본문 검증에 실패했습니다."),
+    VENDOR_UPDATE_PROCESSING_ERROR(1027, HttpStatus.INTERNAL_SERVER_ERROR, "공급업체 정보 수정 처리 중 오류가 발생했습니다."),
+    VENDOR_UPDATE_NOT_FOUND(1028, HttpStatus.NOT_FOUND, "수정할 공급업체를 찾을 수 없습니다."),
     QUOTATION_DUE_DATE_INVALID(1019, HttpStatus.BAD_REQUEST, "요청 납기일은 현재 날짜 이후여야 합니다."),
     QUOTATION_ITEMS_EMPTY(1020, HttpStatus.UNPROCESSABLE_ENTITY, "items는 1개 이상이어야 합니다."),
     PURCHASE_ORDER_NOT_FOUND(1015, HttpStatus.NOT_FOUND, "해당 발주서를 찾을 수 없습니다."),
@@ -42,6 +52,25 @@ public enum ErrorCode {
     CUSTOMER_DELETE_FORBIDDEN(1030, HttpStatus.FORBIDDEN, "해당 고객사를 삭제할 권한이 없습니다."),
     CUSTOMER_DELETE_CONFLICT(1031, HttpStatus.CONFLICT, "해당 고객사는 거래 내역이 존재하여 삭제할 수 없습니다."),
     ANALYTICS_RANGE_TOO_LARGE(1032, HttpStatus.BAD_REQUEST, "조회 기간은 최대 12주(3개월)까지만 가능합니다."),
+    AUTH_TOKEN_REQUIRED(1033, HttpStatus.UNAUTHORIZED, "유효한 인증 토큰이 필요합니다."),
+    BODY_VALIDATION_FAILED(1034, HttpStatus.UNPROCESSABLE_ENTITY, "요청 본문 검증에 실패했습니다."),
+    PURCHASE_REQUEST_UPDATE_CONFLICT(1035, HttpStatus.CONFLICT, "현재 상태에서는 수정이 허용되지 않습니다. (required: NON_STOCK & PENDING)"),
+    PURCHASE_REQUEST_APPROVAL_FORBIDDEN(1036, HttpStatus.FORBIDDEN, "승인 권한이 없습니다. (required role: PR_APPROVER|PURCHASING_MANAGER|ADMIN)"),
+    PURCHASE_REQUEST_INVALID_TRANSITION(1037, HttpStatus.UNPROCESSABLE_ENTITY, "해당 상태에서는 승인할 수 없습니다."),
+    PURCHASE_REQUEST_APPROVAL_PROCESSING_ERROR(1038, HttpStatus.INTERNAL_SERVER_ERROR, "요청 처리 중 오류가 발생했습니다."),
+    PURCHASE_REQUEST_REJECTION_FORBIDDEN(1039, HttpStatus.FORBIDDEN, "해당 문서를 반려할 권한이 없습니다. (required role: PR_APPROVER|PURCHASING_MANAGER|ADMIN)"),
+    PURCHASE_REQUEST_REJECTION_INVALID_TRANSITION(1040, HttpStatus.UNPROCESSABLE_ENTITY, "해당 상태에서는 반려할 수 없습니다."),
+    PURCHASE_REQUEST_REJECTION_PROCESSING_ERROR(1041, HttpStatus.INTERNAL_SERVER_ERROR, "요청 처리 중 오류가 발생했습니다."),
+
+    // Purchase Order Approval (PO)
+    PURCHASE_ORDER_APPROVAL_FORBIDDEN(1042, HttpStatus.FORBIDDEN, "발주서 승인 권한이 없습니다."),
+    PURCHASE_ORDER_INVALID_TRANSITION(1043, HttpStatus.CONFLICT, "현재 상태에서는 승인할 수 없습니다. (status=PENDING만 승인 가능)"),
+    PURCHASE_ORDER_APPROVAL_PROCESSING_ERROR(1044, HttpStatus.INTERNAL_SERVER_ERROR, "승인 처리 중 오류가 발생했습니다."),
+
+    // Purchase Order Rejection (PO)
+    PURCHASE_ORDER_REJECTION_FORBIDDEN(1045, HttpStatus.FORBIDDEN, "발주서 반려 권한이 없습니다."),
+    PURCHASE_ORDER_REJECTION_REASON_REQUIRED(1046, HttpStatus.UNPROCESSABLE_ENTITY, "반려 사유를 입력해야 합니다."),
+    PURCHASE_ORDER_REJECTION_PROCESSING_ERROR(1047, HttpStatus.INTERNAL_SERVER_ERROR, "발주서 반려 처리 중 오류가 발생했습니다."),
 
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),

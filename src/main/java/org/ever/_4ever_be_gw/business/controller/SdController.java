@@ -12,6 +12,7 @@ import org.ever._4ever_be_gw.business.dto.CustomerUpdateRequestDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.common.util.PageResponseUtils;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.ever._4ever_be_gw.business.dto.SdPeriodMetricsDto;
 import org.springframework.http.HttpStatus;
@@ -115,7 +116,7 @@ public class SdController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"items\": [\n      {\n        \"quotationId\": 12001,\n        \"quotationCode\": \"Q2024001\",\n        \"customerName\": \"삼성전자\",\n        \"ownerName\": \"김철수\",\n        \"quotationDate\": \"2024-01-15\",\n        \"dueDate\": \"2024-02-15\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PENDING\",\n        \"statusLabel\": \"대기\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 1, \"size\": 10, \"totalElements\": 57, \"totalPages\": 6, \"hasNext\": true }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"items\": [\n      {\n        \"quotationId\": 12001,\n        \"quotationCode\": \"Q2024001\",\n        \"customerName\": \"삼성전자\",\n        \"ownerName\": \"김철수\",\n        \"quotationDate\": \"2024-01-15\",\n        \"dueDate\": \"2024-02-15\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PENDING\",\n        \"statusLabel\": \"대기\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 57, \"totalPages\": 6, \"hasNext\": true }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "422",
@@ -176,7 +177,7 @@ public class SdController {
 
         // 기본값 처리
         String effectiveSort = (sort == null || sort.isBlank()) ? "quotationDate,desc" : sort;
-        int p = (page == null || page < 1) ? 1 : page;
+        int pageIndex = (page == null || page < 1) ? 0 : page - 1;
         int s = (size == null || size < 1) ? 10 : size;
 
         // 500 모킹 트리거
@@ -214,15 +215,7 @@ public class SdController {
 
         // 페이지 메타 (목업 고정 57건 가정)
         long totalElements = 57L;
-        int totalPages = (int) Math.ceil((double) totalElements / Math.max(1, s));
-        boolean hasNext = (long) p * s < totalElements;
-
-        Map<String, Object> pageMeta = new LinkedHashMap<>();
-        pageMeta.put("number", p);
-        pageMeta.put("size", s);
-        pageMeta.put("totalElements", totalElements);
-        pageMeta.put("totalPages", totalPages);
-        pageMeta.put("hasNext", hasNext);
+        Map<String, Object> pageMeta = PageResponseUtils.buildPage(pageIndex, s, totalElements);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("items", items);
@@ -577,7 +570,7 @@ public class SdController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 목록을 조회했습니다.\",\n  \"data\": {\n    \"total\": 3,\n    \"page\": 1,\n    \"size\": 10,\n    \"customers\": [\n      {\n        \"customerId\": 1,\n        \"customerCode\": \"C-001\",\n        \"companyName\": \"삼성전자\",\n        \"contactPerson\": \"김철수\",\n        \"phone\": \"02-1234-5678\",\n        \"email\": \"kim@samsung.com\",\n        \"address\": \"서울시 강남구 테헤란로 123\",\n        \"transactionAmount\": 1250000000,\n        \"orderCount\": 45,\n        \"lastOrderDate\": \"2024-01-15\",\n        \"status\": \"활성\"\n      }\n    ]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 목록을 조회했습니다.\",\n  \"data\": {\n    \"customers\": [\n      {\n        \"customerId\": 1,\n        \"customerCode\": \"C-001\",\n        \"companyName\": \"삼성전자\",\n        \"contactPerson\": \"김철수\",\n        \"phone\": \"02-1234-5678\",\n        \"email\": \"kim@samsung.com\",\n        \"address\": \"서울시 강남구 테헤란로 123\",\n        \"transactionAmount\": 1250000000,\n        \"orderCount\": 45,\n        \"lastOrderDate\": \"2024-01-15\",\n        \"status\": \"활성\"\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 3, \"totalPages\": 1, \"hasNext\": false }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -642,7 +635,7 @@ public class SdController {
             throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        int p = (page == null || page < 1) ? 1 : page;
+        int pageIndex = (page == null || page < 1) ? 0 : page - 1;
         int s = (size == null || size < 1) ? 10 : size;
 
         // 목업 데이터 준비(최소 10건)
@@ -683,15 +676,13 @@ public class SdController {
         }
 
         int total = filtered.size();
-        int fromIdx = Math.min((p - 1) * s, total);
+        int fromIdx = Math.min(pageIndex * s, total);
         int toIdx = Math.min(fromIdx + s, total);
         List<Map<String, Object>> customers = filtered.subList(fromIdx, toIdx);
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("total", total);
-        data.put("page", p);
-        data.put("size", s);
         data.put("customers", customers);
+        data.put("page", PageResponseUtils.buildPage(pageIndex, s, total));
 
         return ResponseEntity.ok(ApiResponse.success(data, "고객사 목록을 조회했습니다.", HttpStatus.OK));
     }
