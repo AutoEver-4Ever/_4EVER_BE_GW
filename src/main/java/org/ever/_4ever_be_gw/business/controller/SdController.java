@@ -784,21 +784,9 @@ import java.util.stream.Collectors;
     )
     public ResponseEntity<ApiResponse<Object>> getCustomerDetail(
             @Parameter(description = "고객사 ID")
-            @org.springframework.web.bind.annotation.PathVariable("cusId") Long cusId,
-            @RequestHeader(value = "Authorization", required = false) String authorization
+            @org.springframework.web.bind.annotation.PathVariable("cusId") Long cusId
     ) {
-        // 인증 체크
-        if (authorization == null || authorization.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
-        }
-        String token = authorization.trim().toUpperCase(Locale.ROOT);
-        if (token.contains("ERROR")) {
-            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
-        }
-        // 권한 체크: SD_VIEWER, SALES_MANAGER, ADMIN
-        if (!(token.contains("SD_VIEWER") || token.contains("SALES_MANAGER") || token.contains("ADMIN"))) {
-            throw new BusinessException(ErrorCode.CUSTOMER_FORBIDDEN);
-        }
+
         // 403 모킹 (특정 ID)
         if (Long.valueOf(403001L).equals(cusId)) {
             throw new BusinessException(ErrorCode.CUSTOMER_FORBIDDEN);
