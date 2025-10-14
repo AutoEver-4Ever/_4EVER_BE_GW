@@ -275,4 +275,79 @@ public class ProductionController {
         return ResponseEntity.ok(ApiResponse.success(null, "BOM이 성공적으로 삭제되었습니다.", HttpStatus.OK));
     }
 
+    @PostMapping("/mrp/request-summary")
+    @Operation(
+            summary = "MRP 자재 구매 요청 리스트",
+            description = "MRP 자재 구매 요청 목록을 생성합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매 요청 요약을 계산했습니다.\",\n  \"data\": {\n    \"selectedOrderCount\": 4,\n    \"totalExpectedAmount\": 3210000,\n    \"requestDate\": \"2025-10-13\",\n    \"items\": [\n      {\n        \"plannedId\": 1,\n        \"quotationCode\": \"Q-2024-001\",\n        \"itemName\": \"스테인리스 스틸\",\n        \"quantity\": 400,\n        \"unitPrice\": 1200,\n        \"totalAmount\": 480000,\n        \"supplier\": \"포스코\",\n        \"dueDate\": \"2024-02-08\",\n        \"status\": \"계획\"\n      },\n      {\n        \"plannedId\": 2,\n        \"quotationCode\": \"Q-2024-002\",\n        \"itemName\": \"구리선\",\n        \"quantity\": 600,\n        \"unitPrice\": 800,\n        \"totalAmount\": 480000,\n        \"supplier\": \"LS전선\",\n        \"dueDate\": \"2024-02-09\",\n        \"status\": \"계획\"\n      },\n      {\n        \"plannedId\": 3,\n        \"quotationCode\": \"Q-2024-003\",\n        \"itemName\": \"베어링 6205\",\n        \"quantity\": 100,\n        \"unitPrice\": 15000,\n        \"totalAmount\": 1500000,\n        \"supplier\": \"SKF코리아\",\n        \"dueDate\": \"2024-02-07\",\n        \"status\": \"계획\"\n      },\n      {\n        \"plannedId\": 4,\n        \"quotationCode\": \"Q-2024-001\",\n        \"itemName\": \"알루미늄 프로파일\",\n        \"quantity\": 300,\n        \"unitPrice\": 2500,\n        \"totalAmount\": 750000,\n        \"supplier\": \"한국알루미늄\",\n        \"dueDate\": \"2024-02-10\",\n        \"status\": \"계획\"\n      }\n    ]\n  }\n}")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<MrpRequestSummaryDto>> getMrpRequestSummary(
+            @RequestBody MrpRequestBodyDto request
+    ) {
+        List<MrpRequestSummaryDto.MrpItemDto> items = Arrays.asList(
+                MrpRequestSummaryDto.MrpItemDto.builder()
+                        .plannedId(1L)
+                        .quotationCode("Q-2024-001")
+                        .itemName("스테인리스 스틸")
+                        .quantity(400)
+                        .unitPrice(1200)
+                        .totalAmount(480000)
+                        .supplier("포스코")
+                        .dueDate("2024-02-08")
+                        .status("계획")
+                        .build(),
+                MrpRequestSummaryDto.MrpItemDto.builder()
+                        .plannedId(2L)
+                        .quotationCode("Q-2024-002")
+                        .itemName("구리선")
+                        .quantity(600)
+                        .unitPrice(800)
+                        .totalAmount(480000)
+                        .supplier("LS전선")
+                        .dueDate("2024-02-09")
+                        .status("계획")
+                        .build(),
+                MrpRequestSummaryDto.MrpItemDto.builder()
+                        .plannedId(3L)
+                        .quotationCode("Q-2024-003")
+                        .itemName("베어링 6205")
+                        .quantity(100)
+                        .unitPrice(15000)
+                        .totalAmount(1500000)
+                        .supplier("SKF코리아")
+                        .dueDate("2024-02-07")
+                        .status("계획")
+                        .build(),
+                MrpRequestSummaryDto.MrpItemDto.builder()
+                        .plannedId(4L)
+                        .quotationCode("Q-2024-001")
+                        .itemName("알루미늄 프로파일")
+                        .quantity(300)
+                        .unitPrice(2500)
+                        .totalAmount(750000)
+                        .supplier("한국알루미늄")
+                        .dueDate("2024-02-10")
+                        .status("계획")
+                        .build()
+        );
+
+        MrpRequestSummaryDto response = MrpRequestSummaryDto.builder()
+                .selectedOrderCount(4)
+                .totalExpectedAmount(3210000)
+                .requestDate("2025-10-13")
+                .items(items)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(response, "구매 요청 요약을 계산했습니다.", HttpStatus.OK));
+    }
+
 }
