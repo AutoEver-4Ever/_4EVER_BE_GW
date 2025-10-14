@@ -12,6 +12,7 @@ import org.ever._4ever_be_gw.business.dto.CustomerUpdateRequestDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.common.util.PageResponseUtils;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.ever._4ever_be_gw.business.dto.SdPeriodMetricsDto;
 import org.springframework.http.HttpStatus;
@@ -30,10 +31,15 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/business/sd")
 @Tag(name = "영업관리(SD)", description = "영업관리(SD) API")
-public class SdController {
+    public class SdController {
 
     private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
 
+    
+
+    
+
+    // -------- Statistics (R) --------
     @GetMapping("/statistics")
     @Operation(
             summary = "SD 통계 조회",
@@ -106,6 +112,8 @@ public class SdController {
         return ResponseEntity.ok(ApiResponse.success(data, "OK", HttpStatus.OK));
     }
 
+    // (moved to end)
+
     @GetMapping("/quotations")
     @Operation(
             summary = "견적 목록 조회",
@@ -115,13 +123,13 @@ public class SdController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"items\": [\n      {\n        \"quotationId\": 12001,\n        \"quotationCode\": \"Q2024001\",\n        \"customerName\": \"삼성전자\",\n        \"ownerName\": \"김철수\",\n        \"quotationDate\": \"2024-01-15\",\n        \"dueDate\": \"2024-02-15\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PENDING\",\n        \"statusLabel\": \"대기\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 1, \"size\": 10, \"totalElements\": 57, \"totalPages\": 6, \"hasNext\": true }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"items\": [\n      {\n        \"quotationId\": 12001,\n        \"quotationCode\": \"Q2024001\",\n        \"customerName\": \"삼성전자\",\n        \"ownerName\": \"김철수\",\n        \"quotationDate\": \"2024-01-15\",\n        \"dueDate\": \"2024-02-15\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PENDING\",\n        \"statusLabel\": \"대기\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 57, \"totalPages\": 6, \"hasNext\": true }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "422",
                             description = "검증 실패",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: PENDING, REVIEW, APPROVED, REJECTED\" },\n    { \"field\": \"startDate/endDate\", \"reason\": \"FROM_AFTER_TO\" },\n    { \"field\": \"size\", \"reason\": \"MAX_200\" }\n  ]\n}"))
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: PENDING, REVIEW, APPROVED, REJECTED, ALL\" },\n    { \"field\": \"startDate/endDate\", \"reason\": \"FROM_AFTER_TO\" },\n    { \"field\": \"size\", \"reason\": \"MAX_200\" }\n  ]\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "500",
@@ -136,13 +144,13 @@ public class SdController {
             @RequestParam(name = "startDate", required = false) String startDate,
             @Parameter(description = "종료일(YYYY-MM-DD)")
             @RequestParam(name = "endDate", required = false) String endDate,
-            @Parameter(description = "상태: PENDING, REVIEW, APPROVED, REJECTED")
+            @Parameter(description = "상태: PENDING, REVIEW, APPROVED, REJECTED, ALL")
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "검색어(고객명/담당자)")
             @RequestParam(name = "search", required = false) String search,
             @Parameter(description = "정렬 필드,정렬방향")
             @RequestParam(name = "sort", required = false) String sort,
-            @Parameter(description = "페이지 번호(1-base)")
+            @Parameter(description = "페이지 번호(0-base)")
             @RequestParam(name = "page", required = false) Integer page,
             @Parameter(description = "페이지 크기(최대 200)")
             @RequestParam(name = "size", required = false) Integer size
@@ -153,9 +161,9 @@ public class SdController {
         java.time.LocalDate to = null;
 
         if (status != null) {
-            var allowed = java.util.Set.of("PENDING", "REVIEW", "APPROVED", "REJECTED");
+            var allowed = java.util.Set.of("PENDING", "REVIEW", "APPROVED", "REJECTED", "ALL");
             if (!allowed.contains(status)) {
-                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: PENDING, REVIEW, APPROVED, REJECTED"));
+                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: PENDING, REVIEW, APPROVED, REJECTED, ALL"));
             }
         }
         if (startDate != null) {
@@ -176,7 +184,7 @@ public class SdController {
 
         // 기본값 처리
         String effectiveSort = (sort == null || sort.isBlank()) ? "quotationDate,desc" : sort;
-        int p = (page == null || page < 1) ? 1 : page;
+        int pageIndex = (page == null || page < 0) ? 0 : page;
         int s = (size == null || size < 1) ? 10 : size;
 
         // 500 모킹 트리거
@@ -184,19 +192,19 @@ public class SdController {
             throw new BusinessException(ErrorCode.QUOTATION_LIST_PROCESSING_ERROR);
         }
 
-        // 성공 목업 10건 고정
+        // 성공 목업 57건 생성
         List<Map<String, Object>> items = new ArrayList<>();
         String[] customers = {"삼성전자", "LG전자", "현대자동차", "카카오", "네이버", "SK하이닉스", "포스코", "두산중공업", "한화시스템", "CJ대한통운"};
         String[] owners = {"김철수", "이영희", "박민수", "최지훈", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유"};
         String[] codes = {"PENDING", "REVIEW", "APPROVED", "REJECTED"};
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 57; i++) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("quotationId", 12001 + i);
             row.put("quotationCode", String.format("Q2024%03d", i + 1));
             row.put("customerName", customers[i % customers.length]);
             row.put("ownerName", owners[i % owners.length]);
-            row.put("quotationDate", String.format("2024-01-%02d", 15 + (i % 10)));
-            row.put("dueDate", String.format("2024-02-%02d", 10 + (i % 10)));
+            row.put("quotationDate", String.format("2024-01-%02d", 1 + (i % 28)));
+            row.put("dueDate", String.format("2024-02-%02d", 1 + (i % 28)));
             row.put("totalAmount", 15_000_000L - (i * 250_000L));
             String statusCode = codes[i % codes.length];
             row.put("statusCode", statusCode);
@@ -212,20 +220,61 @@ public class SdController {
             items.add(row);
         }
 
-        // 페이지 메타 (목업 고정 57건 가정)
-        long totalElements = 57L;
-        int totalPages = (int) Math.ceil((double) totalElements / Math.max(1, s));
-        boolean hasNext = (long) p * s < totalElements;
+        // 필터 적용: status(ALL은 전체), 날짜 범위, 검색어(customerName/ownerName/quotationCode)
+        List<Map<String, Object>> filtered = items;
+        if (status != null && !status.equalsIgnoreCase("ALL")) {
+            final String st = status.toUpperCase(Locale.ROOT);
+            filtered = filtered.stream()
+                    .filter(m -> st.equals(String.valueOf(m.get("statusCode"))))
+                    .toList();
+        }
+        if (from != null) {
+            final java.time.LocalDate minDate = from;
+            filtered = filtered.stream()
+                    .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("quotationDate"))).isBefore(minDate))
+                    .toList();
+        }
+        if (to != null) {
+            final java.time.LocalDate maxDate = to;
+            filtered = filtered.stream()
+                    .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("quotationDate"))).isAfter(maxDate))
+                    .toList();
+        }
+        if (search != null && !search.isBlank()) {
+            final String kw = search.toLowerCase(Locale.ROOT);
+            filtered = filtered.stream()
+                    .filter(m -> String.valueOf(m.get("customerName")).toLowerCase(Locale.ROOT).contains(kw)
+                              || String.valueOf(m.get("ownerName")).toLowerCase(Locale.ROOT).contains(kw)
+                              || String.valueOf(m.get("quotationCode")).toLowerCase(Locale.ROOT).contains(kw))
+                    .toList();
+        }
 
-        Map<String, Object> pageMeta = new LinkedHashMap<>();
-        pageMeta.put("number", p);
-        pageMeta.put("size", s);
-        pageMeta.put("totalElements", totalElements);
-        pageMeta.put("totalPages", totalPages);
-        pageMeta.put("hasNext", hasNext);
+        // 정렬 적용: quotationDate|dueDate|totalAmount + asc|desc
+        String[] sortParts = effectiveSort.split(",");
+        String sortField = sortParts[0].trim();
+        String sortDirection = sortParts.length > 1 ? sortParts[1].trim().toLowerCase(Locale.ROOT) : "desc";
+        java.util.Comparator<Map<String, Object>> comparator;
+        switch (sortField) {
+            case "dueDate" -> comparator = java.util.Comparator.comparing(m -> java.time.LocalDate.parse(String.valueOf(m.get("dueDate"))));
+            case "totalAmount" -> comparator = java.util.Comparator.comparing(m -> ((Number) m.get("totalAmount")).longValue());
+            case "quotationDate" -> comparator = java.util.Comparator.comparing(m -> java.time.LocalDate.parse(String.valueOf(m.get("quotationDate"))));
+            default -> comparator = java.util.Comparator.comparing(m -> java.time.LocalDate.parse(String.valueOf(m.get("quotationDate"))));
+        }
+        if ("desc".equals(sortDirection)) {
+            comparator = comparator.reversed();
+        }
+        filtered = filtered.stream().sorted(comparator).toList();
+
+        // 페이지네이션 적용
+        int total = filtered.size();
+        int fromIdx = Math.min(pageIndex * s, total);
+        int toIdx = Math.min(fromIdx + s, total);
+        List<Map<String, Object>> pageItems = filtered.subList(fromIdx, toIdx);
+
+        Map<String, Object> pageMeta = PageResponseUtils.buildPage(pageIndex, s, total);
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("items", items);
+        data.put("items", pageItems);
         data.put("page", pageMeta);
 
         return ResponseEntity.ok(ApiResponse.success(data, "견적 목록 조회에 성공했습니다.", HttpStatus.OK));
@@ -577,7 +626,7 @@ public class SdController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 목록을 조회했습니다.\",\n  \"data\": {\n    \"total\": 3,\n    \"page\": 1,\n    \"size\": 10,\n    \"customers\": [\n      {\n        \"customerId\": 1,\n        \"customerCode\": \"C-001\",\n        \"companyName\": \"삼성전자\",\n        \"contactPerson\": \"김철수\",\n        \"phone\": \"02-1234-5678\",\n        \"email\": \"kim@samsung.com\",\n        \"address\": \"서울시 강남구 테헤란로 123\",\n        \"transactionAmount\": 1250000000,\n        \"orderCount\": 45,\n        \"lastOrderDate\": \"2024-01-15\",\n        \"status\": \"활성\"\n      }\n    ]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 목록을 조회했습니다.\",\n  \"data\": {\n    \"customers\": [\n      {\n        \"customerId\": 1,\n        \"customerCode\": \"C-001\",\n        \"companyName\": \"삼성전자\",\n        \"contactPerson\": \"김철수\",\n        \"phone\": \"02-1234-5678\",\n        \"email\": \"kim@samsung.com\",\n        \"address\": \"서울시 강남구 테헤란로 123\",\n        \"transactionAmount\": 1250000000,\n        \"orderCount\": 45,\n        \"lastOrderDate\": \"2024-01-15\",\n        \"status\": \"활성\"\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 3, \"totalPages\": 1, \"hasNext\": false }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -610,7 +659,7 @@ public class SdController {
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "검색 키워드")
             @RequestParam(name = "keyword", required = false) String keyword,
-            @Parameter(description = "페이지 번호(1-base)")
+            @Parameter(description = "페이지 번호(0-base)")
             @RequestParam(name = "page", required = false) Integer page,
             @Parameter(description = "페이지 크기(최대 200)")
             @RequestParam(name = "size", required = false) Integer size
@@ -632,8 +681,8 @@ public class SdController {
                 errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ACTIVE, DEACTIVE"));
             }
         }
-        if (page != null && page < 1) {
-            errors.add(Map.of("field", "page", "reason", "MIN_1"));
+        if (page != null && page < 0) {
+            errors.add(Map.of("field", "page", "reason", "MIN_0"));
         }
         if (size != null && size > 200) {
             errors.add(Map.of("field", "size", "reason", "MAX_200"));
@@ -642,7 +691,7 @@ public class SdController {
             throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        int p = (page == null || page < 1) ? 1 : page;
+        int pageIndex = (page == null || page < 0) ? 0 : page;
         int s = (size == null || size < 1) ? 10 : size;
 
         // 목업 데이터 준비(최소 10건)
@@ -683,15 +732,14 @@ public class SdController {
         }
 
         int total = filtered.size();
-        int fromIdx = Math.min((p - 1) * s, total);
+        int fromIdx = Math.min(pageIndex * s, total);
         int toIdx = Math.min(fromIdx + s, total);
         List<Map<String, Object>> customers = filtered.subList(fromIdx, toIdx);
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("total", total);
-        data.put("page", p);
-        data.put("size", s);
         data.put("customers", customers);
+        Map<String, Object> pageMeta2 = PageResponseUtils.buildPage(pageIndex, s, total);
+        data.put("page", pageMeta2);
 
         return ResponseEntity.ok(ApiResponse.success(data, "고객사 목록을 조회했습니다.", HttpStatus.OK));
     }
@@ -1012,6 +1060,7 @@ public class SdController {
         return ResponseEntity.ok(ApiResponse.success(null, "고객사 정보가 삭제되었습니다.", HttpStatus.OK));
     }
 
+    // -------- Analytics (R) - week params (kept for tests) --------
     @GetMapping("/analytics/sales")
     @Operation(
             summary = "매출 분석 통계 조회",
@@ -1021,7 +1070,7 @@ public class SdController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 통계 데이터를 조회했습니다.\",\n  \"data\": {\n    \"trend\": [ { \"year\": 2025, \"week\": 10, \"sale\": 3.5, \"orderCount\": 120 } ],\n    \"productShare\": [ { \"productCode\": \"P-001\", \"productName\": \"OLED TV\", \"sale\": 12.3, \"saleShare\": 35.2 } ],\n    \"topCustomers\": [ { \"customerCode\": \"C-001\", \"customerName\": \"삼성전자\", \"sale\": 8.5, \"saleShare\": 24.3 } ]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 통계 데이터를 조회했습니다.\",\n  \"data\": {\n    \"trend\": [ { \"year\": 2025, \"week\": 10, \"sale\": 350000000, \"orderCount\": 120 } ],\n    \"productShare\": [ { \"productCode\": \"P-001\", \"productName\": \"OLED TV\", \"sale\": 1230000000, \"saleShare\": 35.2 } ],\n    \"topCustomers\": [ { \"customerCode\": \"C-001\", \"customerName\": \"삼성전자\", \"sale\": 850000000, \"saleShare\": 24.3 } ]\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "400",
@@ -1048,7 +1097,7 @@ public class SdController {
             throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
         }
 
-        // 데이터 캘린더 정의(목업): 2024 주차 1~52, 2025 주차 1~39(= 9월 4주차 근사)
+        // 인덱스 계산 (2024:1..52 → 0..51, 2025:1..39 → 52..90)
         int idxStart = toIndex(startYear, startWeek);
         int idxEnd = toIndex(endYear, endWeek);
         if (idxStart > idxEnd) { int t = idxStart; idxStart = idxEnd; idxEnd = t; }
@@ -1058,28 +1107,29 @@ public class SdController {
             throw new BusinessException(ErrorCode.ANALYTICS_RANGE_TOO_LARGE);
         }
 
-        // 전체 트렌드 풀 생성
-        java.util.List<java.util.Map<String, Object>> fullTrend = buildWeeklyTrend();
-        java.util.List<java.util.Map<String, Object>> trend = fullTrend.subList(idxStart, Math.min(idxEnd + 1, fullTrend.size()));
+        // 트렌드 데이터 생성
+        java.util.List<Map<String, Object>> trend = new java.util.ArrayList<>();
+        for (int i = idxStart; i <= idxEnd; i++) {
+            int year = (i < 52) ? 2024 : 2025;
+            int week = (i < 52) ? (i + 1) : (i - 52 + 1);
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("year", year);
+            row.put("week", week);
+            row.put("sale", 300_000_000L + ((i - idxStart) * 50_000_000L));
+            row.put("orderCount", 100 + ((i - idxStart) * 20));
+            trend.add(row);
+        }
 
-        // 제품 비중(자동차 외장재)
-        java.util.List<java.util.Map<String, Object>> productShare = new java.util.ArrayList<>();
-        productShare.add(row("P-001", "도어패널", 12.8, 28.5));
-        productShare.add(row("P-002", "프론트 범퍼", 10.4, 23.1));
-        productShare.add(row("P-003", "리어 범퍼", 8.9, 19.8));
-        productShare.add(row("P-004", "사이드 미러", 6.1, 13.2));
-        productShare.add(row("P-005", "보닛", 4.5, 10.4));
-        productShare.add(row("P-006", "트렁크 리드", 2.3, 5.0));
+        // 제품 비중/상위 고객(샘플)
+        java.util.List<Map<String, Object>> productShare = new java.util.ArrayList<>();
+        productShare.add(new LinkedHashMap<>() {{ put("productCode", "P-001"); put("productName", "OLED TV"); put("sale", 1_230_000_000L); put("saleShare", 35.2); }});
+        productShare.add(new LinkedHashMap<>() {{ put("productCode", "P-002"); put("productName", "냉장고"); put("sale", 850_000_000L); put("saleShare", 24.3); }});
 
-        // 상위 고객사(자동차 관련)
-        java.util.List<java.util.Map<String, Object>> topCustomers = new java.util.ArrayList<>();
-        topCustomers.add(crow("C-001", "현대자동차", 9.8, 27.0));
-        topCustomers.add(crow("C-002", "기아", 7.3, 20.1));
-        topCustomers.add(crow("C-003", "르노코리아", 5.1, 14.0));
-        topCustomers.add(crow("C-004", "쌍용자동차", 3.9, 10.8));
-        topCustomers.add(crow("C-005", "테슬라코리아", 3.2, 8.8));
+        java.util.List<Map<String, Object>> topCustomers = new java.util.ArrayList<>();
+        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-001"); put("customerName", "삼성전자"); put("sale", 850_000_000L); put("saleShare", 24.3); }});
+        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-002"); put("customerName", "LG전자"); put("sale", 500_000_000L); put("saleShare", 14.3); }});
 
-        java.util.Map<String, Object> data = new java.util.LinkedHashMap<>();
+        Map<String, Object> data = new LinkedHashMap<>();
         data.put("trend", trend);
         data.put("productShare", productShare);
         data.put("topCustomers", topCustomers);
@@ -1088,56 +1138,14 @@ public class SdController {
     }
 
     private static int toIndex(int year, int week) {
-        if (year < 2024 || year > 2025) return 0; // 단순 보정
-        int base2024 = 0;
         int weeks2024 = 52;
-        if (year == 2024) {
+        if (year <= 2024) {
             int w = Math.max(1, Math.min(52, week));
-            return base2024 + (w - 1);
-        } else { // 2025
-            int base2025 = base2024 + weeks2024; // 52
+            return w - 1;
+        } else { // 2025 기준
             int w = Math.max(1, Math.min(39, week));
-            return base2025 + (w - 1);
+            return weeks2024 + (w - 1);
         }
     }
-
-    private static java.util.List<java.util.Map<String, Object>> buildWeeklyTrend() {
-        java.util.List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
-        // 2024: 1..52
-        for (int w = 1; w <= 52; w++) {
-            list.add(tr("2024", w, 2.8 + 1.5 * Math.sin(w / 4.0), 100 + (w % 40)));
-        }
-        // 2025: 1..39 (9월 4주차 근사)
-        for (int w = 1; w <= 39; w++) {
-            list.add(tr("2025", w, 3.2 + 1.7 * Math.sin((w + 2) / 3.5), 110 + (w % 45)));
-        }
-        return list;
-    }
-
-    private static java.util.Map<String, Object> tr(String year, int week, double sale, int orders) {
-        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
-        m.put("year", Integer.parseInt(year));
-        m.put("week", week);
-        m.put("sale", Math.round(sale * 10.0) / 10.0);
-        m.put("orderCount", orders);
-        return m;
-    }
-
-    private static java.util.Map<String, Object> row(String code, String name, double sale, double share) {
-        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
-        m.put("productCode", code);
-        m.put("productName", name);
-        m.put("sale", sale);
-        m.put("saleShare", share);
-        return m;
-    }
-
-    private static java.util.Map<String, Object> crow(String code, String name, double sale, double share) {
-        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
-        m.put("customerCode", code);
-        m.put("customerName", name);
-        m.put("sale", sale);
-        m.put("saleShare", share);
-        return m;
-    }
+    
 }

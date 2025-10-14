@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// 페이지네이션 공통 dto 입니다.
 @Data
 @Builder
 @NoArgsConstructor

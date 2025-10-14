@@ -98,7 +98,7 @@ public class GlobalExceptionHandler {
         errorDetails.put("errors", errors);
 
         ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.INVALID_INPUT_VALUE.getMessage(),
+            "요청 본문 형식이 올바르지 않습니다.",
             HttpStatus.BAD_REQUEST,
             errorDetails
         );
@@ -188,7 +188,7 @@ public class GlobalExceptionHandler {
         errorDetails.put("detail", "요청 본문을 읽을 수 없습니다. JSON 형식을 확인해주세요.");
 
         ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.INVALID_INPUT_VALUE.getMessage(),
+            "요청 본문 형식이 올바르지 않습니다.",
             HttpStatus.BAD_REQUEST,
             errorDetails
         );

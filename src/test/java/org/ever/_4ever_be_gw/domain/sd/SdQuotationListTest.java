@@ -28,7 +28,7 @@ class SdQuotationListTest {
     void getQuotations_success_default() throws Exception {
         mockMvc.perform(get("/api/business/sd/quotations")
                         .servletPath("/api")
-                        .queryParam("page", "1")
+                        .queryParam("page", "0")
                         .queryParam("size", "10")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -39,7 +39,7 @@ class SdQuotationListTest {
                 .andExpect(jsonPath("$.data.items[0].quotationId").exists())
                 .andExpect(jsonPath("$.data.items[0].quotationCode").exists())
                 .andExpect(jsonPath("$.data.items[0].customerName").exists())
-                .andExpect(jsonPath("$.data.page.number").value(1))
+                .andExpect(jsonPath("$.data.page.number").value(0))
                 .andExpect(jsonPath("$.data.page.size").value(10))
                 .andExpect(jsonPath("$.data.page.totalElements").value(57))
                 .andExpect(jsonPath("$.data.page.totalPages").value(6))
@@ -82,7 +82,7 @@ class SdQuotationListTest {
         mockMvc.perform(get("/api/business/sd/quotations")
                         .servletPath("/api")
                         .queryParam("sort", "quotationDate,asc")
-                        .queryParam("page", "1")
+                        .queryParam("page", "0")
                         .queryParam("size", "20")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -92,4 +92,3 @@ class SdQuotationListTest {
                 .andExpect(jsonPath("$.data.page.size").value(20));
     }
 }
-
