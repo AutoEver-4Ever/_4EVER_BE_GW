@@ -918,7 +918,7 @@ public class MmController {
             @RequestParam(name = "orderDateTo", required = false) String orderDateTo,
             @Parameter(description = "정렬 필드,정렬방향(orderDate|deliveryDate)")
             @RequestParam(name = "sort", required = false) String sort,
-            @Parameter(description = "페이지 번호(1-base)")
+            @Parameter(description = "페이지 번호(0-base)")
             @RequestParam(name = "page", required = false) Integer page,
             @Parameter(description = "페이지 크기(최대 200)")
             @RequestParam(name = "size", required = false) Integer size
@@ -964,7 +964,7 @@ public class MmController {
             sortDirection = "desc";
         }
 
-        int currentPage = (page == null || page < 1) ? 1 : page;
+        int pageIndex = (page == null || page < 0) ? 0 : page;
         int pageSize = (size == null || size < 1) ? 10 : size;
 
         if (from != null && from.isBefore(java.time.LocalDate.of(2024, 1, 1))) {
@@ -1042,7 +1042,7 @@ public class MmController {
         filtered = filtered.stream().sorted(comparator).toList();
 
         int total = filtered.size();
-        int fromIdx = Math.min((currentPage - 1) * pageSize, total);
+        int fromIdx = Math.min(pageIndex * pageSize, total);
         int toIdx = Math.min(fromIdx + pageSize, total);
         java.util.List<Map<String, Object>> pageContent = filtered.subList(fromIdx, toIdx);
 
