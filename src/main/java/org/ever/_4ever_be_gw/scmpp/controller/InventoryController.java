@@ -1017,7 +1017,7 @@ public class InventoryController {
             }
     )
     public ResponseEntity<ApiResponse<Map<String, Object>>> getReceivedPurchaseOrders(
-            @Parameter(name = "page", description = "페이지 번호")
+            @Parameter(name = "page", description = "페이지 번호(0-base)")
             @RequestParam(required = false, defaultValue = "0") int page,
             @Parameter(name = "size", description = "페이지 크기")
             @RequestParam(required = false, defaultValue = "10") int size
@@ -1072,7 +1072,7 @@ public class InventoryController {
             }
     )
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPurchaseOrders(
-            @Parameter(name = "page", description = "페이지 번호")
+            @Parameter(name = "page", description = "페이지 번호(0-base)")
             @RequestParam(required = false, defaultValue = "0") int page,
             @Parameter(name = "size", description = "페이지 크기")
             @RequestParam(required = false, defaultValue = "10") int size

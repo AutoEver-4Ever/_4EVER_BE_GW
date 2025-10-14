@@ -131,7 +131,7 @@ class MmPurchaseTest {
     void getPurchaseOrders_success() throws Exception {
         mockMvc.perform(get("/api/scm-pp/mm/purchase-orders")
                         .servletPath("/api")
-                        .queryParam("page", "1")
+                        .queryParam("page", "0")
                         .queryParam("size", "10")
                         .queryParam("sort", "orderDate,desc")
                         .accept(MediaType.APPLICATION_JSON))
