@@ -193,12 +193,12 @@ import java.util.stream.Collectors;
             throw new BusinessException(ErrorCode.QUOTATION_LIST_PROCESSING_ERROR);
         }
 
-        // 성공 목업 57건 생성
+        // 성공 목업 50건 생성
         List<Map<String, Object>> items = new ArrayList<>();
         String[] customers = {"삼성전자", "LG전자", "현대자동차", "카카오", "네이버", "SK하이닉스", "포스코", "두산중공업", "한화시스템", "CJ대한통운"};
         String[] owners = {"김철수", "이영희", "박민수", "최지훈", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유"};
         String[] codes = {"PENDING", "REVIEW", "APPROVED", "REJECTED"};
-        for (int i = 0; i < 57; i++) {
+        for (int i = 0; i < 50; i++) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("quotationId", 12001 + i);
             row.put("quotationCode", String.format("Q2024%03d", i + 1));
@@ -324,8 +324,8 @@ import java.util.stream.Collectors;
         if (Long.valueOf(500001L).equals(quotationId)) {
             throw new RuntimeException("boom");
         }
-        // 10건 유효 범위: 12001 ~ 12010
-        if (quotationId == null || quotationId < 12001L || quotationId > 12010L) {
+        // 유효 범위: 12001 ~ 12050
+        if (quotationId == null || quotationId < 12001L || quotationId > 12050L) {
             throw new BusinessException(ErrorCode.QUOTATION_NOT_FOUND, "quotationId=" + quotationId);
         }
 
@@ -701,7 +701,7 @@ import java.util.stream.Collectors;
         String[] persons = {"김철수", "박영희", "이민호", "최지우", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유", "신동엽", "강호동"};
         String[] phones = {"02-1234-5678", "02-2345-6789", "031-111-2222", "02-9876-5432"};
         String[] emails = {"contact@corp.com", "sales@corp.com", "info@corp.com"};
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 50; i++) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("customerId", i + 1);
             row.put("customerCode", String.format("C-%03d", i + 1));
@@ -795,8 +795,8 @@ import java.util.stream.Collectors;
         if (Long.valueOf(500001L).equals(cusId)) {
             throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
         }
-        // 유효 범위: 1~10
-        if (cusId == null || cusId < 1 || cusId > 10) {
+        // 유효 범위: 1~50
+        if (cusId == null || cusId < 1 || cusId > 50) {
             throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + cusId);
         }
 
@@ -1141,25 +1141,25 @@ import java.util.stream.Collectors;
         int pageIndex = (page == null || page < 0) ? 0 : page;
         int pageSize = (size == null || size < 1) ? 10 : size;
 
-        // 목업 데이터 생성
+        // 목업 데이터 생성(50건) 및 상세 ID 연결: id=soId(1201~1250)
         List<Map<String, Object>> all = new ArrayList<>();
-        String[] soNumbers = {"SO-2024-001","SO-2024-002","SO-2024-003","SO-2024-004","SO-2024-005","SO-2024-006","SO-2024-007","SO-2024-008","SO-2024-009","SO-2024-010"};
-        String[] customers = {"(주)대한제조","(주)테크솔루션","현대기공","포스코엠텍","세아베스틸","네오머티리얼","스마트팩","그린테크","동방기계","에이치파워"};
+        String[] customers = {"(주)테크솔루션","(주)대한제조","현대기공","포스코엠텍","세아베스틸","네오머티리얼","스마트팩","그린테크","동방기계","에이치파워"};
         String[] contacts = {"김영수","박민수","이주연","최은정","홍길동","정우성","김하늘","박서준","한소라","장나라"};
-        String[] orderDates = {"2024-01-15","2024-01-17","2024-01-18","2024-01-19","2024-01-20","2024-01-21","2024-01-22","2024-01-23","2024-01-24","2024-01-25"};
-        String[] deliveryDates = {"2024-01-25","2024-01-30","2024-01-28","2024-01-29","2024-02-01","2024-02-02","2024-02-03","2024-02-04","2024-02-05","2024-02-06"};
         String[] codes = {"MATERIAL_PREPARATION","PRODUCTION","READY_FOR_SHIPMENT","DELIVERING","DELIVERED"};
-
-        for (int i = 0; i < soNumbers.length; i++) {
+        java.time.LocalDate baseOrder = java.time.LocalDate.of(2024, 1, 15);
+        for (int i = 0; i < 50; i++) {
             Map<String, Object> row = new LinkedHashMap<>();
-            row.put("id", 1001 + i);
-            row.put("soNumber", soNumbers[i]);
-            row.put("customerId", 301 + i);
-            row.put("customerName", customers[i]);
-            row.put("contactName", contacts[i]);
-            row.put("orderDate", orderDates[i]);
-            row.put("deliveryDate", deliveryDates[i]);
-            row.put("totalAmount", 15_000_000L - (i * 610_000L));
+            int soSeq = 1201 + i;
+            row.put("id", soSeq);
+            row.put("soNumber", String.format("SO-2024-%03d", i + 1));
+            row.put("customerId", 301 + (i % 50));
+            row.put("customerName", customers[i % customers.length]);
+            row.put("contactName", contacts[i % contacts.length]);
+            java.time.LocalDate od = baseOrder.plusDays(i % 20);
+            java.time.LocalDate dd = od.plusDays(10 + (i % 5));
+            row.put("orderDate", od.toString());
+            row.put("deliveryDate", dd.toString());
+            row.put("totalAmount", 15_000_000L - (i * 120_000L));
             String statusCode = codes[i % codes.length];
             row.put("statusCode", statusCode);
             String statusLabel = switch (statusCode) {
@@ -1279,15 +1279,12 @@ import java.util.stream.Collectors;
             throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
         }
 
-        // 유효 범위: 1201~1210 (목업)
-        if (soId == null || soId < 1201L || soId > 1210L) {
+        // 유효 범위: 1201~1250 (목업)
+        if (soId == null || soId < 1201L || soId > 1250L) {
             throw new BusinessException(ErrorCode.ORDER_NOT_FOUND, "soId=" + soId);
         }
 
         int idx = (int)(soId - 1201);
-        String[] soNumbers = {"SO-2024-001","SO-2024-002","SO-2024-003","SO-2024-004","SO-2024-005","SO-2024-006","SO-2024-007","SO-2024-008","SO-2024-009","SO-2024-010"};
-        String[] orderDates = {"2024-01-15","2024-01-17","2024-01-18","2024-01-19","2024-01-20","2024-01-21","2024-01-22","2024-01-23","2024-01-24","2024-01-25"};
-        String[] deliveryDates = {"2024-01-25","2024-01-30","2024-01-28","2024-01-29","2024-02-01","2024-02-02","2024-02-03","2024-02-04","2024-02-05","2024-02-06"};
         String[] customers = {"(주)테크솔루션","(주)대한제조","현대기공","포스코엠텍","세아베스틸","네오머티리얼","스마트팩","그린테크","동방기계","에이치파워"};
         String[] contacts = {"김영수","박민수","이주연","최은정","홍길동","정우성","김하늘","박서준","한소라","장나라"};
 
@@ -1296,9 +1293,11 @@ import java.util.stream.Collectors;
 
         Map<String, Object> order = new LinkedHashMap<>();
         order.put("soId", soId);
-        order.put("soNumber", soNumbers[idx]);
-        order.put("orderDate", orderDates[idx]);
-        order.put("deliveryDate", deliveryDates[idx]);
+        order.put("soNumber", String.format("SO-2024-%03d", idx + 1));
+        java.time.LocalDate od = java.time.LocalDate.of(2024,1,15).plusDays(idx % 20);
+        java.time.LocalDate dd = od.plusDays(10 + (idx % 5));
+        order.put("orderDate", od.toString());
+        order.put("deliveryDate", dd.toString());
         String code = codes[idx % codes.length];
         order.put("statusCode", code);
         String label = switch (code) {
@@ -1312,7 +1311,6 @@ import java.util.stream.Collectors;
         order.put("statusLabel", label);
         order.put("paymentTerms", "월말 정산");
         order.put("totalAmount", 15_500_000L - (idx * 350_000L));
-        java.time.LocalDate od = java.time.LocalDate.parse(orderDates[idx]);
         java.time.Instant createdAt = od.atTime(3,0).atZone(java.time.ZoneOffset.UTC).toInstant();
         order.put("createdAt", createdAt);
         order.put("updatedAt", createdAt.plusSeconds(300));
