@@ -587,5 +587,51 @@ public class ProductionController {
         return ResponseEntity.ok(ApiResponse.success(response, "계획 주문 요청 목록을 조회했습니다.", HttpStatus.OK));
     }
 
+    @GetMapping("/mps/plans")
+    @Operation(
+            summary = "제품별 MPS 조회",
+            description = "제품별 Master Production Schedule(MPS) 정보를 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{ \"status\": 200, \"success\": true, \"message\": \"제품별 MPS 조회에 성공했습니다.\", \"data\": { \"productId\": 1, \"productName\": \"도어패널\", \"periodType\": \"WEEK\", \"periods\": [ \"9월 1주차\", \"9월 2주차\", \"9월 3주차\", \"9월 4주차\", \"10월 1주차\", \"10월 2주차\" ], \"demand\": [null, null, null, null, 20, 15], \"requiredInventory\": [null, null, 20, 15, 20, 15], \"productionNeeded\": [null, null, 20, 15, null, null], \"plannedProduction\": [null, null, 20, 15, 20, 15], \"totalPlannedProduction\": 70, \"totalDemand\": 35, \"productionWeeks\": 2, \"averageWeeklyProduction\": 2 } }")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<MpsProductPlanDto>> getMpsPlans(
+            @Parameter(name = "itemId", description = "제품 ID")
+            @RequestParam(required = false) Long itemId,
+            @Parameter(name = "startdate", description = "시작일")
+            @RequestParam(required = false) String startdate,
+            @Parameter(name = "enddate", description = "종료일")
+            @RequestParam(required = false) String enddate
+    ) {
+        List<String> periods = Arrays.asList("9월 1주차", "9월 2주차", "9월 3주차", "9월 4주차", "10월 1주차", "10월 2주차");
 
+        List<Integer> demand = Arrays.asList(null, null, null, null, 20, 15);
+        List<Integer> requiredInventory = Arrays.asList(null, null, 20, 15, 20, 15);
+        List<Integer> productionNeeded = Arrays.asList(null, null, 20, 15, null, null);
+        List<Integer> plannedProduction = Arrays.asList(null, null, 20, 15, 20, 15);
+
+        MpsProductPlanDto response = MpsProductPlanDto.builder()
+                .productId(1L)
+                .productName("도어패널")
+                .periodType("WEEK")
+                .periods(periods)
+                .demand(demand)
+                .requiredInventory(requiredInventory)
+                .productionNeeded(productionNeeded)
+                .plannedProduction(plannedProduction)
+                .totalPlannedProduction(70)
+                .totalDemand(35)
+                .productionWeeks(2)
+                .averageWeeklyProduction(2)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(response, "제품별 MPS 조회에 성공했습니다.", HttpStatus.OK));
+    }
 }
