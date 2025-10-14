@@ -745,7 +745,7 @@ import java.util.stream.Collectors;
         return ResponseEntity.ok(ApiResponse.success(data, "고객사 목록을 조회했습니다.", HttpStatus.OK));
     }
 
-    @GetMapping("/customers/{customerId}")
+    @GetMapping("/customers/{cusId}")
     @Operation(
             summary = "고객사 상세 조회",
             description = "고객사 상세 정보를 조회합니다.",
@@ -754,7 +754,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"customerId\": 1,\n    \"customerCode\": \"C-001\",\n    \"companyName\": \"삼성전자\",\n    \"businessNumber\": \"123-45-67890\",\n    \"ceo\": \"이재용\",\n    \"establishmentDate\": \"1969-01-13\",\n    \"industry\": \"전자/반도체\",\n    \"creditRating\": \"A등급\",\n    \"employeeCount\": 267937,\n    \"website\": \"www.samsung.com\",\n    \"status\": \"활성\",\n    \"contact\": {\n      \"phone\": \"02-1234-5678\",\n      \"fax\": \"02-1234-5679\",\n      \"email\": \"kim@samsung.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"manager\": {\n      \"name\": \"김철수\",\n      \"position\": \"구매팀장\",\n      \"department\": \"구매부\",\n      \"mobile\": \"010-1234-5678\",\n      \"directPhone\": \"02-1234-5680\"\n    },\n    \"transaction\": {\n      \"totalOrders\": 45,\n      \"totalAmount\": 1250000000,\n      \"lastOrderDate\": \"2024-01-15\",\n      \"paymentTerm\": \"30일 후 결제\",\n      \"creditLimit\": 5000000000,\n      \"taxType\": \"일반과세\"\n    },\n    \"note\": \"주요 고객사, 정기 거래처\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"customerId\": 1,\n    \"customerCode\": \"C-001\",\n    \"companyName\": \"삼성전자\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"statusLabel\": \"활성\",\n    \"contact\": {\n      \"phone\": \"02-1234-5678\",\n      \"email\": \"contact@samsung.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"manager\": {\n      \"name\": \"김철수\",\n      \"mobile\": \"010-1234-5678\",\n      \"email\": \"kim@samsung.com\"\n    },\n    \"transaction\": {\n      \"totalOrders\": 45,\n      \"totalAmount\": 1250000000\n    },\n    \"note\": \"주요 고객사, 정기 거래처\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -784,97 +784,87 @@ import java.util.stream.Collectors;
     )
     public ResponseEntity<ApiResponse<Object>> getCustomerDetail(
             @Parameter(description = "고객사 ID")
-            @org.springframework.web.bind.annotation.PathVariable("customerId") Long customerId
+            @org.springframework.web.bind.annotation.PathVariable("cusId") Long cusId,
+            @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
-        // 403 모킹
-        if (Long.valueOf(403001L).equals(customerId)) {
+        // 인증 체크
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+        String token = authorization.trim().toUpperCase(Locale.ROOT);
+        if (token.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+        // 권한 체크: SD_VIEWER, SALES_MANAGER, ADMIN
+        if (!(token.contains("SD_VIEWER") || token.contains("SALES_MANAGER") || token.contains("ADMIN"))) {
+            throw new BusinessException(ErrorCode.CUSTOMER_FORBIDDEN);
+        }
+        // 403 모킹 (특정 ID)
+        if (Long.valueOf(403001L).equals(cusId)) {
             throw new BusinessException(ErrorCode.CUSTOMER_FORBIDDEN);
         }
         // 500 모킹
-        if (Long.valueOf(500001L).equals(customerId)) {
+        if (Long.valueOf(500001L).equals(cusId)) {
             throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
         }
         // 유효 범위: 1~10
-        if (customerId == null || customerId < 1 || customerId > 10) {
-            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + customerId);
+        if (cusId == null || cusId < 1 || cusId > 10) {
+            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + cusId);
         }
 
         // 고객사 상세 목업 (id=1은 예시 값 사용)
         Map<String, Object> data = new LinkedHashMap<>();
-        if (customerId == 1L) {
+        if (cusId == 1L) {
             data.put("customerId", 1);
             data.put("customerCode", "C-001");
             data.put("companyName", "삼성전자");
             data.put("businessNumber", "123-45-67890");
-            data.put("ceo", "이재용");
-            data.put("establishmentDate", "1969-01-13");
-            data.put("industry", "전자/반도체");
-            data.put("creditRating", "A등급");
-            data.put("employeeCount", 267_937);
-            data.put("website", "www.samsung.com");
-            data.put("status", "활성");
+            data.put("statusCode", "ACTIVE");
+            data.put("statusLabel", "활성");
             Map<String, Object> contact = new LinkedHashMap<>();
             contact.put("phone", "02-1234-5678");
-            contact.put("fax", "02-1234-5679");
-            contact.put("email", "kim@samsung.com");
+            contact.put("email", "contact@samsung.com");
             contact.put("address", "서울시 강남구 테헤란로 123");
             data.put("contact", contact);
 
             Map<String, Object> manager = new LinkedHashMap<>();
             manager.put("name", "김철수");
-            manager.put("position", "구매팀장");
-            manager.put("department", "구매부");
             manager.put("mobile", "010-1234-5678");
-            manager.put("directPhone", "02-1234-5680");
+            manager.put("email", "kim@samsung.com");
             data.put("manager", manager);
 
             Map<String, Object> transaction = new LinkedHashMap<>();
             transaction.put("totalOrders", 45);
             transaction.put("totalAmount", 1_250_000_000L);
-            transaction.put("lastOrderDate", "2024-01-15");
-            transaction.put("paymentTerm", "30일 후 결제");
-            transaction.put("creditLimit", 5_000_000_000L);
-            transaction.put("taxType", "일반과세");
             data.put("transaction", transaction);
 
             data.put("note", "주요 고객사, 정기 거래처");
         } else {
             // 기타 id는 패턴화된 더미 데이터
-            int idx = customerId.intValue();
-            data.put("customerId", customerId);
+            int idx = cusId.intValue();
+            data.put("customerId", cusId);
             data.put("customerCode", String.format("C-%03d", idx));
             String[] companies = {"LG화학", "현대자동차", "SK하이닉스", "네이버", "카카오"};
             data.put("companyName", companies[(idx - 2) % companies.length]);
             data.put("businessNumber", String.format("%03d-%02d-%05d", 100 + idx, 10 + (idx % 50), 10000 + idx));
-            data.put("ceo", "홍길동");
-            data.put("establishmentDate", "2000-01-01");
-            data.put("industry", "제조/IT");
-            data.put("creditRating", "B등급");
-            data.put("employeeCount", 10_000 + idx);
-            data.put("website", "www.example.com");
-            data.put("status", (idx % 2 == 0) ? "활성" : "비활성");
+            String code = (idx % 2 == 0) ? "ACTIVE" : "INACTIVE";
+            data.put("statusCode", code);
+            data.put("statusLabel", code.equals("ACTIVE") ? "활성" : "비활성");
             Map<String, Object> contact = new LinkedHashMap<>();
             contact.put("phone", "02-0000-0000");
-            contact.put("fax", "02-0000-0001");
             contact.put("email", "info@example.com");
             contact.put("address", "서울시 중구 세종대로 1");
             data.put("contact", contact);
 
             Map<String, Object> manager = new LinkedHashMap<>();
             manager.put("name", "관리자");
-            manager.put("position", "담당");
-            manager.put("department", "영업부");
             manager.put("mobile", "010-0000-0000");
-            manager.put("directPhone", "02-0000-0002");
+            manager.put("email", "manager@example.com");
             data.put("manager", manager);
 
             Map<String, Object> transaction = new LinkedHashMap<>();
             transaction.put("totalOrders", 10 + (idx % 20));
             transaction.put("totalAmount", 100_000_000L + (idx * 1_000_000L));
-            transaction.put("lastOrderDate", "2024-01-10");
-            transaction.put("paymentTerm", "30일 후 결제");
-            transaction.put("creditLimit", 1_000_000_000L);
-            transaction.put("taxType", "일반과세");
             data.put("transaction", transaction);
 
             data.put("note", "비고 없음");
