@@ -144,7 +144,7 @@ import java.util.stream.Collectors;
             @RequestParam(name = "startDate", required = false) String startDate,
             @Parameter(description = "종료일(YYYY-MM-DD)")
             @RequestParam(name = "endDate", required = false) String endDate,
-            @Parameter(description = "상태: PENDING, REVIEW, APPROVED, REJECTED")
+            @Parameter(description = "상태: PENDING, REVIEW, APPROVED, REJECTED, ALL")
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "검색어(고객명/담당자)")
             @RequestParam(name = "search", required = false) String search,
