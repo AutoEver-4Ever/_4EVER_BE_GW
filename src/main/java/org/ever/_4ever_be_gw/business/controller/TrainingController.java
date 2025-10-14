@@ -5,12 +5,15 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.ever._4ever_be_gw.business.dto.ProgramCreateRequestDto;
+import org.ever._4ever_be_gw.business.dto.TrainingRequestDto;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
@@ -18,6 +21,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +32,78 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Training Management", description = "직원 교육 관리 API")
 public class TrainingController {
 
-    // 직원 교육 현황 목록 조회
+    // ==================== 교육 신청 및 프로그램 관리 ====================
+
+    @PostMapping("/employee/request")
+    @Operation(
+        summary = "교육 신청",
+        description = "직원이 교육 프로그램에 신청합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"교육 신청이 완료되었습니다.\",\n  \"data\": {\n    \"requestId\": 301,\n    \"programId\": 1001,\n    \"employeeId\": 101,\n    \"status\": \"PENDING\"\n  }\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> requestTraining(
+        @Valid @RequestBody TrainingRequestDto requestDto
+    ) {
+        // 요청 데이터 로깅
+        System.out.println("교육 신청 요청: " + requestDto);
+
+        // Mock 데이터 생성
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("requestId", 301L);
+        data.put("programId", requestDto.getProgramId());
+        data.put("employeeId", 101L);
+        data.put("status", "PENDING");
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "교육 신청이 완료되었습니다.", HttpStatus.OK
+        ));
+    }
+
+    @PostMapping("/program")
+    @Operation(
+        summary = "교육 프로그램 추가",
+        description = "새로운 교육 프로그램을 추가합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"교육 프로그램이 추가되었습니다.\",\n  \"data\": {\n    \"programId\": 2001,\n    \"programName\": \"신입사원 온보딩\",\n    \"category\": \"BASIC_TRAINING\",\n    \"trainingHour\": 4,\n    \"isOnline\": true,\n    \"startDate\": \"2024-02-01\",\n    \"capacity\": 15,\n    \"status\": \"RECRUITING\"\n  }\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> createProgram(
+        @Valid @RequestBody ProgramCreateRequestDto requestDto
+    ) {
+        // 요청 데이터 로깅
+        System.out.println("교육 프로그램 추가 요청: " + requestDto);
+
+        // Mock 데이터 생성
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("programId", 2001L);
+        data.put("programName", requestDto.getProgramName());
+        data.put("category", requestDto.getCategory());
+        data.put("trainingHour", requestDto.getTrainingHour());
+        data.put("isOnline", requestDto.getIsOnline());
+        data.put("startDate", requestDto.getStartDate());
+        data.put("capacity", requestDto.getCapacity());
+        data.put("requiredDepartments", requestDto.getRequiredDepartments());
+        data.put("requiredPositions", requestDto.getRequiredPositions());
+        data.put("description", requestDto.getDescription());
+        data.put("status", "RECRUITING");
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "교육 프로그램이 추가되었습니다.", HttpStatus.OK
+        ));
+    }
+
+    // ==================== 직원 교육 현황 조회 ====================
     // GET /api/business/training?department=&position=&name=&page=&size=
     @GetMapping("")
     @Operation(
