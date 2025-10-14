@@ -225,4 +225,31 @@ public class ProductionController {
 
         return ResponseEntity.ok(ApiResponse.success(response, "BOM 상세 조회 성공", HttpStatus.OK));
     }
+
+    @PatchMapping("/boms/{bomId}")
+    @Operation(
+            summary = "BOM 수정",
+            description = "BOM 정보를 수정합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"BOM이 성공적으로 수정되었습니다.\",\n  \"data\": {\n    \"bomId\": 1,\n    \"bomCode\": \"BOM-001\"\n  }\n}")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateBom(
+            @Parameter(name = "bomId", description = "BOM ID")
+            @PathVariable Long bomId,
+            @RequestBody BomCreateRequestDto request
+    ) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("bomId", bomId);
+        response.put("bomCode", "BOM-001");
+
+        return ResponseEntity.ok(ApiResponse.success(response, "BOM이 성공적으로 수정되었습니다.", HttpStatus.OK));
+    }
 }
