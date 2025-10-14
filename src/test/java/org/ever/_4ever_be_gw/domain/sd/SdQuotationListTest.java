@@ -28,7 +28,7 @@ class SdQuotationListTest {
     void getQuotations_success_default() throws Exception {
         mockMvc.perform(get("/api/business/sd/quotations")
                         .servletPath("/api")
-                        .queryParam("page", "1")
+                        .queryParam("page", "0")
                         .queryParam("size", "10")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -82,7 +82,7 @@ class SdQuotationListTest {
         mockMvc.perform(get("/api/business/sd/quotations")
                         .servletPath("/api")
                         .queryParam("sort", "quotationDate,asc")
-                        .queryParam("page", "1")
+                        .queryParam("page", "0")
                         .queryParam("size", "20")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

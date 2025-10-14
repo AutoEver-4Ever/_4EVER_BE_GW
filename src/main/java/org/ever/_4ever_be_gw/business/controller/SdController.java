@@ -739,7 +739,6 @@ import java.util.stream.Collectors;
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("customers", customers);
         Map<String, Object> pageMeta2 = PageResponseUtils.buildPage(pageIndex, s, total);
-        pageMeta2.put("number", pageIndex + 1);
         data.put("page", pageMeta2);
 
         return ResponseEntity.ok(ApiResponse.success(data, "고객사 목록을 조회했습니다.", HttpStatus.OK));
