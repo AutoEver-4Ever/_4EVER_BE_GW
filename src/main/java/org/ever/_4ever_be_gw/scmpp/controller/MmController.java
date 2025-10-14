@@ -1088,16 +1088,20 @@ public class MmController {
             }
     )
     public ResponseEntity<ApiResponse<Object>> getPurchaseOrderDetail(
-            @Parameter(description = "발주서 ID", example = "1001")
+            @Parameter(description = "발주서 ID", example = "1")
             @PathVariable("purchaseId") Long purchaseId
     ) {
-        // 유효 범위: 1001 ~ 1010
-        if (purchaseId == null || purchaseId < 1001L || purchaseId > 1010L) {
+        if (purchaseId == null) {
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + null);
+        }
+        boolean classicRange = purchaseId >= 1L && purchaseId <= 10L;
+        boolean poIdRange = purchaseId >= 1001L && purchaseId <= 1010L;
+        if (!classicRange && !poIdRange) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + purchaseId);
         }
 
-        // 목업 데이터 생성
-        int idx = (int)((purchaseId - 1001) % 10);
+        // 목업 데이터 생성 (두 범위 모두 0~9 인덱스로 매핑)
+        int idx = classicRange ? (int)(purchaseId - 1) : (int)(purchaseId - 1001);
         String[] suppliers = {"대한철강","한국알루미늄","포스코","효성중공업","현대제철","두산중공업","세아베스틸","KG동부제철","동국제강","티엠씨메탈"};
         long[] supplierIds = {501,502,503,504,505,506,507,508,509,510};
         String[] supplierCodes = {"SUP001","SUP002","SUP003","SUP004","SUP005","SUP006","SUP007","SUP008","SUP009","SUP010"};
