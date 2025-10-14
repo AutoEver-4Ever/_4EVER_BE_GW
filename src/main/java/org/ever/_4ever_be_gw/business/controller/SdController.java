@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -1058,6 +1059,190 @@ import java.util.stream.Collectors;
         }
 
         return ResponseEntity.ok(ApiResponse.success(null, "고객사 정보가 삭제되었습니다.", HttpStatus.OK));
+    }
+
+    // -------- Sales Orders (R) --------
+    @GetMapping("/orders")
+    @Operation(
+            summary = "주문서 목록 조회",
+            description = "견적서 승인에 따라 자동 생성된 주문서 목록을 조회합니다. 기간/상태/키워드(주문번호, 고객사명, 고객명) 필터를 지원합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1001,\n        \"soNumber\": \"SO-2024-001\",\n        \"customerId\": 301,\n        \"customerName\": \"(주)대한제조\",\n        \"contactName\": \"김영수\",\n        \"orderDate\": \"2024-01-15\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PRODUCTION\",\n        \"statusLabel\": \"생산중\",\n        \"actions\": [\"view\"]\n      },\n      {\n        \"id\": 1002,\n        \"soNumber\": \"SO-2024-002\",\n        \"customerId\": 302,\n        \"customerName\": \"(주)테크솔루션\",\n        \"contactName\": \"박민수\",\n        \"orderDate\": \"2024-01-17\",\n        \"deliveryDate\": \"2024-01-30\",\n        \"totalAmount\": 8900000,\n        \"statusCode\": \"DELIVERING\",\n        \"statusLabel\": \"배송중\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 2, \"totalPages\": 1, \"hasNext\": false }\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"인증이 필요합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"주문 목록 조회 권한이 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [ { \"field\": \"startDate\", \"reason\": \"INVALID_DATE_FORMAT(YYYY-MM-DD)\" } ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"주문 목록 조회 중 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> getSalesOrders(
+            @Parameter(description = "검색 시작일(YYYY-MM-DD)")
+            @RequestParam(name = "startDate", required = false) String startDate,
+            @Parameter(description = "검색 종료일(YYYY-MM-DD)")
+            @RequestParam(name = "endDate", required = false) String endDate,
+            @Parameter(description = "주문번호/고객사명/고객명 검색 키워드")
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @Parameter(description = "상태: ALL, MATERIAL_PREPARATION, PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED")
+            @RequestParam(name = "status", required = false) String status,
+            @Parameter(description = "페이지 번호(0-base)")
+            @RequestParam(name = "page", required = false) Integer page,
+            @Parameter(description = "페이지 크기(최대 200)")
+            @RequestParam(name = "size", required = false) Integer size,
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        // 인증 체크
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+        String token = authorization.trim().toUpperCase(Locale.ROOT);
+        if (token.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+        // 권한 체크: SD_VIEWER, SALES_MANAGER, ADMIN
+        if (!(token.contains("SD_VIEWER") || token.contains("SALES_MANAGER") || token.contains("ADMIN"))) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
+        }
+
+        // 422 검증
+        List<Map<String, String>> errors = new ArrayList<>();
+        java.time.LocalDate from = null;
+        java.time.LocalDate to = null;
+        if (startDate != null) {
+            try { from = java.time.LocalDate.parse(startDate); } catch (Exception e) {
+                errors.add(Map.of("field", "startDate", "reason", "INVALID_DATE_FORMAT(YYYY-MM-DD)"));
+            }
+        }
+        if (endDate != null) {
+            try { to = java.time.LocalDate.parse(endDate); } catch (Exception e) {
+                errors.add(Map.of("field", "endDate", "reason", "INVALID_DATE_FORMAT(YYYY-MM-DD)"));
+            }
+        }
+        if (from != null && to != null && from.isAfter(to)) {
+            errors.add(Map.of("field", "startDate/endDate", "reason", "FROM_AFTER_TO"));
+        }
+        if (status != null) {
+            var allowed = java.util.Set.of("ALL", "MATERIAL_PREPARATION", "PRODUCTION", "READY_FOR_SHIPMENT", "DELIVERING", "DELIVERED");
+            if (!allowed.contains(status)) {
+                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ALL, MATERIAL_PREPARATION, PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED"));
+            }
+        }
+        if (page != null && page < 0) {
+            errors.add(Map.of("field", "page", "reason", "MIN_0"));
+        }
+        if (size != null && size > 200) {
+            errors.add(Map.of("field", "size", "reason", "MAX_200"));
+        }
+        if (!errors.isEmpty()) {
+            throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
+        }
+
+        int pageIndex = (page == null || page < 0) ? 0 : page;
+        int pageSize = (size == null || size < 1) ? 10 : size;
+
+        // 목업 데이터 생성
+        List<Map<String, Object>> all = new ArrayList<>();
+        String[] soNumbers = {"SO-2024-001","SO-2024-002","SO-2024-003","SO-2024-004","SO-2024-005","SO-2024-006","SO-2024-007","SO-2024-008","SO-2024-009","SO-2024-010"};
+        String[] customers = {"(주)대한제조","(주)테크솔루션","현대기공","포스코엠텍","세아베스틸","네오머티리얼","스마트팩","그린테크","동방기계","에이치파워"};
+        String[] contacts = {"김영수","박민수","이주연","최은정","홍길동","정우성","김하늘","박서준","한소라","장나라"};
+        String[] orderDates = {"2024-01-15","2024-01-17","2024-01-18","2024-01-19","2024-01-20","2024-01-21","2024-01-22","2024-01-23","2024-01-24","2024-01-25"};
+        String[] deliveryDates = {"2024-01-25","2024-01-30","2024-01-28","2024-01-29","2024-02-01","2024-02-02","2024-02-03","2024-02-04","2024-02-05","2024-02-06"};
+        String[] codes = {"MATERIAL_PREPARATION","PRODUCTION","READY_FOR_SHIPMENT","DELIVERING","DELIVERED"};
+
+        for (int i = 0; i < soNumbers.length; i++) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", 1001 + i);
+            row.put("soNumber", soNumbers[i]);
+            row.put("customerId", 301 + i);
+            row.put("customerName", customers[i]);
+            row.put("contactName", contacts[i]);
+            row.put("orderDate", orderDates[i]);
+            row.put("deliveryDate", deliveryDates[i]);
+            row.put("totalAmount", 15_000_000L - (i * 610_000L));
+            String statusCode = codes[i % codes.length];
+            row.put("statusCode", statusCode);
+            String statusLabel = switch (statusCode) {
+                case "MATERIAL_PREPARATION" -> "자재 준비중";
+                case "PRODUCTION" -> "생산중";
+                case "READY_FOR_SHIPMENT" -> "출하 준비 완료";
+                case "DELIVERING" -> "배송중";
+                case "DELIVERED" -> "배송완료";
+                default -> "";
+            };
+            row.put("statusLabel", statusLabel);
+            row.put("actions", List.of("view"));
+            all.add(row);
+        }
+
+        // 필터 적용
+        List<Map<String, Object>> filtered = all;
+        if (status != null && !status.equalsIgnoreCase("ALL")) {
+            final String st = status.toUpperCase(Locale.ROOT);
+            filtered = filtered.stream().filter(m -> st.equals(String.valueOf(m.get("statusCode")))).toList();
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            final String kw = keyword.toLowerCase(Locale.ROOT);
+            filtered = filtered.stream().filter(m -> {
+                String so = String.valueOf(m.get("soNumber")).toLowerCase(Locale.ROOT);
+                String cn = String.valueOf(m.get("customerName")).toLowerCase(Locale.ROOT);
+                String pn = String.valueOf(m.get("contactName")).toLowerCase(Locale.ROOT);
+                return so.contains(kw) || cn.contains(kw) || pn.contains(kw);
+            }).toList();
+        }
+        if (from != null) {
+            final java.time.LocalDate min = from;
+            filtered = filtered.stream()
+                    .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))).isBefore(min))
+                    .toList();
+        }
+        if (to != null) {
+            final java.time.LocalDate max = to;
+            filtered = filtered.stream()
+                    .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))).isAfter(max))
+                    .toList();
+        }
+
+        // 정렬: orderDate desc, id asc 보조
+        filtered = filtered.stream()
+                .sorted(java.util.Comparator
+                        .comparing((Map<String, Object> m) -> java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))))
+                        .reversed()
+                        .thenComparing(m -> ((Number) m.get("id")).longValue()))
+                .toList();
+
+        int total = filtered.size();
+        int fromIdx = Math.min(pageIndex * pageSize, total);
+        int toIdx2 = Math.min(fromIdx + pageSize, total);
+        List<Map<String, Object>> pageContent = filtered.subList(fromIdx, toIdx2);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("content", pageContent);
+        data.put("page", PageResponseUtils.buildPage(pageIndex, pageSize, total));
+
+        return ResponseEntity.ok(ApiResponse.success(data, "주문 목록 조회에 성공했습니다.", HttpStatus.OK));
     }
 
     // -------- Analytics (R) - week params (kept for tests) --------
