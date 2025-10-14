@@ -62,6 +62,16 @@ public enum ErrorCode {
     PURCHASE_REQUEST_REJECTION_INVALID_TRANSITION(1040, HttpStatus.UNPROCESSABLE_ENTITY, "해당 상태에서는 반려할 수 없습니다."),
     PURCHASE_REQUEST_REJECTION_PROCESSING_ERROR(1041, HttpStatus.INTERNAL_SERVER_ERROR, "요청 처리 중 오류가 발생했습니다."),
 
+    // Purchase Order Approval (PO)
+    PURCHASE_ORDER_APPROVAL_FORBIDDEN(1042, HttpStatus.FORBIDDEN, "발주서 승인 권한이 없습니다."),
+    PURCHASE_ORDER_INVALID_TRANSITION(1043, HttpStatus.CONFLICT, "현재 상태에서는 승인할 수 없습니다. (status=PENDING만 승인 가능)"),
+    PURCHASE_ORDER_APPROVAL_PROCESSING_ERROR(1044, HttpStatus.INTERNAL_SERVER_ERROR, "승인 처리 중 오류가 발생했습니다."),
+
+    // Purchase Order Rejection (PO)
+    PURCHASE_ORDER_REJECTION_FORBIDDEN(1045, HttpStatus.FORBIDDEN, "발주서 반려 권한이 없습니다."),
+    PURCHASE_ORDER_REJECTION_REASON_REQUIRED(1046, HttpStatus.UNPROCESSABLE_ENTITY, "반려 사유를 입력해야 합니다."),
+    PURCHASE_ORDER_REJECTION_PROCESSING_ERROR(1047, HttpStatus.INTERNAL_SERVER_ERROR, "발주서 반려 처리 중 오류가 발생했습니다."),
+
     // User Errors (3000~3999)
     USER_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
     USER_ALREADY_EXISTS(3001, HttpStatus.CONFLICT, "이미 존재하는 사용자입니다."),

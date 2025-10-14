@@ -1397,6 +1397,187 @@ public class MmController {
         return ResponseEntity.ok(ApiResponse.success(data, "공급업체가 정상적으로 등록되었습니다.", HttpStatus.OK));
     }
 
+    @PostMapping("/purchase-orders/{poId}/approve")
+    @Operation(
+            summary = "발주서 승인",
+            description = "발주서의 상태를 대기 → 승인으로 변경합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "승인 성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서를 승인했습니다.\",\n  \"data\": {\n    \"id\": 1001,\n    \"poNumber\": \"PO-2024-001\",\n    \"statusCode\": \"APPROVED\",\n    \"statusLabel\": \"승인\",\n    \"approvedAt\": \"2025-10-07T09:15:00Z\",\n    \"approvedBy\": \"홍길동\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{ \"status\": 401, \"success\": false, \"message\": \"인증이 필요합니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "승인 권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{ \"status\": 403, \"success\": false, \"message\": \"발주서 승인 권한이 없습니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "발주서 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{ \"status\": 404, \"success\": false, \"message\": \"해당 발주서를 찾을 수 없습니다: poId=1001\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "409",
+                            description = "승인 불가 상태",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "conflict", value = "{ \"status\": 409, \"success\": false, \"message\": \"현재 상태에서는 승인할 수 없습니다. (status=PENDING만 승인 가능)\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "처리 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{ \"status\": 500, \"success\": false, \"message\": \"승인 처리 중 오류가 발생했습니다.\" }"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> approvePurchaseOrder(
+            @Parameter(description = "발주서 ID", example = "1001")
+            @PathVariable("poId") Long poId,
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+
+        String token = authorization.trim().toUpperCase(Locale.ROOT);
+        if (token.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_APPROVAL_PROCESSING_ERROR);
+        }
+
+        // 승인 권한 체크: PO_APPROVER, PURCHASING_MANAGER, ADMIN
+        boolean hasPrivilege = token.contains("PO_APPROVER") || token.contains("PURCHASING_MANAGER") || token.contains("ADMIN");
+        if (!hasPrivilege) {
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_APPROVAL_FORBIDDEN);
+        }
+
+        // 유효한 발주서 ID 범위 (목업 데이터 기준: 1001~1010)
+        if (poId == null || poId < 1001L || poId > 1010L) {
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + poId);
+        }
+
+        // 현재 상태 확인: PENDING만 승인 가능
+        // 목록 목업의 상태 매핑을 그대로 사용: 1002,1005,1008만 PENDING
+        java.util.Set<Long> pendingIds = java.util.Set.of(1002L, 1005L, 1008L);
+        if (!pendingIds.contains(poId)) {
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_INVALID_TRANSITION);
+        }
+
+        String[] poNumbers = {"PO-2024-001","PO-2024-002","PO-2024-003","PO-2024-004","PO-2024-005","PO-2024-006","PO-2024-007","PO-2024-008","PO-2024-009","PO-2024-010"};
+        int idx = (int)(poId - 1001);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", poId);
+        data.put("poNumber", poNumbers[idx]);
+        data.put("statusCode", "APPROVED");
+        data.put("statusLabel", "승인");
+        data.put("approvedAt", java.time.Instant.parse("2025-10-07T09:15:00Z"));
+        data.put("approvedBy", "홍길동");
+
+        return ResponseEntity.ok(ApiResponse.success(data, "발주서를 승인했습니다.", HttpStatus.OK));
+    }
+
+    @PostMapping("/purchase-orders/{poId}/reject")
+    @Operation(
+            summary = "발주서 반려",
+            description = "발주서의 상태를 반려로 변경합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "반려 성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서를 반려했습니다.\",\n  \"data\": {\n    \"id\": 1001,\n    \"poNumber\": \"PO-2024-001\",\n    \"statusCode\": \"REJECTED\",\n    \"statusLabel\": \"반려\",\n    \"rejectedAt\": \"2025-10-14T10:00:00Z\",\n    \"rejectedBy\": \"홍길동\",\n    \"reason\": \"납기일 미확정\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{ \"status\": 401, \"success\": false, \"message\": \"인증이 필요합니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "반려 권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{ \"status\": 403, \"success\": false, \"message\": \"발주서 반려 권한이 없습니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "발주서 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{ \"status\": 404, \"success\": false, \"message\": \"해당 발주서를 찾을 수 없습니다: poId=999999\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "본문 검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "reason_required", value = "{ \"status\": 422, \"success\": false, \"message\": \"반려 사유를 입력해야 합니다.\" }"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "처리 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{ \"status\": 500, \"success\": false, \"message\": \"발주서 반려 처리 중 오류가 발생했습니다.\" }"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> rejectPurchaseOrder(
+            @Parameter(description = "발주서 ID", example = "1001")
+            @PathVariable("poId") Long poId,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "{ \"reason\": \"납기일 미확정\" }"))
+            )
+            @RequestBody org.ever._4ever_be_gw.scmpp.dto.MmPurchaseOrderRejectRequestDto request
+    ) {
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+
+        String token = authorization.trim().toUpperCase(Locale.ROOT);
+        if (token.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_REJECTION_PROCESSING_ERROR);
+        }
+
+        // 반려 권한 체크: PO_APPROVER, PURCHASING_MANAGER, ADMIN
+        boolean hasPrivilege = token.contains("PO_APPROVER") || token.contains("PURCHASING_MANAGER") || token.contains("ADMIN");
+        if (!hasPrivilege) {
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_REJECTION_FORBIDDEN);
+        }
+
+        if (poId == null || poId < 1001L || poId > 1010L) {
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + poId);
+        }
+
+        if (request == null || request.getReason() == null || request.getReason().isBlank()) {
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_REJECTION_REASON_REQUIRED);
+        }
+
+        String[] poNumbers = {"PO-2024-001","PO-2024-002","PO-2024-003","PO-2024-004","PO-2024-005","PO-2024-006","PO-2024-007","PO-2024-008","PO-2024-009","PO-2024-010"};
+        int idx = (int)(poId - 1001);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", poId);
+        data.put("poNumber", poNumbers[idx]);
+        data.put("statusCode", "REJECTED");
+        data.put("statusLabel", "반려");
+        data.put("rejectedAt", java.time.Instant.parse("2025-10-14T10:00:00Z"));
+        data.put("rejectedBy", "홍길동");
+        data.put("reason", request.getReason());
+
+        return ResponseEntity.ok(ApiResponse.success(data, "발주서를 반려했습니다.", HttpStatus.OK));
+    }
+
     // ---------------- Vendor Detail ----------------
     @GetMapping("/vendors/{vendorId}")
     @Operation(
