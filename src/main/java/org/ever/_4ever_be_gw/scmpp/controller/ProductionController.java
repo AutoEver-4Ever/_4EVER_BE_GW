@@ -451,4 +451,141 @@ public class ProductionController {
         return ResponseEntity.ok(ApiResponse.success(response, "자재 조달 계획을 조회했습니다.", HttpStatus.OK));
     }
 
+
+
+
+
+    @GetMapping("/mrp/planned-orders/detail/{plannedId}")
+    @Operation(
+            summary = "MRP 계획 주문 상세 조회",
+            description = "MRP 계획 주문 상세 정보를 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"계획 주문 요청 상세를 조회했습니다.\",\n  \"data\": {\n    \"plannedId\": 1,\n    \"quotationId\": 1,\n    \"quotationCode\": \"Q-2024-001\",\n    \"requester\": \"김철수\",\n    \"department\": \"생산팀\",\n    \"requestDate\": \"2024-01-15\",\n    \"desiredDueDate\": \"2024-01-25\",\n    \"status\": \"승인\",\n    \"orderItems\": [\n      {\n        \"itemId\": 1,\n        \"itemName\": \"강판\",\n        \"quantity\": 500,\n        \"unit\": \"EA\",\n        \"unitPrice\": 5000\n      },\n      {\n        \"itemId\": 2,\n        \"itemName\": \"볼트\",\n        \"quantity\": 100,\n        \"unit\": \"EA\",\n        \"unitPrice\": 500\n      }\n    ],\n    \"totalAmount\": 2500000\n  }\n}")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<PlannedOrderDetailDto>> getPlannedOrderDetail(
+            @Parameter(name = "plannedId", description = "계획 주문 ID")
+            @PathVariable Long plannedId
+    ) {
+        List<PlannedOrderDetailDto.OrderItemDto> orderItems = Arrays.asList(
+                PlannedOrderDetailDto.OrderItemDto.builder()
+                        .itemId(1L)
+                        .itemName("강판")
+                        .quantity(500)
+                        .unit("EA")
+                        .unitPrice(5000)
+                        .build(),
+                PlannedOrderDetailDto.OrderItemDto.builder()
+                        .itemId(2L)
+                        .itemName("볼트")
+                        .quantity(100)
+                        .unit("EA")
+                        .unitPrice(500)
+                        .build()
+        );
+
+        PlannedOrderDetailDto response = PlannedOrderDetailDto.builder()
+                .plannedId(plannedId)
+                .quotationId(1L)
+                .quotationCode("Q-2024-001")
+                .requestId(1L)
+                .requester("김철수")
+                .department("생산팀")
+                .requestDate("2024-01-15")
+                .desiredDueDate("2024-01-25")
+                .status("승인")
+                .orderItems(orderItems)
+                .totalAmount(2500000)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(response, "계획 주문 요청 상세를 조회했습니다.", HttpStatus.OK));
+    }
+
+    @GetMapping("/mrp/planned-orders/list")
+    @Operation(
+            summary = "MRP 계획 주문 목록 조회",
+            description = "MRP 계획 주문 목록을 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"계획 주문 요청 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"plannedId\": 1,\n        \"quotationId\": 1,\n        \"quotationCode\": \"Q-2024-001\",\n        \"itemId\": 1,\n        \"itemName\": \"스테인리스 스틸\",\n        \"quantity\": 400,\n        \"procurementStartDate\": \"2024-02-01\",\n        \"status\": \"계획\"\n      },\n      {\n        \"plannedId\": 2,\n        \"quotationId\": 2,\n        \"quotationCode\": \"Q-2024-002\",\n        \"itemId\": 2,\n        \"itemName\": \"구리선\",\n        \"quantity\": 600,\n        \"procurementStartDate\": \"2024-02-02\",\n        \"status\": \"대기\"\n      },\n      {\n        \"plannedId\": 3,\n        \"quotationId\": 3,\n        \"quotationCode\": \"Q-2024-003\",\n        \"itemId\": 3,\n        \"itemName\": \"베어링 6205\",\n        \"quantity\": 100,\n        \"procurementStartDate\": \"2024-02-03\",\n        \"status\": \"승인\"\n      },\n      {\n        \"plannedId\": 4,\n        \"quotationId\": 1,\n        \"quotationCode\": \"Q-2024-001\",\n        \"itemId\": 4,\n        \"itemName\": \"알루미늄 프로파일\",\n        \"quantity\": 300,\n        \"procurementStartDate\": \"2024-02-01\",\n        \"status\": \"반려\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 4,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPlannedOrderList(
+            @Parameter(name = "page", description = "페이지 번호")
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @Parameter(name = "size", description = "페이지 크기")
+            @RequestParam(required = false, defaultValue = "10") int size
+    ) {
+        List<PlannedOrderListItemDto> items = Arrays.asList(
+                PlannedOrderListItemDto.builder()
+                        .plannedId(1L)
+                        .quotationId(1L)
+                        .quotationCode("Q-2024-001")
+                        .itemId(1L)
+                        .itemName("스테인리스 스틸")
+                        .quantity(400)
+                        .procurementStartDate("2024-02-01")
+                        .status("계획")
+                        .build(),
+                PlannedOrderListItemDto.builder()
+                        .plannedId(2L)
+                        .quotationId(2L)
+                        .quotationCode("Q-2024-002")
+                        .itemId(2L)
+                        .itemName("구리선")
+                        .quantity(600)
+                        .procurementStartDate("2024-02-02")
+                        .status("대기")
+                        .build(),
+                PlannedOrderListItemDto.builder()
+                        .plannedId(3L)
+                        .quotationId(3L)
+                        .quotationCode("Q-2024-003")
+                        .itemId(3L)
+                        .itemName("베어링 6205")
+                        .quantity(100)
+                        .procurementStartDate("2024-02-03")
+                        .status("승인")
+                        .build(),
+                PlannedOrderListItemDto.builder()
+                        .plannedId(4L)
+                        .quotationId(1L)
+                        .quotationCode("Q-2024-001")
+                        .itemId(4L)
+                        .itemName("알루미늄 프로파일")
+                        .quantity(300)
+                        .procurementStartDate("2024-02-01")
+                        .status("반려")
+                        .build()
+        );
+
+        PageDto pageInfo = PageDto.builder()
+                .number(page)
+                .size(size)
+                .totalElements(4)
+                .totalPages(1)
+                .hasNext(false)
+                .build();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", items);
+        response.put("page", pageInfo);
+
+        return ResponseEntity.ok(ApiResponse.success(response, "계획 주문 요청 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
+
 }
