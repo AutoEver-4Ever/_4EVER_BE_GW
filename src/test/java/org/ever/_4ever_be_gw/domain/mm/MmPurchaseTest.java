@@ -139,9 +139,14 @@ class MmPurchaseTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("발주서 목록 조회에 성공했습니다."))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data[0].id").value(1001))
-                .andExpect(jsonPath("$.data[0].status").value("APPROVED"));
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].id").value(1001))
+                .andExpect(jsonPath("$.data.content[0].status").value("APPROVED"))
+                .andExpect(jsonPath("$.data.page.number").value(0))
+                .andExpect(jsonPath("$.data.page.size").value(10))
+                .andExpect(jsonPath("$.data.page.totalElements").exists())
+                .andExpect(jsonPath("$.data.page.totalPages").exists())
+                .andExpect(jsonPath("$.data.page.hasNext").exists());
     }
 
     @Test
@@ -188,16 +193,16 @@ class MmPurchaseTest {
     }
 
     @Test
-    @DisplayName("발주서 상세 조회 성공(1~10)")
+    @DisplayName("발주서 상세 조회 성공(1001~1050)")
     void getPurchaseOrderDetail_success() throws Exception {
-        mockMvc.perform(get("/api/scm-pp/mm/purchase-orders/{purchaseId}", 1L)
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-orders/{purchaseId}", 1001L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("발주서 상세 정보 조회에 성공했습니다."))
-                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.id").value(1001))
                 .andExpect(jsonPath("$.data.poNumber").exists())
                 .andExpect(jsonPath("$.data.items").isArray());
     }
@@ -205,13 +210,13 @@ class MmPurchaseTest {
     @Test
     @DisplayName("발주서 상세 미존재 404(범위 밖)")
     void getPurchaseOrderDetail_notFound() throws Exception {
-        mockMvc.perform(get("/api/scm-pp/mm/purchase-orders/{purchaseId}", 11L)
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-orders/{purchaseId}", 1051L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("해당 발주서를 찾을 수 없습니다: poId=11"));
+                .andExpect(jsonPath("$.message").value("해당 발주서를 찾을 수 없습니다: poId=1051"));
     }
     @Test
     @DisplayName("구매요청 상세 조회 성공(1~10)")
@@ -244,12 +249,12 @@ class MmPurchaseTest {
     @Test
     @DisplayName("구매요청 상세 미존재 404(범위 밖)")
     void getPurchaseRequisitionDetail_notFound() throws Exception {
-        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions/{purchaseId}", 11L)
+        mockMvc.perform(get("/api/scm-pp/mm/purchase-requisitions/{purchaseId}", 51L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("해당 구매요청서를 찾을 수 없습니다: purchaseId=11"));
+                .andExpect(jsonPath("$.message").value("해당 구매요청서를 찾을 수 없습니다: purchaseId=51"));
     }
 }

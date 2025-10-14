@@ -64,8 +64,8 @@ class MmVendorTest {
                 .andExpect(jsonPath("$.data.content[0].vendorCode").value("SUP001"))
                 .andExpect(jsonPath("$.data.page.number").value(0))
                 .andExpect(jsonPath("$.data.page.size").value(10))
-                .andExpect(jsonPath("$.data.page.totalElements").value(5))
-                .andExpect(jsonPath("$.data.page.hasNext").value(false));
+                .andExpect(jsonPath("$.data.page.totalElements").value(50))
+                .andExpect(jsonPath("$.data.page.hasNext").value(true));
     }
 
     @Test
@@ -131,7 +131,7 @@ class MmVendorTest {
     @Test
     @DisplayName("공급업체 상세 미존재 404")
     void getVendorDetail_notFound() throws Exception {
-        mockMvc.perform(get("/api/scm-pp/mm/vendors/{vendorId}", 11L)
+        mockMvc.perform(get("/api/scm-pp/mm/vendors/{vendorId}", 51L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
