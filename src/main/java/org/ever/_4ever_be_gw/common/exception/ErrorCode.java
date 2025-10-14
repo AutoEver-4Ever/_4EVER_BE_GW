@@ -78,6 +78,21 @@ public enum ErrorCode {
     INVALID_CREDENTIALS(3002, HttpStatus.UNAUTHORIZED, "잘못된 인증 정보입니다."),
     USER_ACCOUNT_LOCKED(3003, HttpStatus.FORBIDDEN, "계정이 잠겨있습니다."),
 
+    // HR Errors (2000~2999)
+    EMPLOYEE_NOT_FOUND(2000, HttpStatus.NOT_FOUND, "해당 직원을 찾을 수 없습니다."),
+    EMPLOYEE_ALREADY_EXISTS(2001, HttpStatus.CONFLICT, "이미 존재하는 직원입니다."),
+    DEPARTMENT_NOT_FOUND(2002, HttpStatus.NOT_FOUND, "해당 부서를 찾을 수 없습니다."),
+    DEPARTMENT_ALREADY_EXISTS(2003, HttpStatus.CONFLICT, "이미 존재하는 부서입니다."),
+    POSITION_NOT_FOUND(2004, HttpStatus.NOT_FOUND, "해당 직급을 찾을 수 없습니다."),
+    POSITION_ALREADY_EXISTS(2005, HttpStatus.CONFLICT, "이미 존재하는 직급입니다."),
+    ATTENDANCE_NOT_FOUND(2006, HttpStatus.NOT_FOUND, "해당 출퇴근 기록을 찾을 수 없습니다."),
+    LEAVE_REQUEST_NOT_FOUND(2007, HttpStatus.NOT_FOUND, "해당 휴가 신청을 찾을 수 없습니다."),
+    PAYROLL_NOT_FOUND(2008, HttpStatus.NOT_FOUND, "해당 급여 정보를 찾을 수 없습니다."),
+    INVALID_ATTENDANCE_TIME(2009, HttpStatus.BAD_REQUEST, "잘못된 출퇴근 시간입니다."),
+    INVALID_LEAVE_PERIOD(2010, HttpStatus.BAD_REQUEST, "잘못된 휴가 기간입니다."),
+    INSUFFICIENT_LEAVE_DAYS(2011, HttpStatus.BAD_REQUEST, "휴가 일수가 부족합니다."),
+    PAYROLL_ALREADY_PROCESSED(2012, HttpStatus.CONFLICT, "이미 처리된 급여입니다."),
+
     // Order Errors (4000~4999)
     ORDER_NOT_FOUND(4000, HttpStatus.NOT_FOUND, "주문 정보를 찾을 수 없습니다."),
     ORDER_ALREADY_COMPLETED(4001, HttpStatus.BAD_REQUEST, "이미 완료된 주문입니다."),
