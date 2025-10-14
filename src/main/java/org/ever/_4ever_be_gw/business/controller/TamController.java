@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -12,13 +13,19 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.ever._4ever_be_gw.business.dto.LeaveRequestDto;
+import org.ever._4ever_be_gw.business.dto.TimeRecordUpdateRequestDto;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,7 +35,193 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Time & Attendance Management", description = "근태 관리 API")
 public class TamController {
 
-    // 출퇴근 기록 목록 조회
+    // ==================== 출퇴근 관리 ====================
+
+    @PatchMapping("/attendance/check-in")
+    @Operation(
+        summary = "출근 상태 변경",
+        description = "직원의 출근 상태를 변경합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"출근 처리가 완료되었습니다.\",\n  \"data\": {\n    \"timerecordId\": 101,\n    \"employeeId\": 1,\n    \"checkInTime\": \"2025-01-15T09:00:00\",\n    \"status\": \"ON_TIME\"\n  }\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> checkIn() {
+        // Mock 데이터 생성
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("timerecordId", 101L);
+        data.put("employeeId", 1L);
+        data.put("checkInTime", LocalDateTime.now());
+        data.put("status", "ON_TIME");
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "출근 처리가 완료되었습니다.", HttpStatus.OK
+        ));
+    }
+
+    @PatchMapping("/attendance/check-out")
+    @Operation(
+        summary = "퇴근 상태 변경",
+        description = "직원의 퇴근 상태를 변경합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"퇴근 처리가 완료되었습니다.\",\n  \"data\": {\n    \"timerecordId\": 101,\n    \"employeeId\": 1,\n    \"checkOutTime\": \"2025-01-15T18:00:00\",\n    \"totalWorkMinutes\": 540,\n    \"overtimeMinutes\": 0\n  }\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> checkOut() {
+        // Mock 데이터 생성
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("timerecordId", 101L);
+        data.put("employeeId", 1L);
+        data.put("checkOutTime", LocalDateTime.now());
+        data.put("totalWorkMinutes", 540);
+        data.put("overtimeMinutes", 0);
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "퇴근 처리가 완료되었습니다.", HttpStatus.OK
+        ));
+    }
+
+    @PutMapping("/time-record/{timerecordId}")
+    @Operation(
+        summary = "출퇴근 기록 수정",
+        description = "출퇴근 기록을 수정합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"출퇴근 기록 수정이 완료되었습니다.\",\n  \"data\": {\n    \"timerecordId\": 101,\n    \"employeeId\": 1,\n    \"inTime\": \"2025-01-15T09:00:00\",\n    \"outTime\": \"2025-01-15T18:00:00\",\n    \"attendanceStatus\": \"ON_TIME\"\n  }\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> updateTimeRecord(
+        @Parameter(description = "근태 기록 ID", example = "101")
+        @PathVariable("timerecordId") Long timerecordId,
+        @Valid @RequestBody TimeRecordUpdateRequestDto requestDto
+    ) {
+        // 요청 데이터 로깅
+        System.out.println("출퇴근 기록 수정 요청 - ID: " + timerecordId + ", 데이터: " + requestDto);
+
+        // Mock 데이터 생성
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("timerecordId", timerecordId);
+        data.put("employeeId", 1L);
+        data.put("inTime", requestDto.getInTime());
+        data.put("outTime", requestDto.getOutTime());
+        data.put("attendanceStatus", requestDto.getAttendanceStatus());
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "출퇴근 기록 수정이 완료되었습니다.", HttpStatus.OK
+        ));
+    }
+
+    // ==================== 휴가 관리 ====================
+
+    @PostMapping("/leave/request")
+    @Operation(
+        summary = "휴가 신청",
+        description = "새로운 휴가를 신청합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청이 완료되었습니다.\",\n  \"data\": {\n    \"leaveRequestId\": 201,\n    \"employeeId\": 101,\n    \"leaveType\": \"ANNUAL\",\n    \"startDate\": \"2025-10-15\",\n    \"endDate\": \"2025-10-18\",\n    \"status\": \"PENDING\"\n  }\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> requestLeave(
+        @Valid @RequestBody LeaveRequestDto requestDto
+    ) {
+        // 요청 데이터 로깅
+        System.out.println("휴가 신청 요청: " + requestDto);
+
+        // Mock 데이터 생성
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("leaveRequestId", 201L);
+        data.put("employeeId", requestDto.getEmployeeId());
+        data.put("leaveType", requestDto.getLeaveType());
+        data.put("startDate", requestDto.getStartDate());
+        data.put("endDate", requestDto.getEndDate());
+        data.put("status", "PENDING");
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "휴가 신청이 완료되었습니다.", HttpStatus.OK
+        ));
+    }
+
+    @PatchMapping("/leave/request/{requestId}/release")
+    @Operation(
+        summary = "휴가 신청 승인",
+        description = "휴가 신청을 승인합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청이 승인되었습니다.\",\n  \"data\": {\n    \"leaveRequestId\": 201,\n    \"status\": \"APPROVED\",\n    \"approvedAt\": \"2025-01-15T10:30:00\"\n  }\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> approveLeaveRequest(
+        @Parameter(description = "휴가 신청 ID", example = "201")
+        @PathVariable("requestId") Long requestId
+    ) {
+        // 요청 데이터 로깅
+        System.out.println("휴가 신청 승인 요청 - ID: " + requestId);
+
+        // Mock 데이터 생성
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("leaveRequestId", requestId);
+        data.put("status", "APPROVED");
+        data.put("approvedAt", LocalDateTime.now());
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "휴가 신청이 승인되었습니다.", HttpStatus.OK
+        ));
+    }
+
+    @PatchMapping("/leave/request/{requestId}/reject")
+    @Operation(
+        summary = "휴가 신청 반려",
+        description = "휴가 신청을 반려합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청이 반려되었습니다.\",\n  \"data\": {\n    \"leaveRequestId\": 201,\n    \"status\": \"REJECTED\",\n    \"rejectedAt\": \"2025-01-15T10:30:00\"\n  }\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> rejectLeaveRequest(
+        @Parameter(description = "휴가 신청 ID", example = "201")
+        @PathVariable("requestId") Long requestId
+    ) {
+        // 요청 데이터 로깅
+        System.out.println("휴가 신청 반려 요청 - ID: " + requestId);
+
+        // Mock 데이터 생성
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("leaveRequestId", requestId);
+        data.put("status", "REJECTED");
+        data.put("rejectedAt", LocalDateTime.now());
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "휴가 신청이 반려되었습니다.", HttpStatus.OK
+        ));
+    }
+
+    // ==================== 기존 조회 API들 ====================
     // GET /api/business/tam/time-record?department=&position=&name=&date=&page=&size=
     @GetMapping("/time-record")
     @Operation(
