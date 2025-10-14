@@ -1245,6 +1245,140 @@ import java.util.stream.Collectors;
         return ResponseEntity.ok(ApiResponse.success(data, "주문 목록 조회에 성공했습니다.", HttpStatus.OK));
     }
 
+    // -------- Sales Order Detail (R) --------
+    @GetMapping("/orders/{soId}")
+    @Operation(
+            summary = "주문서 상세 조회",
+            description = "주문서 상세 정보를 조회합니다. 주문 정보, 고객 정보, 배송 정보, 품목, 총액, 메모를 포함합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문서 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"order\": {\n      \"soId\": 1201,\n      \"soNumber\": \"SO-2024-001\",\n      \"orderDate\": \"2024-01-15\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"statusCode\": \"IN_PRODUCTION\",\n      \"statusLabel\": \"생산중\",\n      \"paymentTerms\": \"월말 정산\",\n      \"totalAmount\": 15500000,\n      \"createdAt\": \"2024-01-15T03:00:00Z\",\n      \"updatedAt\": \"2024-01-15T03:05:00Z\"\n    },\n    \"customer\": {\n      \"customerId\": 301,\n      \"customerName\": \"(주)테크솔루션\",\n      \"contactName\": \"김영수\",\n      \"contactPhone\": \"02-1234-5678\",\n      \"contactEmail\": \"techsolution@company.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"shipping\": {\n      \"deliveryAddress\": \"경기도 성남시 분당구 판교역로 166\"\n    },\n    \"items\": [\n      { \"productName\": \"산업용 모터 5HP\", \"spec\": \"\", \"quantity\": 5, \"unit\": \"개\", \"unitPrice\": 850000, \"amount\": 4250000 },\n      { \"productName\": \"제어판넬\", \"spec\": \"\", \"quantity\": 2, \"unit\": \"개\", \"unitPrice\": 1200000, \"amount\": 2400000 }\n    ],\n    \"memo\": \"긴급 주문 - 우선 처리 요청\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "인증 필요",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "unauthorized", value = "{\n  \"status\": 401,\n  \"success\": false,\n  \"message\": \"인증이 필요합니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "403",
+                            description = "권한 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "forbidden", value = "{\n  \"status\": 403,\n  \"success\": false,\n  \"message\": \"주문서 상세 조회 권한이 없습니다.\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "리소스 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"해당 주문서를 찾을 수 없습니다: soId=1201\"\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"주문서 상세 조회 중 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> getSalesOrderDetail(
+            @Parameter(description = "주문서 ID")
+            @org.springframework.web.bind.annotation.PathVariable("soId") Long soId,
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        // 인증 체크
+        if (authorization == null || authorization.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
+        }
+        String token = authorization.trim().toUpperCase(Locale.ROOT);
+        if (token.contains("ERROR")) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+        // 권한 체크: SD_VIEWER, SALES_MANAGER, ADMIN
+        if (!(token.contains("SD_VIEWER") || token.contains("SALES_MANAGER") || token.contains("ADMIN"))) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
+        }
+
+        // 유효 범위: 1201~1210 (목업)
+        if (soId == null || soId < 1201L || soId > 1210L) {
+            throw new BusinessException(ErrorCode.ORDER_NOT_FOUND, "soId=" + soId);
+        }
+
+        int idx = (int)(soId - 1201);
+        String[] soNumbers = {"SO-2024-001","SO-2024-002","SO-2024-003","SO-2024-004","SO-2024-005","SO-2024-006","SO-2024-007","SO-2024-008","SO-2024-009","SO-2024-010"};
+        String[] orderDates = {"2024-01-15","2024-01-17","2024-01-18","2024-01-19","2024-01-20","2024-01-21","2024-01-22","2024-01-23","2024-01-24","2024-01-25"};
+        String[] deliveryDates = {"2024-01-25","2024-01-30","2024-01-28","2024-01-29","2024-02-01","2024-02-02","2024-02-03","2024-02-04","2024-02-05","2024-02-06"};
+        String[] customers = {"(주)테크솔루션","(주)대한제조","현대기공","포스코엠텍","세아베스틸","네오머티리얼","스마트팩","그린테크","동방기계","에이치파워"};
+        String[] contacts = {"김영수","박민수","이주연","최은정","홍길동","정우성","김하늘","박서준","한소라","장나라"};
+
+        // 상태코드(상세): IN_PRODUCTION 포함
+        String[] codes = {"IN_PRODUCTION","DELIVERING","MATERIAL_PREPARATION","READY_FOR_SHIPMENT","DELIVERED"};
+
+        Map<String, Object> order = new LinkedHashMap<>();
+        order.put("soId", soId);
+        order.put("soNumber", soNumbers[idx]);
+        order.put("orderDate", orderDates[idx]);
+        order.put("deliveryDate", deliveryDates[idx]);
+        String code = codes[idx % codes.length];
+        order.put("statusCode", code);
+        String label = switch (code) {
+            case "MATERIAL_PREPARATION" -> "자재 준비중";
+            case "IN_PRODUCTION" -> "생산중";
+            case "READY_FOR_SHIPMENT" -> "출하 준비 완료";
+            case "DELIVERING" -> "배송중";
+            case "DELIVERED" -> "배송완료";
+            default -> "";
+        };
+        order.put("statusLabel", label);
+        order.put("paymentTerms", "월말 정산");
+        order.put("totalAmount", 15_500_000L - (idx * 350_000L));
+        java.time.LocalDate od = java.time.LocalDate.parse(orderDates[idx]);
+        java.time.Instant createdAt = od.atTime(3,0).atZone(java.time.ZoneOffset.UTC).toInstant();
+        order.put("createdAt", createdAt);
+        order.put("updatedAt", createdAt.plusSeconds(300));
+
+        Map<String, Object> customer = new LinkedHashMap<>();
+        customer.put("customerId", 301 + idx);
+        customer.put("customerName", customers[idx]);
+        customer.put("contactName", contacts[idx]);
+        customer.put("contactPhone", "02-1234-5678");
+        customer.put("contactEmail", "contact@example.com");
+        customer.put("address", "서울시 강남구 테헤란로 123");
+
+        Map<String, Object> shipping = new LinkedHashMap<>();
+        shipping.put("deliveryAddress", "경기도 성남시 분당구 판교역로 166");
+
+        java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
+        Map<String, Object> it1 = new LinkedHashMap<>();
+        it1.put("productName", "산업용 모터 5HP");
+        it1.put("spec", "");
+        it1.put("quantity", 5);
+        it1.put("unit", "개");
+        it1.put("unitPrice", 850_000);
+        it1.put("amount", 4_250_000);
+        items.add(it1);
+
+        Map<String, Object> it2 = new LinkedHashMap<>();
+        it2.put("productName", "제어판넬");
+        it2.put("spec", "");
+        it2.put("quantity", 2);
+        it2.put("unit", "개");
+        it2.put("unitPrice", 1_200_000);
+        it2.put("amount", 2_400_000);
+        items.add(it2);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("order", order);
+        data.put("customer", customer);
+        data.put("shipping", shipping);
+        data.put("items", items);
+        data.put("memo", "긴급 주문 - 우선 처리 요청");
+
+        return ResponseEntity.ok(ApiResponse.success(data, "주문서 상세 정보를 조회했습니다.", HttpStatus.OK));
+    }
+
     // -------- Analytics (R) - week params (kept for tests) --------
     @GetMapping("/analytics/sales")
     @Operation(
