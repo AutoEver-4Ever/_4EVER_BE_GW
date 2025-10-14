@@ -655,7 +655,7 @@ import java.util.stream.Collectors;
             }
     )
     public ResponseEntity<ApiResponse<Object>> getCustomers(
-            @Parameter(description = "상태: ACTIVE, DEACTIVE")
+            @Parameter(description = "상태: ALL, ACTIVE, DEACTIVE")
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "검색 키워드")
             @RequestParam(name = "keyword", required = false) String keyword,
@@ -676,9 +676,9 @@ import java.util.stream.Collectors;
         // 422 검증
         List<Map<String, String>> errors = new ArrayList<>();
         if (status != null) {
-            var allowed = java.util.Set.of("ACTIVE", "DEACTIVE");
+            var allowed = java.util.Set.of("ALL", "ACTIVE", "DEACTIVE");
             if (!allowed.contains(status)) {
-                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ACTIVE, DEACTIVE"));
+                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ALL, ACTIVE, DEACTIVE"));
             }
         }
         if (page != null && page < 0) {
@@ -718,7 +718,7 @@ import java.util.stream.Collectors;
 
         // 필터 적용
         List<Map<String, Object>> filtered = all;
-        if (status != null) {
+        if (status != null && !"ALL".equals(status)) {
             boolean active = status.equals("ACTIVE");
             filtered = filtered.stream().filter(m -> (active ? "활성" : "비활성").equals(m.get("status"))).toList();
         }
