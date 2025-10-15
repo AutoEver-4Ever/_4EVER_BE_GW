@@ -691,9 +691,16 @@ import java.util.stream.Collectors;
             row.put("customerId", i + 1);
             row.put("customerCode", String.format("C-%03d", i + 1));
             row.put("companyName", companies[i % companies.length]);
+            // 표준화: manager { name, mobile, email }
+            Map<String, Object> listManager = new LinkedHashMap<>();
+            listManager.put("name", persons[i % persons.length]);
+            listManager.put("mobile", phones[i % phones.length]);
+            listManager.put("email", (i % 2 == 0) ? (persons[i % persons.length].charAt(0) + "@" + companies[i % companies.length] + ".com") : emails[i % emails.length]);
+            row.put("manager", listManager);
+            // 하위 호환 키 유지
             row.put("contactPerson", persons[i % persons.length]);
             row.put("phone", phones[i % phones.length]);
-            row.put("email", (i % 2 == 0) ? (persons[i % persons.length].charAt(0) + "@" + companies[i % companies.length] + ".com") : emails[i % emails.length]);
+            row.put("email", listManager.get("email"));
             row.put("address", (i % 2 == 0) ? "서울시 강남구 테헤란로 123" : "서울시 영등포구 여의도동 456");
             row.put("transactionAmount", 1_250_000_000L - (i * 37_000_000L));
             row.put("orderCount", 45 - (i % 10));
@@ -712,7 +719,14 @@ import java.util.stream.Collectors;
             String kw = keyword.toLowerCase();
             filtered = filtered.stream().filter(m -> {
                 String cname = String.valueOf(m.get("companyName")).toLowerCase();
-                String person = String.valueOf(m.get("contactPerson")).toLowerCase();
+                Object nameVal;
+                if (m.containsKey("manager") && m.get("manager") instanceof Map) {
+                    Map<?,?> mgr = (Map<?,?>) m.get("manager");
+                    nameVal = mgr.get("name");
+                } else {
+                    nameVal = m.get("contactPerson");
+                }
+                String person = (nameVal == null ? "" : String.valueOf(nameVal)).toLowerCase();
                 return cname.contains(kw) || person.contains(kw);
             }).toList();
         }
@@ -739,7 +753,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"customerId\": 1,\n    \"customerCode\": \"C-001\",\n    \"companyName\": \"삼성전자\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contact\": {\n      \"phone\": \"02-1234-5678\",\n      \"email\": \"contact@samsung.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"manager\": {\n      \"name\": \"김철수\",\n      \"mobile\": \"010-1234-5678\",\n      \"email\": \"kim@samsung.com\"\n    },\n    \"transaction\": {\n      \"totalOrders\": 45,\n      \"totalAmount\": 1250000000\n    },\n    \"note\": \"주요 고객사, 정기 거래처\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"customerId\": 1,\n    \"customerCode\": \"C-001\",\n    \"companyName\": \"삼성전자\",\n+    \"ceoName\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contact\": {\n      \"phone\": \"02-1234-5678\",\n      \"email\": \"contact@samsung.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"manager\": {\n      \"name\": \"김철수\",\n      \"mobile\": \"010-1234-5678\",\n      \"email\": \"kim@samsung.com\"\n    },\n    \"transaction\": {\n      \"totalOrders\": 45,\n      \"totalAmount\": 1250000000\n    },\n    \"note\": \"주요 고객사, 정기 거래처\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -791,6 +805,7 @@ import java.util.stream.Collectors;
             data.put("customerId", 1);
             data.put("customerCode", "C-001");
             data.put("companyName", "삼성전자");
+            data.put("ceoName", "이재용");
             data.put("businessNumber", "123-45-67890");
             data.put("statusCode", "ACTIVE");
             Map<String, Object> contact = new LinkedHashMap<>();
@@ -818,6 +833,7 @@ import java.util.stream.Collectors;
             data.put("customerCode", String.format("C-%03d", idx));
             String[] companies = {"LG화학", "현대자동차", "SK하이닉스", "네이버", "카카오"};
             data.put("companyName", companies[(idx - 2) % companies.length]);
+            data.put("ceoName", "홍길동");
             data.put("businessNumber", String.format("%03d-%02d-%05d", 100 + idx, 10 + (idx % 50), 10000 + idx));
             String code = (idx % 2 == 0) ? "ACTIVE" : "INACTIVE";
             data.put("statusCode", code);
@@ -1032,7 +1048,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1001,\n        \"soNumber\": \"SO-2024-001\",\n        \"customerId\": 301,\n        \"customerName\": \"(주)대한제조\",\n        \"contactName\": \"김영수\",\n        \"orderDate\": \"2024-01-15\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PRODUCTION\",\n        \"actions\": [\"view\"]\n      },\n      {\n        \"id\": 1002,\n        \"soNumber\": \"SO-2024-002\",\n        \"customerId\": 302,\n        \"customerName\": \"(주)테크솔루션\",\n        \"contactName\": \"박민수\",\n        \"orderDate\": \"2024-01-17\",\n        \"deliveryDate\": \"2024-01-30\",\n        \"totalAmount\": 8900000,\n        \"statusCode\": \"DELIVERING\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 2, \"totalPages\": 1, \"hasNext\": false }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1001,\n        \"soNumber\": \"SO-2024-001\",\n        \"customerId\": 301,\n        \"customerName\": \"(주)대한제조\",\n        \"contactName\": \"김영수\",\n        \"contactPhone\": \"010-1111-1111\",\n        \"orderDate\": \"2024-01-15\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PRODUCTION\",\n        \"actions\": [\"view\"]\n      },\n      {\n        \"id\": 1002,\n        \"soNumber\": \"SO-2024-002\",\n        \"customerId\": 302,\n        \"customerName\": \"(주)테크솔루션\",\n        \"contactName\": \"박민수\",\n        \"contactPhone\": \"010-2222-2222\",\n        \"orderDate\": \"2024-01-17\",\n        \"deliveryDate\": \"2024-01-30\",\n        \"totalAmount\": 8900000,\n        \"statusCode\": \"DELIVERING\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 2, \"totalPages\": 1, \"hasNext\": false }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1072,22 +1088,8 @@ import java.util.stream.Collectors;
             @Parameter(description = "페이지 번호(0-base)")
             @RequestParam(name = "page", required = false) Integer page,
             @Parameter(description = "페이지 크기(최대 200)")
-            @RequestParam(name = "size", required = false) Integer size,
-            @RequestHeader(value = "Authorization", required = false) String authorization
+            @RequestParam(name = "size", required = false) Integer size
     ) {
-        // 인증 체크
-        if (authorization == null || authorization.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
-        }
-        String token = authorization.trim().toUpperCase(Locale.ROOT);
-        if (token.contains("ERROR")) {
-            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
-        }
-        // 권한 체크: SD_VIEWER, SALES_MANAGER, ADMIN
-        if (!(token.contains("SD_VIEWER") || token.contains("SALES_MANAGER") || token.contains("ADMIN"))) {
-            throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
-        }
-
         // 422 검증
         List<Map<String, String>> errors = new ArrayList<>();
         java.time.LocalDate from = null;
@@ -1128,6 +1130,7 @@ import java.util.stream.Collectors;
         List<Map<String, Object>> all = new ArrayList<>();
         String[] customers = {"(주)테크솔루션","(주)대한제조","현대기공","포스코엠텍","세아베스틸","네오머티리얼","스마트팩","그린테크","동방기계","에이치파워"};
         String[] contacts = {"김영수","박민수","이주연","최은정","홍길동","정우성","김하늘","박서준","한소라","장나라"};
+        String[] contactPhones = {"010-1111-1111","010-2222-2222","010-3333-3333","010-4444-4444","010-5555-5555","010-6666-6666","010-7777-7777","010-8888-8888","010-9999-9999","010-0000-0000"};
         String[] codes = {"MATERIAL_PREPARATION","PRODUCTION","READY_FOR_SHIPMENT","DELIVERING","DELIVERED"};
         java.time.LocalDate baseOrder = java.time.LocalDate.of(2024, 1, 15);
         for (int i = 0; i < 50; i++) {
@@ -1137,7 +1140,14 @@ import java.util.stream.Collectors;
             row.put("soNumber", String.format("SO-2024-%03d", i + 1));
             row.put("customerId", 301 + (i % 50));
             row.put("customerName", customers[i % customers.length]);
+            // 표준화: manager { name, mobile }
+            Map<String, Object> rowManager = new LinkedHashMap<>();
+            rowManager.put("name", contacts[i % contacts.length]);
+            rowManager.put("mobile", contactPhones[i % contactPhones.length]);
+            row.put("manager", rowManager);
+            // 하위 호환 키
             row.put("contactName", contacts[i % contacts.length]);
+            row.put("contactPhone", contactPhones[i % contactPhones.length]);
             java.time.LocalDate od = baseOrder.plusDays(i % 20);
             java.time.LocalDate dd = od.plusDays(10 + (i % 5));
             row.put("orderDate", od.toString());
@@ -1161,7 +1171,14 @@ import java.util.stream.Collectors;
             filtered = filtered.stream().filter(m -> {
                 String so = String.valueOf(m.get("soNumber")).toLowerCase(Locale.ROOT);
                 String cn = String.valueOf(m.get("customerName")).toLowerCase(Locale.ROOT);
-                String pn = String.valueOf(m.get("contactName")).toLowerCase(Locale.ROOT);
+                Object nameVal;
+                if (m.containsKey("manager") && m.get("manager") instanceof Map) {
+                    Map<?,?> mgr = (Map<?,?>) m.get("manager");
+                    nameVal = mgr.get("name");
+                } else {
+                    nameVal = m.get("contactName");
+                }
+                String pn = (nameVal == null ? "" : String.valueOf(nameVal)).toLowerCase(Locale.ROOT);
                 return so.contains(kw) || cn.contains(kw) || pn.contains(kw);
             }).toList();
         }
@@ -1202,13 +1219,19 @@ import java.util.stream.Collectors;
     @GetMapping("/orders/{soId}")
     @Operation(
             summary = "주문서 상세 조회",
-            description = "주문서 상세 정보를 조회합니다. 주문 정보, 고객 정보, 배송 정보, 품목, 총액, 메모를 포함합니다.",
+            description = "주문서 상세 정보를 조회합니다. 주문 정보, 고객 정보, 품목, 총액, 메모를 포함합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문서 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"order\": {\n      \"soId\": 1201,\n      \"soNumber\": \"SO-2024-001\",\n      \"orderDate\": \"2024-01-15\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"statusCode\": \"IN_PRODUCTION\",\n      \"paymentTerms\": \"월말 정산\",\n      \"totalAmount\": 15500000,\n      \"createdAt\": \"2024-01-15T03:00:00Z\",\n      \"updatedAt\": \"2024-01-15T03:05:00Z\"\n    },\n    \"customer\": {\n      \"customerId\": 301,\n      \"customerName\": \"(주)테크솔루션\",\n      \"contactName\": \"김영수\",\n      \"contactPhone\": \"02-1234-5678\",\n      \"contactEmail\": \"techsolution@company.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"shipping\": {\n      \"deliveryAddress\": \"경기도 성남시 분당구 판교역로 166\"\n    },\n    \"items\": [\n      { \"productName\": \"산업용 모터 5HP\", \"spec\": \"\", \"quantity\": 5, \"unit\": \"개\", \"unitPrice\": 850000, \"amount\": 4250000 },\n      { \"productName\": \"제어판넬\", \"spec\": \"\", \"quantity\": 2, \"unit\": \"개\", \"unitPrice\": 1200000, \"amount\": 2400000 }\n    ],\n    \"memo\": \"긴급 주문 - 우선 처리 요청\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문서 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"order\": {\n      \"soId\": 1201,\n      \"soNumber\": \"SO-2024-001\",\n      \"orderDate\": \"2024-01-15\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"statusCode\": \"IN_PRODUCTION\",\n      \"totalAmount\": 15500000\n    },\n    \"customer\": {\n      \"customerId\": 301,\n      \"customerName\": \"(주)테크솔루션\",\n      \"manager\": { \"name\": \"김영수\", \"mobile\": \"02-1234-5678\", \"email\": \"techsolution@company.com\" },\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"items\": [\n      { \"productName\": \"산업용 모터 5HP\", \"quantity\": 5, \"unit\": \"개\", \"unitPrice\": 850000, \"amount\": 4250000 },\n      { \"productName\": \"제어판넬\", \"quantity\": 2, \"unit\": \"개\", \"unitPrice\": 1200000, \"amount\": 2400000 }\n    ],\n    \"note\": \"긴급 주문 - 우선 처리 요청\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공(예시 업데이트)",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success_updated", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문서 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"order\": {\n      \"soId\": 1201,\n      \"soNumber\": \"SO-2024-001\",\n      \"orderDate\": \"2024-01-15\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"statusCode\": \"IN_PRODUCTION\",\n      \"totalAmount\": 15500000\n    },\n    \"customer\": {\n      \"customerId\": 301,\n      \"customerName\": \"(주)테크솔루션\",\n      \"manager\": { \"name\": \"김영수\", \"mobile\": \"02-1234-5678\", \"email\": \"techsolution@company.com\" },\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"items\": [\n      { \"productName\": \"산업용 모터 5HP\", \"quantity\": 5, \"unit\": \"개\", \"unitPrice\": 850000, \"amount\": 4250000 },\n      { \"productName\": \"제어판넬\", \"quantity\": 2, \"unit\": \"개\", \"unitPrice\": 1200000, \"amount\": 2400000 }\n    ],\n    \"note\": \"긴급 주문 - 우선 처리 요청\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1238,22 +1261,8 @@ import java.util.stream.Collectors;
     )
     public ResponseEntity<ApiResponse<Object>> getSalesOrderDetail(
             @Parameter(description = "주문서 ID")
-            @org.springframework.web.bind.annotation.PathVariable("soId") Long soId,
-            @RequestHeader(value = "Authorization", required = false) String authorization
+            @org.springframework.web.bind.annotation.PathVariable("soId") Long soId
     ) {
-        // 인증 체크
-        if (authorization == null || authorization.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
-        }
-        String token = authorization.trim().toUpperCase(Locale.ROOT);
-        if (token.contains("ERROR")) {
-            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
-        }
-        // 권한 체크: SD_VIEWER, SALES_MANAGER, ADMIN
-        if (!(token.contains("SD_VIEWER") || token.contains("SALES_MANAGER") || token.contains("ADMIN"))) {
-            throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
-        }
-
         // 유효 범위: 1201~1250 (목업)
         if (soId == null || soId < 1201L || soId > 1250L) {
             throw new BusinessException(ErrorCode.ORDER_NOT_FOUND, "soId=" + soId);
@@ -1276,27 +1285,29 @@ import java.util.stream.Collectors;
         String code = codes[idx % codes.length];
         order.put("statusCode", code);
         // statusLabel 제거: statusCode만 반환
-        order.put("paymentTerms", "월말 정산");
         order.put("totalAmount", 15_500_000L - (idx * 350_000L));
-        java.time.Instant createdAt = od.atTime(3,0).atZone(java.time.ZoneOffset.UTC).toInstant();
-        order.put("createdAt", createdAt);
-        order.put("updatedAt", createdAt.plusSeconds(300));
+        // createdAt/updatedAt 제거 (응답 단순화)
 
         Map<String, Object> customer = new LinkedHashMap<>();
         customer.put("customerId", 301 + idx);
         customer.put("customerName", customers[idx]);
+        Map<String, Object> custManager = new LinkedHashMap<>();
+        custManager.put("name", contacts[idx]);
+        custManager.put("mobile", "02-1234-5678");
+        custManager.put("email", "contact@example.com");
+        customer.put("manager", custManager);
+        // 하위 호환 필드 유지
         customer.put("contactName", contacts[idx]);
         customer.put("contactPhone", "02-1234-5678");
         customer.put("contactEmail", "contact@example.com");
         customer.put("address", "서울시 강남구 테헤란로 123");
 
-        Map<String, Object> shipping = new LinkedHashMap<>();
-        shipping.put("deliveryAddress", "경기도 성남시 분당구 판교역로 166");
+        // 배송 정보(shipping) 제거
 
         java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
         Map<String, Object> it1 = new LinkedHashMap<>();
         it1.put("productName", "산업용 모터 5HP");
-        it1.put("spec", "");
+        // 사양(spec) 제거
         it1.put("quantity", 5);
         it1.put("unit", "개");
         it1.put("unitPrice", 850_000);
@@ -1305,7 +1316,7 @@ import java.util.stream.Collectors;
 
         Map<String, Object> it2 = new LinkedHashMap<>();
         it2.put("productName", "제어판넬");
-        it2.put("spec", "");
+        // 사양(spec) 제거
         it2.put("quantity", 2);
         it2.put("unit", "개");
         it2.put("unitPrice", 1_200_000);
@@ -1315,9 +1326,9 @@ import java.util.stream.Collectors;
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("order", order);
         data.put("customer", customer);
-        data.put("shipping", shipping);
+        // 배송 정보(shipping) 제거
         data.put("items", items);
-        data.put("memo", "긴급 주문 - 우선 처리 요청");
+        data.put("note", "긴급 주문 - 우선 처리 요청");
 
         return ResponseEntity.ok(ApiResponse.success(data, "주문서 상세 정보를 조회했습니다.", HttpStatus.OK));
     }
@@ -1333,8 +1344,8 @@ import java.util.stream.Collectors;
                     "  * period: { start, end, weekStart, weekEnd, weekCount }\n" +
                     "  * trend: [{ year, month, week, sale, orderCount }] (주차별)\n" +
                     "  * trendScale: { sale: {min,max}, orderCount: {min,max} } (차트 y축 범위)\n" +
-                    "  * productShare: 10개 품목의 매출 및 비중({ productCode, productName, sale, saleShare })\n" +
-                    "  * topCustomers: 10개 고객({ customerCode, customerName, orderCount, sale })",
+                    "  * productShare: 상위 5개 + etc(총 6개) ({ productCode, productName, sale, saleShare })\n" +
+                    "  * topCustomers: 10개 고객({ customerCode, customerName, orderCount, sale, active })",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
@@ -1436,22 +1447,36 @@ import java.util.stream.Collectors;
 
             int weekCount = trend.size();
 
-            // 제품 비중 10개 (자동차 외장재)
+            // 제품 비중: 상위 5개 + etc(나머지 합산)
             String[] productNames = new String[]{
                 "Door Panel", "Front Bumper", "Rear Bumper", "Hood", "Trunk Lid",
                 "Front Fender", "Rear Fender", "Side Skirt", "Roof Panel", "Grille"
             };
             int[] productWeights = new int[]{14, 12, 11, 10, 10, 9, 8, 8, 9, 9}; // 합 100
             java.util.List<java.util.Map<String, Object>> productShare = new java.util.ArrayList<>();
-            for (int idx = 0; idx < 10; idx++) {
-                java.util.Map<String, Object> p = new java.util.LinkedHashMap<>();
-                p.put("productCode", String.format("EXT-%03d", idx + 1));
-                p.put("productName", productNames[idx]);
-                long ps = Math.round(totalSale * (productWeights[idx] / 100.0));
-                p.put("sale", ps);
-                p.put("saleShare", (double) productWeights[idx]);
-                productShare.add(p);
+            int topN = 5;
+            int etcWeight = 0;
+            for (int idx = 0; idx < productWeights.length; idx++) {
+                if (idx < topN) {
+                    java.util.Map<String, Object> p = new java.util.LinkedHashMap<>();
+                    p.put("productCode", String.format("EXT-%03d", idx + 1));
+                    p.put("productName", productNames[idx]);
+                    long ps = Math.round(totalSale * (productWeights[idx] / 100.0));
+                    p.put("sale", ps);
+                    p.put("saleShare", (double) productWeights[idx]);
+                    productShare.add(p);
+                } else {
+                    etcWeight += productWeights[idx];
+                }
             }
+            // etc 항목 추가
+            java.util.Map<String, Object> etc = new java.util.LinkedHashMap<>();
+            etc.put("productCode", "ETC");
+            etc.put("productName", "etc");
+            long etcSale = Math.round(totalSale * (etcWeight / 100.0));
+            etc.put("sale", etcSale);
+            etc.put("saleShare", (double) etcWeight);
+            productShare.add(etc);
 
             // 상위 고객 10개 (국내 자동차/부품사)
             String[] customerNames = new String[]{
@@ -1468,6 +1493,8 @@ import java.util.stream.Collectors;
                 int oc = Math.max(1, (int) Math.round((double) totalOrders * (customerWeights[idx] / 100.0)));
                 c.put("orderCount", oc);
                 c.put("sale", cs);
+                // 활성 상태 목업: 짝수 인덱스 활성, 홀수 비활성
+                c.put("active", idx % 2 == 0);
                 topCustomers.add(c);
             }
 

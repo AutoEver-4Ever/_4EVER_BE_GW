@@ -40,7 +40,7 @@ class SdAnalyticsTest {
                 .andExpect(jsonPath("$.data.trend").isArray())
                 .andExpect(jsonPath("$.data.trend.length()").isNumber())
                 .andExpect(jsonPath("$.data.productShare").isArray())
-                .andExpect(jsonPath("$.data.productShare.length()").value(10))
+                .andExpect(jsonPath("$.data.productShare.length()").value(6))
                 .andExpect(jsonPath("$.data.topCustomers").isArray())
                 .andExpect(jsonPath("$.data.topCustomers.length()").value(10));
     }

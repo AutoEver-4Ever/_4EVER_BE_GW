@@ -220,15 +220,23 @@ public class MmController {
             String deptName = (deptId == 12L) ? "영업1팀" : "경영지원팀";
             row.put("departmentId", deptId);
             row.put("departmentName", deptName);
+            // 구매 요청서 출처
             row.put("origin", origin);
+            // 구매 요청서 출처의 ID
             row.put("originRefId", originRef);
-            row.put("createdAt", createdAt);
+            // 요청일
+            row.put("requestDate", java.time.LocalDate.from(createdAt.atZone(java.time.ZoneOffset.UTC)));
             // 추가: 납기일(desiredDeliveryDate) 반환 (샘플: 요청일 기준 +7일)
             java.time.LocalDate desiredDeliveryDate = createdAt.atZone(java.time.ZoneOffset.UTC).toLocalDate().plusDays(7);
             row.put("desiredDeliveryDate", desiredDeliveryDate);
+
             row.put("createdBy", requesterId);
             row.put("itemCount", itemCount);
             row.put("hasPreferredVendor", hasPreferred);
+            // 총 금액(totalAmount) 추가: 항목 수와 인덱스로 가중 합산 (목업)
+            long base = 250_000L;
+            long totalAmount = base * itemCount + (i % 5) * 100_000L;
+            row.put("totalAmount", totalAmount);
             content.add(row);
         }
 
@@ -365,7 +373,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서 상세입니다.\",\n  \"data\": {\n    \"id\": 1,\n    \"prNumber\": \"PR-2024-001\",\n    \"requesterId\": 123,\n    \"requesterName\": \"김철수\",\n    \"departmentId\": 77,\n    \"departmentName\": \"생산팀\",\n    \"createdAt\": \"2024-01-15T00:00:00Z\",\n    \"desiredDeliveryDate\": \"2024-01-25\",\n    \"status\": \"APPROVED\",\n    \"currency\": \"KRW\",\n    \"items\": [\n      {\n        \"id\": 900001,\n        \"lineNo\": 1,\n        \"itemId\": 40000123,\n        \"itemName\": \"강판\",\n        \"quantity\": 500,\n        \"uomCode\": \"EA\",\n        \"unitPrice\": 5000,\n        \"amount\": 2500000,\n        \"deliveryDate\": \"2024-01-25\",\n        \"note\": null\n      },\n      {\n        \"id\": 900002,\n        \"lineNo\": 2,\n        \"itemId\": 987654321,\n        \"itemName\": \"볼트\",\n        \"quantity\": 100,\n        \"uomCode\": \"EA\",\n        \"unitPrice\": 500,\n        \"amount\": 50000,\n        \"deliveryDate\": \"2024-01-25\",\n        \"note\": null\n      }\n    ],\n    \"totalAmount\": 2550000\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서 상세입니다.\",\n  \"data\": {\n    \"id\": 1,\n    \"prNumber\": \"PR-2024-001\",\n    \"requesterId\": 123,\n    \"requesterName\": \"김철수\",\n    \"departmentId\": 77,\n    \"departmentName\": \"생산팀\",\n    \"requestDate\": \"2024-01-15\",\n    \"desiredDeliveryDate\": \"2024-01-25\",\n    \"status\": \"APPROVED\",\n    \"currency\": \"KRW\",\n    \"items\": [\n      {\n        \"id\": 900001,\n        \"lineNo\": 1,\n        \"itemId\": 40000123,\n        \"itemName\": \"강판\",\n        \"quantity\": 500,\n        \"uomCode\": \"EA\",\n        \"unitPrice\": 5000,\n        \"amount\": 2500000\n      },\n      {\n        \"id\": 900002,\n        \"lineNo\": 2,\n        \"itemId\": 987654321,\n        \"itemName\": \"볼트\",\n        \"quantity\": 100,\n        \"uomCode\": \"EA\",\n        \"unitPrice\": 500,\n        \"amount\": 50000\n      }\n    ],\n    \"totalAmount\": 2550000\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "403",
@@ -407,6 +415,8 @@ public class MmController {
         data.put("requesterName", "김철수");
         data.put("departmentId", 77L);
         data.put("departmentName", "생산팀");
+        // 요청일 추가 (createdAt의 날짜 기준)
+        data.put("requestDate", java.time.LocalDate.parse("2024-01-15"));
         data.put("createdAt", java.time.Instant.parse("2024-01-15T00:00:00Z"));
         data.put("desiredDeliveryDate", java.time.LocalDate.parse("2024-01-25"));
         data.put("status", "APPROVED");
@@ -423,8 +433,6 @@ public class MmController {
             put("uomCode", "EA");
             put("unitPrice", 5000);
             put("amount", 2_500_000);
-            put("deliveryDate", java.time.LocalDate.parse("2024-01-25"));
-            put("note", null);
         }});
         items.add(new java.util.LinkedHashMap<>() {{
             put("id", 900002L);
@@ -435,8 +443,6 @@ public class MmController {
             put("uomCode", "EA");
             put("unitPrice", 500);
             put("amount", 50_000);
-            put("deliveryDate", java.time.LocalDate.parse("2024-01-25"));
-            put("note", null);
         }});
         data.put("items", items);
         data.put("totalAmount", 2_550_000);
@@ -892,7 +898,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1001,\n        \"poNumber\": \"PO-2024-001\",\n        \"supplierName\": \"대한철강\",\n        \"itemsSummary\": \"강판 500kg, 알루미늄 300kg\",\n        \"totalAmount\": 5000000,\n        \"orderDate\": \"2024-01-18\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"status\": \"APPROVED\"\n      }\n    ],\n    \"page\": { \n      \"number\": 0, \n      \"size\": 10, \n      \"totalElements\": 50, \n      \"totalPages\": 5, \n      \"hasNext\": true \n    }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1001,\n        \"poNumber\": \"PO-2024-001\",\n        \"vendorName\": \"대한철강\",\n        \"itemsSummary\": \"강판 500kg, 알루미늄 300kg\",\n        \"totalAmount\": 5000000,\n        \"orderDate\": \"2024-01-18\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"status\": \"APPROVED\"\n      }\n    ],\n    \"page\": { \n      \"number\": 0, \n      \"size\": 10, \n      \"totalElements\": 50, \n      \"totalPages\": 5, \n      \"hasNext\": true \n    }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -923,8 +929,8 @@ public class MmController {
     public ResponseEntity<ApiResponse<Object>> getPurchaseOrders(
             @Parameter(description = "상태 필터: PENDING, APPROVED, REJECTED, DELIVERED, ALL(전체)")
             @RequestParam(name = "status", required = false) String status,
-            @Parameter(description = "공급업체명 검색")
-            @RequestParam(name = "supplierName", required = false) String supplierName,
+            @Parameter(description = "공급업체명(=vendorName) 검색")
+            @RequestParam(name = "vendorName", required = false) String vendorName,
             @Parameter(description = "발주서 번호 검색")
             @RequestParam(name = "poNumber", required = false) String poNumber,
             @Parameter(description = "주문일 시작(YYYY-MM-DD)")
@@ -1002,7 +1008,7 @@ public class MmController {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("id", 1001 + i);
             row.put("poNumber", String.format("PO-2024-%03d", i + 1));
-            row.put("supplierName", suppliers[idx]);
+            row.put("vendorName", suppliers[idx]);
             row.put("itemsSummary", itemsSummary[idx]);
             java.time.LocalDate od = baseDate.minusDays(idx);
             row.put("orderDate", od.toString());
@@ -1019,10 +1025,10 @@ public class MmController {
                 filtered = filtered.stream().filter(m -> st.equals(m.get("status"))).toList();
             }
         }
-        if (supplierName != null && !supplierName.isBlank()) {
-            String keyword = supplierName.toLowerCase(Locale.ROOT);
+        if (vendorName != null && !vendorName.isBlank()) {
+            String keyword = vendorName.toLowerCase(Locale.ROOT);
             filtered = filtered.stream()
-                    .filter(m -> String.valueOf(m.get("supplierName")).toLowerCase(Locale.ROOT).contains(keyword))
+                    .filter(m -> String.valueOf(m.get("vendorName")).toLowerCase(Locale.ROOT).contains(keyword))
                     .toList();
         }
         if (poNumber != null && !poNumber.isBlank()) {
@@ -1085,7 +1091,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"id\": 1,\n    \"poNumber\": \"PO-2024-001\",\n    \"supplierName\": \"대한철강\",\n    \"supplierContact\": \"02-1234-5678\",\n    \"supplierEmail\": \"order@steel.co.kr\",\n    \"orderDate\": \"2024-01-18\",\n    \"deliveryDate\": \"2024-01-25\",\n    \"status\": \"승인됨\",\n    \"totalAmount\": 5000000,\n    \"items\": [\n      { \"itemName\": \"강판\", \"spec\": \"SS400 10mm\", \"quantity\": 500, \"unit\": \"kg\", \"unitPrice\": 8000, \"amount\": 4000000 },\n      { \"itemName\": \"알루미늄\", \"spec\": \"A6061 5mm\", \"quantity\": 300, \"unit\": \"kg\", \"unitPrice\": 3333, \"amount\": 1000000 }\n    ],\n    \"deliveryAddress\": \"경기도 안산시 단원구 공장로 456\",\n    \"requestedDeliveryDate\": \"2024-01-25\",\n    \"specialInstructions\": \"오전 배송 요청\",\n    \"paymentTerms\": \"월말 결제\",\n    \"memo\": \"1월 생산용 원자재 주문\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"id\": 1,\n    \"poNumber\": \"PO-2024-001\",\n    \"vendorName\": \"대한철강\",\n    \"managerPhone\": \"02-1234-5678\",\n    \"managerEmail\": \"order@steel.co.kr\",\n    \"orderDate\": \"2024-01-18\",\n    \"deliveryDate\": \"2024-01-25\",\n    \"status\": \"승인됨\",\n    \"totalAmount\": 5000000,\n    \"items\": [\n      { \"itemName\": \"강판\", \"spec\": \"SS400 10mm\", \"quantity\": 500, \"unit\": \"kg\", \"unitPrice\": 8000, \"amount\": 4000000 },\n      { \"itemName\": \"알루미늄\", \"spec\": \"A6061 5mm\", \"quantity\": 300, \"unit\": \"kg\", \"unitPrice\": 3333, \"amount\": 1000000 }\n    ],\n    \"deliveryAddress\": \"경기도 안산시 단원구 공장로 456\",\n    \"requestedDeliveryDate\": \"2024-01-25\",\n    \"specialInstructions\": \"오전 배송 요청\",\n    \"paymentTerms\": \"월말 결제\",\n    \"note\": \"1월 생산용 원자재 주문\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1138,11 +1144,11 @@ public class MmController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", purchaseId);
         data.put("poNumber", String.format("PO-2024-%03d", 1 + idxFull));
-        data.put("supplierId", supplierIds[idx]);
-        data.put("supplierCode", supplierCodes[idx]);
-        data.put("supplierName", suppliers[idx]);
-        data.put("supplierContact", "02-1234-5678");
-        data.put("supplierEmail", "order@steel.co.kr");
+        data.put("vendorId", supplierIds[idx]);
+        data.put("vendorCode", supplierCodes[idx]);
+        data.put("vendorName", suppliers[idx]);
+        data.put("managerPhone", "02-1234-5678");
+        data.put("managerEmail", "order@steel.co.kr");
         data.put("orderDate", orderDates[idx]);
         data.put("requestedDeliveryDate", deliveryDates[idx]);
         data.put("statusCode", statusCodes[idx]);
@@ -1167,7 +1173,7 @@ public class MmController {
 
         data.put("items", items);
         data.put("totalAmount", 5_000_000);
-        data.put("memo", "1월 생산용 원자재 주문");
+        data.put("note", "1월 생산용 원자재 주문");
 
         // 생성/수정 일시 (orderDate 기준 09:00Z와 +5분)
         java.time.LocalDate od = java.time.LocalDate.parse(orderDates[idx]);
@@ -1263,8 +1269,8 @@ public class MmController {
             v.put("vendorId", 1 + i);
             v.put("vendorCode", codes[idx]);
             v.put("companyName", names[idx]);
-            v.put("contactPhone", phones[idx]);
-            v.put("contactEmail", emails[idx]);
+            v.put("managerPhone", phones[idx]);
+            v.put("managerEmail", emails[idx]);
             v.put("category", categories[idx]);
             v.put("leadTimeDays", leadDays[idx]);
             v.put("leadTimeLabel", leadDays[idx] == 0 ? "당일 배송" : leadDays[idx] + "일");
@@ -1324,7 +1330,7 @@ public class MmController {
                             responseCode = "200",
                             description = "등록 성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체가 정상적으로 등록되었습니다.\",\n  \"data\": {\n    \"vendorId\": 101,\n    \"vendorCode\": \"SUP-2025-0001\",\n    \"companyName\": \"대한철강\",\n    \"contactPerson\": \"홍길동\",\n    \"email\": \"contact@koreasteel.com\",\n    \"createdAt\": \"2025-10-13T10:00:00Z\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체가 정상적으로 등록되었습니다.\",\n  \"data\": {\n    \"vendorId\": 101,\n    \"vendorCode\": \"SUP-2025-0001\",\n    \"companyName\": \"대한철강\",\n    \"managerName\": \"홍길동\",\n    \"managerEmail\": \"contact@koreasteel.com\",\n    \"createdAt\": \"2025-10-13T10:00:00Z\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1388,8 +1394,8 @@ public class MmController {
         data.put("vendorId", 101L);
         data.put("vendorCode", "SUP-2025-0001");
         data.put("companyName", request.getCompanyName());
-        data.put("contactPerson", request.getContactPerson());
-        data.put("email", request.getEmail());
+        data.put("managerName", request.getContactPerson());
+        data.put("managerEmail", request.getEmail());
         data.put("createdAt", java.time.Instant.parse("2025-10-13T10:00:00Z"));
 
         return ResponseEntity.ok(ApiResponse.success(data, "공급업체가 정상적으로 등록되었습니다.", HttpStatus.OK));
@@ -1653,8 +1659,8 @@ public class MmController {
         data.put("vendorId", vendorId);
         data.put("vendorCode", codes[idx]);
         data.put("companyName", names[idx]);
-        data.put("contactPhone", phones[idx]);
-        data.put("contactEmail", emails[idx]);
+        data.put("managerPhone", phones[idx]);
+        data.put("managerEmail", emails[idx]);
         data.put("category", categories[idx]);
         data.put("leadTimeDays", leadDays[idx]);
         data.put("leadTimeLabel", leadDays[idx] == 0 ? "당일 배송" : leadDays[idx] + "일 소요");
@@ -1741,7 +1747,7 @@ public class MmController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("vendorId", vendorId);
         data.put("vendorCode", "SUP-2025-0001");
-        data.put("email", accountEmail);
+        data.put("managerEmail", accountEmail);
         data.put("tempPassword", "Abc12345!");
         data.put("invitedAt", java.time.Instant.parse("2025-10-13T10:05:00Z"));
 
@@ -1843,10 +1849,10 @@ public class MmController {
         data.put("leadTimeDays", request != null && request.getLeadTimeDays() != null ? request.getLeadTimeDays() : 3);
         data.put("materialList", request != null && request.getMaterialList() != null ? request.getMaterialList() : java.util.List.of("철강재", "스테인리스"));
         data.put("statusCode", request != null && request.getStatusCode() != null ? request.getStatusCode() : "ACTIVE");
-        data.put("contactPerson", "홍길동");
-        data.put("contactPosition", "영업팀장");
-        data.put("contactPhone", "010-1234-5678");
-        data.put("contactEmail", "contact@koreasteel.com");
+        data.put("managerName", "홍길동");
+        data.put("managerPosition", "영업팀장");
+        data.put("managerPhone", "010-1234-5678");
+        data.put("managerEmail", "contact@koreasteel.com");
         data.put("createdAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
         data.put("updatedAt", java.time.Instant.parse("2025-10-13T12:00:00Z"));
 

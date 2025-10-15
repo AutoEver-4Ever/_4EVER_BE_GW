@@ -60,7 +60,7 @@ class MmVendorAccountTest {
                 .andExpect(jsonPath("$.message").value("공급업체 계정이 생성되고 초대 이메일이 발송되었습니다."))
                 .andExpect(jsonPath("$.data.vendorId").value(101))
                 .andExpect(jsonPath("$.data.vendorCode").value("SUP-2025-0001"))
-                .andExpect(jsonPath("$.data.email").value("contact@everp.com"))
+                .andExpect(jsonPath("$.data.managerEmail").value("contact@everp.com"))
                 .andExpect(jsonPath("$.data.tempPassword").value("Abc12345!"))
                 .andExpect(jsonPath("$.data.invitedAt").value("2025-10-13T10:05:00Z"));
     }
@@ -123,4 +123,3 @@ class MmVendorAccountTest {
                 .andExpect(jsonPath("$.message").value("초대 이메일 발송 중 오류가 발생했습니다."));
     }
 }
-

@@ -35,6 +35,7 @@ class SdCustomerDetailTest {
                 .andExpect(jsonPath("$.message").value("고객사 상세 정보를 조회했습니다."))
                 .andExpect(jsonPath("$.data.customerId").value(1))
                 .andExpect(jsonPath("$.data.companyName").value("삼성전자"))
+                .andExpect(jsonPath("$.data.ceoName").value("이재용"))
                 .andExpect(jsonPath("$.data.contact.phone").value("02-1234-5678"))
                 .andExpect(jsonPath("$.data.transaction.totalOrders").value(45));
     }
