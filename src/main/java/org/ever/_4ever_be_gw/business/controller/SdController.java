@@ -739,7 +739,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"customerId\": 1,\n    \"customerCode\": \"C-001\",\n    \"companyName\": \"삼성전자\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contact\": {\n      \"phone\": \"02-1234-5678\",\n      \"email\": \"contact@samsung.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"manager\": {\n      \"name\": \"김철수\",\n      \"mobile\": \"010-1234-5678\",\n      \"email\": \"kim@samsung.com\"\n    },\n    \"transaction\": {\n      \"totalOrders\": 45,\n      \"totalAmount\": 1250000000\n    },\n    \"note\": \"주요 고객사, 정기 거래처\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"customerId\": 1,\n    \"customerCode\": \"C-001\",\n    \"companyName\": \"삼성전자\",\n+    \"ceoName\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contact\": {\n      \"phone\": \"02-1234-5678\",\n      \"email\": \"contact@samsung.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"manager\": {\n      \"name\": \"김철수\",\n      \"mobile\": \"010-1234-5678\",\n      \"email\": \"kim@samsung.com\"\n    },\n    \"transaction\": {\n      \"totalOrders\": 45,\n      \"totalAmount\": 1250000000\n    },\n    \"note\": \"주요 고객사, 정기 거래처\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -791,6 +791,7 @@ import java.util.stream.Collectors;
             data.put("customerId", 1);
             data.put("customerCode", "C-001");
             data.put("companyName", "삼성전자");
+            data.put("ceoName", "이재용");
             data.put("businessNumber", "123-45-67890");
             data.put("statusCode", "ACTIVE");
             Map<String, Object> contact = new LinkedHashMap<>();
@@ -818,6 +819,7 @@ import java.util.stream.Collectors;
             data.put("customerCode", String.format("C-%03d", idx));
             String[] companies = {"LG화학", "현대자동차", "SK하이닉스", "네이버", "카카오"};
             data.put("companyName", companies[(idx - 2) % companies.length]);
+            data.put("ceoName", "홍길동");
             data.put("businessNumber", String.format("%03d-%02d-%05d", 100 + idx, 10 + (idx % 50), 10000 + idx));
             String code = (idx % 2 == 0) ? "ACTIVE" : "INACTIVE";
             data.put("statusCode", code);
