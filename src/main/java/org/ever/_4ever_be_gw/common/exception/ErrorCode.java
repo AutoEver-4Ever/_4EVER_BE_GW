@@ -51,7 +51,7 @@ public enum ErrorCode {
     CUSTOMER_UPDATE_FORBIDDEN(1029, HttpStatus.FORBIDDEN, "해당 고객사를 수정할 권한이 없습니다."),
     CUSTOMER_DELETE_FORBIDDEN(1030, HttpStatus.FORBIDDEN, "해당 고객사를 삭제할 권한이 없습니다."),
     CUSTOMER_DELETE_CONFLICT(1031, HttpStatus.CONFLICT, "해당 고객사는 거래 내역이 존재하여 삭제할 수 없습니다."),
-    ANALYTICS_RANGE_TOO_LARGE(1032, HttpStatus.BAD_REQUEST, "조회 기간은 최대 12주(3개월)까지만 가능합니다."),
+    ANALYTICS_RANGE_TOO_LARGE(1032, HttpStatus.BAD_REQUEST, "조회 기간은 최대 6개월까지만 가능합니다."),
     AUTH_TOKEN_REQUIRED(1033, HttpStatus.UNAUTHORIZED, "유효한 인증 토큰이 필요합니다."),
     BODY_VALIDATION_FAILED(1034, HttpStatus.UNPROCESSABLE_ENTITY, "요청 본문 검증에 실패했습니다."),
     ANALYTICS_START_AFTER_END(1048, HttpStatus.CONFLICT, "startDate는 endDate보다 이후일 수 없습니다."),
