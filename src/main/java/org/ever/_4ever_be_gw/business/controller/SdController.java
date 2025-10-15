@@ -124,7 +124,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"items\": [\n      {\n        \"quotationId\": 12001,\n        \"quotationCode\": \"Q2024001\",\n        \"customerName\": \"삼성전자\",\n        \"ownerName\": \"김철수\",\n        \"quotationDate\": \"2024-01-15\",\n        \"dueDate\": \"2024-02-15\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PENDING\",\n        \"statusLabel\": \"대기\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 57, \"totalPages\": 6, \"hasNext\": true }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"items\": [\n      {\n        \"quotationId\": 12001,\n        \"quotationCode\": \"Q2024001\",\n        \"customerName\": \"삼성전자\",\n        \"ownerName\": \"김철수\",\n        \"quotationDate\": \"2024-01-15\",\n        \"dueDate\": \"2024-02-15\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PENDING\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 57, \"totalPages\": 6, \"hasNext\": true }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "422",
@@ -209,14 +209,7 @@ import java.util.stream.Collectors;
             row.put("totalAmount", 15_000_000L - (i * 250_000L));
             String statusCode = codes[i % codes.length];
             row.put("statusCode", statusCode);
-            String statusLabel = switch (statusCode) {
-                case "PENDING" -> "대기";
-                case "REVIEW" -> "검토";
-                case "APPROVED" -> "승인";
-                case "REJECTED" -> "반려";
-                default -> "";
-            };
-            row.put("statusLabel", statusLabel);
+            // statusLabel 제거: statusCode만 반환
             row.put("actions", List.of("view"));
             items.add(row);
         }
@@ -290,7 +283,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationCode\": \"Q2024001\",\n    \"quotationDate\": \"2024-01-15\",\n    \"dueDate\": \"2024-02-15\",\n    \"statusCode\": \"PENDING\",\n    \"statusLabel\": \"대기\",\n    \"customerName\": \"삼성전자\",\n    \"ownerName\": \"김철수\",\n    \"items\": [\n      { \"itemId\": 900001, \"productName\": \"제품 A\", \"quantity\": 10, \"unitPrice\": 500000, \"amount\": 5000000 },\n      { \"itemId\": 900002, \"productName\": \"제품 B\", \"quantity\": 5,  \"unitPrice\": 200000, \"amount\": 1000000 }\n    ],\n    \"totalAmount\": 15000000\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationCode\": \"Q2024001\",\n    \"quotationDate\": \"2024-01-15\",\n    \"dueDate\": \"2024-02-15\",\n    \"statusCode\": \"PENDING\",\n    \"customerName\": \"삼성전자\",\n    \"ownerName\": \"김철수\",\n    \"items\": [\n      { \"itemId\": 900001, \"productName\": \"제품 A\", \"quantity\": 10, \"unitPrice\": 500000, \"amount\": 5000000 },\n      { \"itemId\": 900002, \"productName\": \"제품 B\", \"quantity\": 5,  \"unitPrice\": 200000, \"amount\": 1000000 }\n    ],\n    \"totalAmount\": 15000000\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "403",
@@ -337,13 +330,6 @@ import java.util.stream.Collectors;
         int idx = (int) ((quotationId - 12001) % 10);
         String quotationCode = String.format("Q2024%03d", (quotationId - 12000));
         String statusCode = codes[idx % codes.length];
-        String statusLabel = switch (statusCode) {
-            case "PENDING" -> "대기";
-            case "REVIEW" -> "검토";
-            case "APPROVED" -> "승인";
-            case "REJECTED" -> "반려";
-            default -> "";
-        };
 
         Map<String, Object> item1 = new LinkedHashMap<>();
         item1.put("itemId", 900001 + idx);
@@ -367,7 +353,6 @@ import java.util.stream.Collectors;
         data.put("quotationDate", "2024-01-15");
         data.put("dueDate", "2024-02-15");
         data.put("statusCode", statusCode);
-        data.put("statusLabel", statusLabel);
         data.put("customerName", customers[idx]);
         data.put("ownerName", owners[idx]);
         data.put("items", List.of(item1, item2));
@@ -385,7 +370,7 @@ import java.util.stream.Collectors;
                             responseCode = "201",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"신규 견적서 등록이 완료되었습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationDate\": \"2025-10-12\",\n    \"dueDate\": \"2025-11-01\",\n    \"totalAmount\": 7000000,\n    \"statusCode\": \"PENDING\",\n    \"statusLabel\": \"대기\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"신규 견적서 등록이 완료되었습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationDate\": \"2025-10-12\",\n    \"dueDate\": \"2025-11-01\",\n    \"totalAmount\": 7000000,\n    \"statusCode\": \"PENDING\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "400",
@@ -438,7 +423,6 @@ import java.util.stream.Collectors;
         data.put("dueDate", request.getDueDate().toString());
         data.put("totalAmount", totalAmount);
         data.put("statusCode", "PENDING");
-        data.put("statusLabel", "대기");
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(data, "신규 견적서 등록이 완료되었습니다.", HttpStatus.CREATED));
@@ -510,7 +494,7 @@ import java.util.stream.Collectors;
                             responseCode = "201",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"고객사가 등록되었습니다.\",\n  \"data\": {\n    \"customerId\": 501,\n    \"customerCode\": \"C-0001\",\n    \"companyName\": \"삼성전자\",\n    \"ceoName\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"statusLabel\": \"활성\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"contact@samsung.com\",\n    \"address\": \"서울시 강남구 테헤란로 123\",\n    \"manager\": { \"name\": \"김철수\", \"mobile\": \"010-1234-5678\", \"email\": \"kim@samsung.com\" },\n    \"totalOrders\": 0,\n    \"totalTransactionAmount\": 0,\n    \"currency\": \"KRW\",\n    \"note\": \"주요 고객사, 정기 거래처\",\n    \"createdAt\": \"2025-10-12T12:34:56Z\",\n    \"updatedAt\": \"2025-10-12T12:34:56Z\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"고객사가 등록되었습니다.\",\n  \"data\": {\n    \"customerId\": 501,\n    \"customerCode\": \"C-0001\",\n    \"companyName\": \"삼성전자\",\n    \"ceoName\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"contact@samsung.com\",\n    \"zipCode\": \"06236\",\n    \"address\": \"서울시 강남구 테헤란로 123\",\n    \"detailAddress\": \"4층\",\n    \"manager\": { \"name\": \"김철수\", \"mobile\": \"010-1234-5678\", \"email\": \"kim@samsung.com\" },\n    \"totalOrders\": 0,\n    \"totalTransactionAmount\": 0,\n    \"currency\": \"KRW\",\n    \"note\": \"주요 고객사, 정기 거래처\",\n    \"createdAt\": \"2025-10-12T12:34:56Z\",\n    \"updatedAt\": \"2025-10-12T12:34:56Z\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "400",
@@ -536,7 +520,7 @@ import java.util.stream.Collectors;
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(name = "request", value = "{\n  \"companyName\": \"삼성전자\",\n  \"businessNumber\": \"123-45-67890\",\n  \"ceoName\": \"이재용\",\n  \"contactPhone\": \"02-1234-5678\",\n  \"contactEmail\": \"contact@samsung.com\",\n  \"address\": \"서울시 강남구 테헤란로 123\",\n  \"manager\": {\n    \"name\": \"김철수\",\n    \"mobile\": \"010-1234-5678\",\n    \"email\": \"kim@samsung.com\"\n  },\n  \"note\": \"주요 고객사, 정기 거래처\"\n}"))
+                            examples = @ExampleObject(name = "request", value = "{\n  \"companyName\": \"삼성전자\",\n  \"businessNumber\": \"123-45-67890\",\n  \"ceoName\": \"이재용\",\n  \"contactPhone\": \"02-1234-5678\",\n  \"contactEmail\": \"contact@samsung.com\",\n  \"zipCode\": \"06236\",\n  \"address\": \"서울시 강남구 테헤란로 123\",\n  \"detailAddress\": \"4층\",\n  \"manager\": {\n    \"name\": \"김철수\",\n    \"mobile\": \"010-1234-5678\",\n    \"email\": \"kim@samsung.com\"\n  },\n  \"note\": \"주요 고객사, 정기 거래처\"\n}"))
             )
             @RequestBody CustomerCreateRequestDto request
     ) {
@@ -591,10 +575,11 @@ import java.util.stream.Collectors;
         data.put("ceoName", request.getCeoName());
         data.put("businessNumber", request.getBusinessNumber());
         data.put("statusCode", "ACTIVE");
-        data.put("statusLabel", "활성");
         data.put("contactPhone", request.getContactPhone());
         data.put("contactEmail", request.getContactEmail());
+        data.put("zipCode", request.getZipCode());
         data.put("address", request.getAddress());
+        data.put("detailAddress", request.getDetailAddress());
         java.util.Map<String, Object> manager = new java.util.LinkedHashMap<>();
         if (request.getManager() != null) {
             manager.put("name", request.getManager().getName());
@@ -754,7 +739,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"customerId\": 1,\n    \"customerCode\": \"C-001\",\n    \"companyName\": \"삼성전자\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"statusLabel\": \"활성\",\n    \"contact\": {\n      \"phone\": \"02-1234-5678\",\n      \"email\": \"contact@samsung.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"manager\": {\n      \"name\": \"김철수\",\n      \"mobile\": \"010-1234-5678\",\n      \"email\": \"kim@samsung.com\"\n    },\n    \"transaction\": {\n      \"totalOrders\": 45,\n      \"totalAmount\": 1250000000\n    },\n    \"note\": \"주요 고객사, 정기 거래처\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"customerId\": 1,\n    \"customerCode\": \"C-001\",\n    \"companyName\": \"삼성전자\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contact\": {\n      \"phone\": \"02-1234-5678\",\n      \"email\": \"contact@samsung.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"manager\": {\n      \"name\": \"김철수\",\n      \"mobile\": \"010-1234-5678\",\n      \"email\": \"kim@samsung.com\"\n    },\n    \"transaction\": {\n      \"totalOrders\": 45,\n      \"totalAmount\": 1250000000\n    },\n    \"note\": \"주요 고객사, 정기 거래처\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -808,7 +793,6 @@ import java.util.stream.Collectors;
             data.put("companyName", "삼성전자");
             data.put("businessNumber", "123-45-67890");
             data.put("statusCode", "ACTIVE");
-            data.put("statusLabel", "활성");
             Map<String, Object> contact = new LinkedHashMap<>();
             contact.put("phone", "02-1234-5678");
             contact.put("email", "contact@samsung.com");
@@ -837,7 +821,6 @@ import java.util.stream.Collectors;
             data.put("businessNumber", String.format("%03d-%02d-%05d", 100 + idx, 10 + (idx % 50), 10000 + idx));
             String code = (idx % 2 == 0) ? "ACTIVE" : "INACTIVE";
             data.put("statusCode", code);
-            data.put("statusLabel", code.equals("ACTIVE") ? "활성" : "비활성");
             Map<String, Object> contact = new LinkedHashMap<>();
             contact.put("phone", "02-0000-0000");
             contact.put("email", "info@example.com");
@@ -1049,7 +1032,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1001,\n        \"soNumber\": \"SO-2024-001\",\n        \"customerId\": 301,\n        \"customerName\": \"(주)대한제조\",\n        \"contactName\": \"김영수\",\n        \"orderDate\": \"2024-01-15\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PRODUCTION\",\n        \"statusLabel\": \"생산중\",\n        \"actions\": [\"view\"]\n      },\n      {\n        \"id\": 1002,\n        \"soNumber\": \"SO-2024-002\",\n        \"customerId\": 302,\n        \"customerName\": \"(주)테크솔루션\",\n        \"contactName\": \"박민수\",\n        \"orderDate\": \"2024-01-17\",\n        \"deliveryDate\": \"2024-01-30\",\n        \"totalAmount\": 8900000,\n        \"statusCode\": \"DELIVERING\",\n        \"statusLabel\": \"배송중\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 2, \"totalPages\": 1, \"hasNext\": false }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1001,\n        \"soNumber\": \"SO-2024-001\",\n        \"customerId\": 301,\n        \"customerName\": \"(주)대한제조\",\n        \"contactName\": \"김영수\",\n        \"orderDate\": \"2024-01-15\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PRODUCTION\",\n        \"actions\": [\"view\"]\n      },\n      {\n        \"id\": 1002,\n        \"soNumber\": \"SO-2024-002\",\n        \"customerId\": 302,\n        \"customerName\": \"(주)테크솔루션\",\n        \"contactName\": \"박민수\",\n        \"orderDate\": \"2024-01-17\",\n        \"deliveryDate\": \"2024-01-30\",\n        \"totalAmount\": 8900000,\n        \"statusCode\": \"DELIVERING\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 2, \"totalPages\": 1, \"hasNext\": false }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1162,15 +1145,7 @@ import java.util.stream.Collectors;
             row.put("totalAmount", 15_000_000L - (i * 120_000L));
             String statusCode = codes[i % codes.length];
             row.put("statusCode", statusCode);
-            String statusLabel = switch (statusCode) {
-                case "MATERIAL_PREPARATION" -> "자재 준비중";
-                case "PRODUCTION" -> "생산중";
-                case "READY_FOR_SHIPMENT" -> "출하 준비 완료";
-                case "DELIVERING" -> "배송중";
-                case "DELIVERED" -> "배송완료";
-                default -> "";
-            };
-            row.put("statusLabel", statusLabel);
+            // statusLabel 제거: statusCode만 반환
             row.put("actions", List.of("view"));
             all.add(row);
         }
@@ -1233,7 +1208,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문서 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"order\": {\n      \"soId\": 1201,\n      \"soNumber\": \"SO-2024-001\",\n      \"orderDate\": \"2024-01-15\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"statusCode\": \"IN_PRODUCTION\",\n      \"statusLabel\": \"생산중\",\n      \"paymentTerms\": \"월말 정산\",\n      \"totalAmount\": 15500000,\n      \"createdAt\": \"2024-01-15T03:00:00Z\",\n      \"updatedAt\": \"2024-01-15T03:05:00Z\"\n    },\n    \"customer\": {\n      \"customerId\": 301,\n      \"customerName\": \"(주)테크솔루션\",\n      \"contactName\": \"김영수\",\n      \"contactPhone\": \"02-1234-5678\",\n      \"contactEmail\": \"techsolution@company.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"shipping\": {\n      \"deliveryAddress\": \"경기도 성남시 분당구 판교역로 166\"\n    },\n    \"items\": [\n      { \"productName\": \"산업용 모터 5HP\", \"spec\": \"\", \"quantity\": 5, \"unit\": \"개\", \"unitPrice\": 850000, \"amount\": 4250000 },\n      { \"productName\": \"제어판넬\", \"spec\": \"\", \"quantity\": 2, \"unit\": \"개\", \"unitPrice\": 1200000, \"amount\": 2400000 }\n    ],\n    \"memo\": \"긴급 주문 - 우선 처리 요청\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문서 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"order\": {\n      \"soId\": 1201,\n      \"soNumber\": \"SO-2024-001\",\n      \"orderDate\": \"2024-01-15\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"statusCode\": \"IN_PRODUCTION\",\n      \"paymentTerms\": \"월말 정산\",\n      \"totalAmount\": 15500000,\n      \"createdAt\": \"2024-01-15T03:00:00Z\",\n      \"updatedAt\": \"2024-01-15T03:05:00Z\"\n    },\n    \"customer\": {\n      \"customerId\": 301,\n      \"customerName\": \"(주)테크솔루션\",\n      \"contactName\": \"김영수\",\n      \"contactPhone\": \"02-1234-5678\",\n      \"contactEmail\": \"techsolution@company.com\",\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"shipping\": {\n      \"deliveryAddress\": \"경기도 성남시 분당구 판교역로 166\"\n    },\n    \"items\": [\n      { \"productName\": \"산업용 모터 5HP\", \"spec\": \"\", \"quantity\": 5, \"unit\": \"개\", \"unitPrice\": 850000, \"amount\": 4250000 },\n      { \"productName\": \"제어판넬\", \"spec\": \"\", \"quantity\": 2, \"unit\": \"개\", \"unitPrice\": 1200000, \"amount\": 2400000 }\n    ],\n    \"memo\": \"긴급 주문 - 우선 처리 요청\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1300,15 +1275,7 @@ import java.util.stream.Collectors;
         order.put("deliveryDate", dd.toString());
         String code = codes[idx % codes.length];
         order.put("statusCode", code);
-        String label = switch (code) {
-            case "MATERIAL_PREPARATION" -> "자재 준비중";
-            case "IN_PRODUCTION" -> "생산중";
-            case "READY_FOR_SHIPMENT" -> "출하 준비 완료";
-            case "DELIVERING" -> "배송중";
-            case "DELIVERED" -> "배송완료";
-            default -> "";
-        };
-        order.put("statusLabel", label);
+        // statusLabel 제거: statusCode만 반환
         order.put("paymentTerms", "월말 정산");
         order.put("totalAmount", 15_500_000L - (idx * 350_000L));
         java.time.Instant createdAt = od.atTime(3,0).atZone(java.time.ZoneOffset.UTC).toInstant();
@@ -1359,19 +1326,27 @@ import java.util.stream.Collectors;
     @GetMapping("/analytics/sales")
     @Operation(
             summary = "매출 분석 통계 조회",
-            description = "주차 범위 내 매출 추이, 제품 비중, 상위 고객사를 조회합니다.",
+            description = "start/end(yyyy-mm-dd) 또는 주차 기준으로 매출 분석을 조회합니다.\n" +
+                    "- 날짜 기반: start가 포함된 ISO 주의 월요일부터 end가 포함된 ISO 주의 일요일까지 포함\n" +
+                    "- 제한: 최대 6개월 범위\n" +
+                    "- 응답 필드\n" +
+                    "  * period: { start, end, weekStart, weekEnd, startYear, startWeek, endYear, endWeek, weekCount }\n" +
+                    "  * trend: [{ year, month, week, sale, orderCount }] (주차별)\n" +
+                    "  * trendScale: { sale: {min,max}, orderCount: {min,max} } (차트 y축 범위)\n" +
+                    "  * productShare: 10개 품목의 매출 및 비중({ productCode, productName, sale, saleShare })\n" +
+                    "  * topCustomers: 10개 고객({ customerCode, customerName, orderCount, sale })",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 통계 데이터를 조회했습니다.\",\n  \"data\": {\n    \"trend\": [ { \"year\": 2025, \"week\": 10, \"sale\": 350000000, \"orderCount\": 120 } ],\n    \"productShare\": [ { \"productCode\": \"P-001\", \"productName\": \"OLED TV\", \"sale\": 1230000000, \"saleShare\": 35.2 } ],\n    \"topCustomers\": [ { \"customerCode\": \"C-001\", \"customerName\": \"삼성전자\", \"sale\": 850000000, \"saleShare\": 24.3 } ]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 통계 데이터를 조회했습니다.\",\n  \"data\": {\n    \"period\": { \"start\": \"2025-01-01\", \"end\": \"2025-03-31\", \"weekStart\": \"2024-12-30\", \"weekEnd\": \"2025-04-06\", \"startYear\": 2025, \"startWeek\": 1, \"endYear\": 2025, \"endWeek\": 14, \"weekCount\": 14 },\n    \"trend\": [ { \"year\": 2025, \"month\": 1, \"week\": 1, \"sale\": 410000000, \"orderCount\": 106 } ],\n    \"trendScale\": { \"sale\": { \"min\": 400000000, \"max\": 540000000 }, \"orderCount\": { \"min\": 100, \"max\": 140 } },\n    \"productShare\": [ { \"productCode\": \"EXT-001\", \"productName\": \"Door Panel\", \"sale\": 1260000000, \"saleShare\": 14.0 } ],\n    \"topCustomers\": [ { \"customerCode\": \"C-001\", \"customerName\": \"현대자동차\", \"orderCount\": 42, \"sale\": 850000000 } ]\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "400",
                             description = "범위 초과",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "range_too_large", value = "{\n  \"status\": 400,\n  \"success\": false,\n  \"message\": \"조회 기간은 최대 12주(3개월)까지만 가능합니다.\"\n}"))
+                                    examples = @ExampleObject(name = "range_too_large", value = "{\n  \"status\": 400,\n  \"success\": false,\n  \"message\": \"조회 기간은 최대 6개월까지만 가능합니다.\"\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "500",
@@ -1382,17 +1357,174 @@ import java.util.stream.Collectors;
             }
     )
     public ResponseEntity<ApiResponse<Object>> getSalesAnalytics(
-            @Parameter(description = "시작 연도") @RequestParam int startYear,
-            @Parameter(description = "시작 주차") @RequestParam int startWeek,
-            @Parameter(description = "종료 연도") @RequestParam int endYear,
-            @Parameter(description = "종료 주차") @RequestParam int endWeek
+            @Parameter(description = "시작 연도") @RequestParam(required = false) Integer startYear,
+            @Parameter(description = "시작 주차") @RequestParam(required = false) Integer startWeek,
+            @Parameter(description = "종료 연도") @RequestParam(required = false) Integer endYear,
+            @Parameter(description = "종료 주차") @RequestParam(required = false) Integer endWeek,
+            @Parameter(description = "시작일 (yyyy-mm-dd)") @RequestParam(name = "start", required = false) String startDateStr,
+            @Parameter(description = "종료일 (yyyy-mm-dd)") @RequestParam(name = "end", required = false) String endDateStr
     ) {
+        // 날짜 기반 조회가 들어오면 날짜 기반 로직으로 처리
+        if (startDateStr != null && !startDateStr.isBlank() && endDateStr != null && !endDateStr.isBlank()) {
+            java.time.LocalDate startDate;
+            java.time.LocalDate endDate;
+            try {
+                startDate = java.time.LocalDate.parse(startDateStr);
+                endDate = java.time.LocalDate.parse(endDateStr);
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.ANALYTICS_INVALID_DATE_FORMAT);
+            }
+
+            if (startDate.isAfter(endDate)) {
+                throw new BusinessException(ErrorCode.ANALYTICS_START_AFTER_END);
+            }
+
+            var wf = java.time.temporal.WeekFields.ISO;
+            java.time.LocalDate weekStart = startDate.with(wf.dayOfWeek(), 1);
+            java.time.LocalDate weekEnd = endDate.with(wf.dayOfWeek(), 7);
+
+            // 조회 제한: 최대 6개월 (weekEnd가 weekStart.plusMonths(6) 이후면 초과)
+            if (weekEnd.isAfter(weekStart.plusMonths(6))) {
+                throw new BusinessException(ErrorCode.ANALYTICS_RANGE_TOO_LARGE);
+            }
+
+            // 주차별 트렌드 생성
+            java.util.List<java.util.Map<String, Object>> trend = new java.util.ArrayList<>();
+            long totalSale = 0L;
+            int totalOrders = 0;
+            long minSale = Long.MAX_VALUE;
+            long maxSale = Long.MIN_VALUE;
+            int minOrders = Integer.MAX_VALUE;
+            int maxOrders = Integer.MIN_VALUE;
+
+            java.time.LocalDate cursor = weekStart;
+            int i = 0;
+            while (!cursor.isAfter(weekEnd)) {
+                int weekBasedYear = cursor.get(wf.weekBasedYear());
+                int weekOfYear = cursor.get(wf.weekOfWeekBasedYear());
+                java.time.LocalDate ws = cursor.with(wf.dayOfWeek(), 1);
+
+                double base = 400_000_000d;
+                double seasonal = 60_000_000d * Math.sin(2 * Math.PI * i / 13.0);
+                double step = 15_000_000d * (i % 3);
+                double hash = 10_000_000d * ((weekBasedYear * 100 + weekOfYear) % 5);
+                long sale = (long) Math.max(250_000_000d, base + seasonal + step + hash);
+                sale = (sale / 10_000L) * 10_000L; // 1만 원 단위 절삭
+
+                int orderCount = 100 + 5 * (i % 6) + ((weekBasedYear + weekOfYear) % 7);
+
+                java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
+                row.put("year", weekBasedYear);
+                row.put("month", ws.getMonthValue());
+                row.put("week", weekOfYear);
+                row.put("sale", sale);
+                row.put("orderCount", orderCount);
+                trend.add(row);
+
+                totalSale += sale;
+                totalOrders += orderCount;
+
+                if (sale < minSale) minSale = sale;
+                if (sale > maxSale) maxSale = sale;
+                if (orderCount < minOrders) minOrders = orderCount;
+                if (orderCount > maxOrders) maxOrders = orderCount;
+
+                cursor = cursor.plusWeeks(1);
+                i++;
+            }
+
+            int startY = weekStart.get(wf.weekBasedYear());
+            int startW = weekStart.get(wf.weekOfWeekBasedYear());
+            int endYv = weekEnd.get(wf.weekBasedYear());
+            int endW = weekEnd.get(wf.weekOfWeekBasedYear());
+            int weekCount = trend.size();
+
+            // 제품 비중 10개 (자동차 외장재)
+            String[] productNames = new String[]{
+                "Door Panel", "Front Bumper", "Rear Bumper", "Hood", "Trunk Lid",
+                "Front Fender", "Rear Fender", "Side Skirt", "Roof Panel", "Grille"
+            };
+            int[] productWeights = new int[]{14, 12, 11, 10, 10, 9, 8, 8, 9, 9}; // 합 100
+            java.util.List<java.util.Map<String, Object>> productShare = new java.util.ArrayList<>();
+            for (int idx = 0; idx < 10; idx++) {
+                java.util.Map<String, Object> p = new java.util.LinkedHashMap<>();
+                p.put("productCode", String.format("EXT-%03d", idx + 1));
+                p.put("productName", productNames[idx]);
+                long ps = Math.round(totalSale * (productWeights[idx] / 100.0));
+                p.put("sale", ps);
+                p.put("saleShare", (double) productWeights[idx]);
+                productShare.add(p);
+            }
+
+            // 상위 고객 10개 (국내 자동차/부품사)
+            String[] customerNames = new String[]{
+                "현대자동차", "기아", "한국GM", "르노코리아", "KG모빌리티",
+                "현대모비스", "만도", "현대위아", "한온시스템", "SL"
+            };
+            int[] customerWeights = new int[]{15, 13, 12, 10, 10, 9, 8, 8, 7, 8}; // 합 100
+            java.util.List<java.util.Map<String, Object>> topCustomers = new java.util.ArrayList<>();
+            for (int idx = 0; idx < 10; idx++) {
+                java.util.Map<String, Object> c = new java.util.LinkedHashMap<>();
+                c.put("customerCode", String.format("C-%03d", idx + 1));
+                c.put("customerName", customerNames[idx]);
+                long cs = Math.round(totalSale * (customerWeights[idx] / 100.0));
+                int oc = Math.max(1, (int) Math.round((double) totalOrders * (customerWeights[idx] / 100.0)));
+                c.put("orderCount", oc);
+                c.put("sale", cs);
+                topCustomers.add(c);
+            }
+
+            java.util.Map<String, Object> period = new java.util.LinkedHashMap<>();
+            period.put("start", startDate.toString());
+            period.put("end", endDate.toString());
+            period.put("weekStart", weekStart.toString());
+            period.put("weekEnd", weekEnd.toString());
+            period.put("startYear", startY);
+            period.put("startWeek", startW);
+            period.put("endYear", endYv);
+            period.put("endWeek", endW);
+            period.put("weekCount", weekCount);
+
+            // y축 범위 계산 (보기 좋은 단위로 보정)
+            long saleUnit = 10_000_000L; // 1천만 단위
+            long saleMin = (minSale == Long.MAX_VALUE) ? 0 : (minSale / saleUnit) * saleUnit;
+            long saleMax = (maxSale == Long.MIN_VALUE) ? 0 : ((maxSale + saleUnit - 1) / saleUnit) * saleUnit;
+            int orderUnit = 5;
+            int orderMin = (minOrders == Integer.MAX_VALUE) ? 0 : (minOrders / orderUnit) * orderUnit;
+            int orderMax = (maxOrders == Integer.MIN_VALUE) ? 0 : ((maxOrders + orderUnit - 1) / orderUnit) * orderUnit;
+
+            java.util.Map<String, Object> trendScale = new java.util.LinkedHashMap<>();
+            java.util.Map<String, Object> saleScale = new java.util.LinkedHashMap<>();
+            saleScale.put("min", saleMin);
+            saleScale.put("max", saleMax);
+            java.util.Map<String, Object> orderScale = new java.util.LinkedHashMap<>();
+            orderScale.put("min", orderMin);
+            orderScale.put("max", orderMax);
+            trendScale.put("sale", saleScale);
+            trendScale.put("orderCount", orderScale);
+
+            java.util.Map<String, Object> data = new java.util.LinkedHashMap<>();
+            data.put("period", period);
+            data.put("totalSale", totalSale);
+            data.put("totalOrders", totalOrders);
+            data.put("trend", trend);
+            data.put("trendScale", trendScale);
+            data.put("productShare", productShare);
+            data.put("topCustomers", topCustomers);
+
+            return ResponseEntity.ok(ApiResponse.success(data, "매출 통계 데이터를 조회했습니다.", HttpStatus.OK));
+        }
+
+        // 이하: 기존 주차 기반(테스트 호환) 로직 유지
         // 500 모킹 트리거
-        if (startYear == 5000 || endYear == 5000) {
+        if (startYear != null && endYear != null && (startYear == 5000 || endYear == 5000)) {
             throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
         }
 
         // 인덱스 계산 (2024:1..52 → 0..51, 2025:1..39 → 52..90)
+        if (startYear == null || startWeek == null || endYear == null || endWeek == null) {
+            throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE);
+        }
         int idxStart = toIndex(startYear, startWeek);
         int idxEnd = toIndex(endYear, endWeek);
         if (idxStart > idxEnd) { int t = idxStart; idxStart = idxEnd; idxEnd = t; }
@@ -1404,14 +1536,31 @@ import java.util.stream.Collectors;
 
         // 트렌드 데이터 생성
         java.util.List<Map<String, Object>> trend = new java.util.ArrayList<>();
+        long minSale = Long.MAX_VALUE;
+        long maxSale = Long.MIN_VALUE;
+        int minOrders = Integer.MAX_VALUE;
+        int maxOrders = Integer.MIN_VALUE;
         for (int i = idxStart; i <= idxEnd; i++) {
             int year = (i < 52) ? 2024 : 2025;
             int week = (i < 52) ? (i + 1) : (i - 52 + 1);
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("year", year);
+            // ISO 주차의 월 계산: 해당 주의 월요일 기준
+            var wf2 = java.time.temporal.WeekFields.ISO;
+            java.time.LocalDate monday = java.time.LocalDate.of(year, 6, 1)
+                    .with(wf2.weekBasedYear(), year)
+                    .with(wf2.weekOfWeekBasedYear(), week)
+                    .with(wf2.dayOfWeek(), 1);
+            row.put("month", monday.getMonthValue());
             row.put("week", week);
             row.put("sale", 300_000_000L + ((i - idxStart) * 50_000_000L));
             row.put("orderCount", 100 + ((i - idxStart) * 20));
+            long s = (Long) row.get("sale");
+            int oc = (Integer) row.get("orderCount");
+            if (s < minSale) minSale = s;
+            if (s > maxSale) maxSale = s;
+            if (oc < minOrders) minOrders = oc;
+            if (oc > maxOrders) maxOrders = oc;
             trend.add(row);
         }
 
@@ -1421,11 +1570,30 @@ import java.util.stream.Collectors;
         productShare.add(new LinkedHashMap<>() {{ put("productCode", "P-002"); put("productName", "냉장고"); put("sale", 850_000_000L); put("saleShare", 24.3); }});
 
         java.util.List<Map<String, Object>> topCustomers = new java.util.ArrayList<>();
-        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-001"); put("customerName", "삼성전자"); put("sale", 850_000_000L); put("saleShare", 24.3); }});
-        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-002"); put("customerName", "LG전자"); put("sale", 500_000_000L); put("saleShare", 14.3); }});
+        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-001"); put("customerName", "삼성전자"); put("orderCount", 42); put("sale", 850_000_000L); }});
+        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-002"); put("customerName", "LG전자"); put("orderCount", 28); put("sale", 500_000_000L); }});
 
         Map<String, Object> data = new LinkedHashMap<>();
+        // y축 범위 계산 (보기 좋은 단위로 보정)
+        long saleUnit2 = 10_000_000L;
+        long saleMin2 = (minSale == Long.MAX_VALUE) ? 0 : (minSale / saleUnit2) * saleUnit2;
+        long saleMax2 = (maxSale == Long.MIN_VALUE) ? 0 : ((maxSale + saleUnit2 - 1) / saleUnit2) * saleUnit2;
+        int orderUnit2 = 5;
+        int orderMin2 = (minOrders == Integer.MAX_VALUE) ? 0 : (minOrders / orderUnit2) * orderUnit2;
+        int orderMax2 = (maxOrders == Integer.MIN_VALUE) ? 0 : ((maxOrders + orderUnit2 - 1) / orderUnit2) * orderUnit2;
+
+        Map<String, Object> trendScale2 = new LinkedHashMap<>();
+        Map<String, Object> saleScale2 = new LinkedHashMap<>();
+        saleScale2.put("min", saleMin2);
+        saleScale2.put("max", saleMax2);
+        Map<String, Object> orderScale2 = new LinkedHashMap<>();
+        orderScale2.put("min", orderMin2);
+        orderScale2.put("max", orderMax2);
+        trendScale2.put("sale", saleScale2);
+        trendScale2.put("orderCount", orderScale2);
+
         data.put("trend", trend);
+        data.put("trendScale", trendScale2);
         data.put("productShare", productShare);
         data.put("topCustomers", topCustomers);
 
