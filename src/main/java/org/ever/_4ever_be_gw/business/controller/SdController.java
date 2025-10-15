@@ -1332,7 +1332,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 통계 데이터를 조회했습니다.\",\n  \"data\": {\n    \"trend\": [ { \"year\": 2025, \"week\": 10, \"sale\": 350000000, \"orderCount\": 120 } ],\n    \"productShare\": [ { \"productCode\": \"P-001\", \"productName\": \"OLED TV\", \"sale\": 1230000000, \"saleShare\": 35.2 } ],\n    \"topCustomers\": [ { \"customerCode\": \"C-001\", \"customerName\": \"삼성전자\", \"sale\": 850000000, \"saleShare\": 24.3 } ]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 통계 데이터를 조회했습니다.\",\n  \"data\": {\n    \"trend\": [ { \"year\": 2025, \"week\": 10, \"sale\": 350000000, \"orderCount\": 120 } ],\n    \"productShare\": [ { \"productCode\": \"P-001\", \"productName\": \"OLED TV\", \"sale\": 1230000000, \"saleShare\": 35.2 } ],\n    \"topCustomers\": [ { \"customerCode\": \"C-001\", \"customerName\": \"삼성전자\", \"orderCount\": 42, \"sale\": 850000000 } ]\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "400",
@@ -1453,8 +1453,9 @@ import java.util.stream.Collectors;
                 c.put("customerCode", String.format("C-%03d", idx + 1));
                 c.put("customerName", customerNames[idx]);
                 long cs = Math.round(totalSale * (customerWeights[idx] / 100.0));
+                int oc = Math.max(1, (int) Math.round((double) totalOrders * (customerWeights[idx] / 100.0)));
+                c.put("orderCount", oc);
                 c.put("sale", cs);
-                c.put("saleShare", (double) customerWeights[idx]);
                 topCustomers.add(c);
             }
 
@@ -1470,7 +1471,6 @@ import java.util.stream.Collectors;
             period.put("weekCount", weekCount);
 
             java.util.Map<String, Object> data = new java.util.LinkedHashMap<>();
-            data.put("currency", "KRW");
             data.put("period", period);
             data.put("totalSale", totalSale);
             data.put("totalOrders", totalOrders);
@@ -1519,8 +1519,8 @@ import java.util.stream.Collectors;
         productShare.add(new LinkedHashMap<>() {{ put("productCode", "P-002"); put("productName", "냉장고"); put("sale", 850_000_000L); put("saleShare", 24.3); }});
 
         java.util.List<Map<String, Object>> topCustomers = new java.util.ArrayList<>();
-        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-001"); put("customerName", "삼성전자"); put("sale", 850_000_000L); put("saleShare", 24.3); }});
-        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-002"); put("customerName", "LG전자"); put("sale", 500_000_000L); put("saleShare", 14.3); }});
+        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-001"); put("customerName", "삼성전자"); put("orderCount", 42); put("sale", 850_000_000L); }});
+        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-002"); put("customerName", "LG전자"); put("orderCount", 28); put("sale", 500_000_000L); }});
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("trend", trend);
