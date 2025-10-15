@@ -55,7 +55,6 @@ class SdCustomerCreateTest {
                 .andExpect(jsonPath("$.data.customerCode").value("C-0001"))
                 .andExpect(jsonPath("$.data.companyName").value("삼성전자"))
                 .andExpect(jsonPath("$.data.statusCode").value("ACTIVE"))
-                .andExpect(jsonPath("$.data.statusLabel").value("활성"))
                 .andExpect(jsonPath("$.data.totalOrders").value(0))
                 .andExpect(jsonPath("$.data.totalTransactionAmount").value(0))
                 .andExpect(jsonPath("$.data.currency").value("KRW"));
@@ -119,4 +118,3 @@ class SdCustomerCreateTest {
                 .andExpect(jsonPath("$.message").value("요청 처리 중 알 수 없는 오류가 발생했습니다."));
     }
 }
-

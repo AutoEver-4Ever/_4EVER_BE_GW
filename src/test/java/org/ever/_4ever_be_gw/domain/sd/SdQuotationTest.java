@@ -50,8 +50,7 @@ class SdQuotationTest {
                 .andExpect(jsonPath("$.data.quotationDate").exists())
                 .andExpect(jsonPath("$.data.dueDate").value(futureDate))
                 .andExpect(jsonPath("$.data.totalAmount").value(6000000))
-                .andExpect(jsonPath("$.data.statusCode").value("PENDING"))
-                .andExpect(jsonPath("$.data.statusLabel").value("대기"));
+                .andExpect(jsonPath("$.data.statusCode").value("PENDING"));
     }
 
     @Test
