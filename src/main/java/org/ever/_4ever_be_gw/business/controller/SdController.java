@@ -1326,11 +1326,11 @@ import java.util.stream.Collectors;
     @GetMapping("/analytics/sales")
     @Operation(
             summary = "매출 분석 통계 조회",
-            description = "start/end(yyyy-mm-dd) 또는 주차 기준으로 매출 분석을 조회합니다.\n" +
+            description = "start/end(yyyy-mm-dd)으로 날짜 범위를 지정하여 매출 분석을 조회합니다.\n" +
                     "- 날짜 기반: start가 포함된 ISO 주의 월요일부터 end가 포함된 ISO 주의 일요일까지 포함\n" +
                     "- 제한: 최대 6개월 범위\n" +
                     "- 응답 필드\n" +
-                    "  * period: { start, end, weekStart, weekEnd, startYear, startWeek, endYear, endWeek, weekCount }\n" +
+                    "  * period: { start, end, weekStart, weekEnd, weekCount }\n" +
                     "  * trend: [{ year, month, week, sale, orderCount }] (주차별)\n" +
                     "  * trendScale: { sale: {min,max}, orderCount: {min,max} } (차트 y축 범위)\n" +
                     "  * productShare: 10개 품목의 매출 및 비중({ productCode, productName, sale, saleShare })\n" +
@@ -1340,7 +1340,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 통계 데이터를 조회했습니다.\",\n  \"data\": {\n    \"period\": { \"start\": \"2025-01-01\", \"end\": \"2025-03-31\", \"weekStart\": \"2024-12-30\", \"weekEnd\": \"2025-04-06\", \"startYear\": 2025, \"startWeek\": 1, \"endYear\": 2025, \"endWeek\": 14, \"weekCount\": 14 },\n    \"trend\": [ { \"year\": 2025, \"month\": 1, \"week\": 1, \"sale\": 410000000, \"orderCount\": 106 } ],\n    \"trendScale\": { \"sale\": { \"min\": 400000000, \"max\": 540000000 }, \"orderCount\": { \"min\": 100, \"max\": 140 } },\n    \"productShare\": [ { \"productCode\": \"EXT-001\", \"productName\": \"Door Panel\", \"sale\": 1260000000, \"saleShare\": 14.0 } ],\n    \"topCustomers\": [ { \"customerCode\": \"C-001\", \"customerName\": \"현대자동차\", \"orderCount\": 42, \"sale\": 850000000 } ]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 통계 데이터를 조회했습니다.\",\n  \"data\": {\n    \"period\": { \"start\": \"2025-01-01\", \"end\": \"2025-03-31\", \"weekStart\": \"2024-12-30\", \"weekEnd\": \"2025-04-06\", \"weekCount\": 14 },\n    \"trend\": [ { \"year\": 2025, \"month\": 1, \"week\": 1, \"sale\": 410000000, \"orderCount\": 106 } ],\n    \"trendScale\": { \"sale\": { \"min\": 400000000, \"max\": 540000000 }, \"orderCount\": { \"min\": 100, \"max\": 140 } },\n    \"productShare\": [ { \"productCode\": \"EXT-001\", \"productName\": \"Door Panel\", \"sale\": 1260000000, \"saleShare\": 14.0 } ],\n    \"topCustomers\": [ { \"customerCode\": \"C-001\", \"customerName\": \"현대자동차\", \"orderCount\": 42, \"sale\": 850000000 } ]\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "400",
@@ -1357,14 +1357,10 @@ import java.util.stream.Collectors;
             }
     )
     public ResponseEntity<ApiResponse<Object>> getSalesAnalytics(
-            @Parameter(description = "시작 연도") @RequestParam(required = false) Integer startYear,
-            @Parameter(description = "시작 주차") @RequestParam(required = false) Integer startWeek,
-            @Parameter(description = "종료 연도") @RequestParam(required = false) Integer endYear,
-            @Parameter(description = "종료 주차") @RequestParam(required = false) Integer endWeek,
             @Parameter(description = "시작일 (yyyy-mm-dd)") @RequestParam(name = "start", required = false) String startDateStr,
             @Parameter(description = "종료일 (yyyy-mm-dd)") @RequestParam(name = "end", required = false) String endDateStr
     ) {
-        // 날짜 기반 조회가 들어오면 날짜 기반 로직으로 처리
+        // 날짜 기반 요청만 지원: 둘 다 필수
         if (startDateStr != null && !startDateStr.isBlank() && endDateStr != null && !endDateStr.isBlank()) {
             java.time.LocalDate startDate;
             java.time.LocalDate endDate;
@@ -1373,6 +1369,11 @@ import java.util.stream.Collectors;
                 endDate = java.time.LocalDate.parse(endDateStr);
             } catch (Exception e) {
                 throw new BusinessException(ErrorCode.ANALYTICS_INVALID_DATE_FORMAT);
+            }
+
+            // 서버 오류(모킹) 트리거: 연도 5000 포함 시
+            if (startDate.getYear() == 5000 || endDate.getYear() == 5000) {
+                throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
             }
 
             if (startDate.isAfter(endDate)) {
@@ -1433,10 +1434,6 @@ import java.util.stream.Collectors;
                 i++;
             }
 
-            int startY = weekStart.get(wf.weekBasedYear());
-            int startW = weekStart.get(wf.weekOfWeekBasedYear());
-            int endYv = weekEnd.get(wf.weekBasedYear());
-            int endW = weekEnd.get(wf.weekOfWeekBasedYear());
             int weekCount = trend.size();
 
             // 제품 비중 10개 (자동차 외장재)
@@ -1479,10 +1476,6 @@ import java.util.stream.Collectors;
             period.put("end", endDate.toString());
             period.put("weekStart", weekStart.toString());
             period.put("weekEnd", weekEnd.toString());
-            period.put("startYear", startY);
-            period.put("startWeek", startW);
-            period.put("endYear", endYv);
-            period.put("endWeek", endW);
             period.put("weekCount", weekCount);
 
             // y축 범위 계산 (보기 좋은 단위로 보정)
@@ -1515,100 +1508,8 @@ import java.util.stream.Collectors;
             return ResponseEntity.ok(ApiResponse.success(data, "매출 통계 데이터를 조회했습니다.", HttpStatus.OK));
         }
 
-        // 이하: 기존 주차 기반(테스트 호환) 로직 유지
-        // 500 모킹 트리거
-        if (startYear != null && endYear != null && (startYear == 5000 || endYear == 5000)) {
-            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
-        }
-
-        // 인덱스 계산 (2024:1..52 → 0..51, 2025:1..39 → 52..90)
-        if (startYear == null || startWeek == null || endYear == null || endWeek == null) {
-            throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE);
-        }
-        int idxStart = toIndex(startYear, startWeek);
-        int idxEnd = toIndex(endYear, endWeek);
-        if (idxStart > idxEnd) { int t = idxStart; idxStart = idxEnd; idxEnd = t; }
-
-        int weeks = idxEnd - idxStart + 1;
-        if (weeks > 12) {
-            throw new BusinessException(ErrorCode.ANALYTICS_RANGE_TOO_LARGE);
-        }
-
-        // 트렌드 데이터 생성
-        java.util.List<Map<String, Object>> trend = new java.util.ArrayList<>();
-        long minSale = Long.MAX_VALUE;
-        long maxSale = Long.MIN_VALUE;
-        int minOrders = Integer.MAX_VALUE;
-        int maxOrders = Integer.MIN_VALUE;
-        for (int i = idxStart; i <= idxEnd; i++) {
-            int year = (i < 52) ? 2024 : 2025;
-            int week = (i < 52) ? (i + 1) : (i - 52 + 1);
-            Map<String, Object> row = new LinkedHashMap<>();
-            row.put("year", year);
-            // ISO 주차의 월 계산: 해당 주의 월요일 기준
-            var wf2 = java.time.temporal.WeekFields.ISO;
-            java.time.LocalDate monday = java.time.LocalDate.of(year, 6, 1)
-                    .with(wf2.weekBasedYear(), year)
-                    .with(wf2.weekOfWeekBasedYear(), week)
-                    .with(wf2.dayOfWeek(), 1);
-            row.put("month", monday.getMonthValue());
-            row.put("week", week);
-            row.put("sale", 300_000_000L + ((i - idxStart) * 50_000_000L));
-            row.put("orderCount", 100 + ((i - idxStart) * 20));
-            long s = (Long) row.get("sale");
-            int oc = (Integer) row.get("orderCount");
-            if (s < minSale) minSale = s;
-            if (s > maxSale) maxSale = s;
-            if (oc < minOrders) minOrders = oc;
-            if (oc > maxOrders) maxOrders = oc;
-            trend.add(row);
-        }
-
-        // 제품 비중/상위 고객(샘플)
-        java.util.List<Map<String, Object>> productShare = new java.util.ArrayList<>();
-        productShare.add(new LinkedHashMap<>() {{ put("productCode", "P-001"); put("productName", "OLED TV"); put("sale", 1_230_000_000L); put("saleShare", 35.2); }});
-        productShare.add(new LinkedHashMap<>() {{ put("productCode", "P-002"); put("productName", "냉장고"); put("sale", 850_000_000L); put("saleShare", 24.3); }});
-
-        java.util.List<Map<String, Object>> topCustomers = new java.util.ArrayList<>();
-        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-001"); put("customerName", "삼성전자"); put("orderCount", 42); put("sale", 850_000_000L); }});
-        topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-002"); put("customerName", "LG전자"); put("orderCount", 28); put("sale", 500_000_000L); }});
-
-        Map<String, Object> data = new LinkedHashMap<>();
-        // y축 범위 계산 (보기 좋은 단위로 보정)
-        long saleUnit2 = 10_000_000L;
-        long saleMin2 = (minSale == Long.MAX_VALUE) ? 0 : (minSale / saleUnit2) * saleUnit2;
-        long saleMax2 = (maxSale == Long.MIN_VALUE) ? 0 : ((maxSale + saleUnit2 - 1) / saleUnit2) * saleUnit2;
-        int orderUnit2 = 5;
-        int orderMin2 = (minOrders == Integer.MAX_VALUE) ? 0 : (minOrders / orderUnit2) * orderUnit2;
-        int orderMax2 = (maxOrders == Integer.MIN_VALUE) ? 0 : ((maxOrders + orderUnit2 - 1) / orderUnit2) * orderUnit2;
-
-        Map<String, Object> trendScale2 = new LinkedHashMap<>();
-        Map<String, Object> saleScale2 = new LinkedHashMap<>();
-        saleScale2.put("min", saleMin2);
-        saleScale2.put("max", saleMax2);
-        Map<String, Object> orderScale2 = new LinkedHashMap<>();
-        orderScale2.put("min", orderMin2);
-        orderScale2.put("max", orderMax2);
-        trendScale2.put("sale", saleScale2);
-        trendScale2.put("orderCount", orderScale2);
-
-        data.put("trend", trend);
-        data.put("trendScale", trendScale2);
-        data.put("productShare", productShare);
-        data.put("topCustomers", topCustomers);
-
-        return ResponseEntity.ok(ApiResponse.success(data, "매출 통계 데이터를 조회했습니다.", HttpStatus.OK));
-    }
-
-    private static int toIndex(int year, int week) {
-        int weeks2024 = 52;
-        if (year <= 2024) {
-            int w = Math.max(1, Math.min(52, week));
-            return w - 1;
-        } else { // 2025 기준
-            int w = Math.max(1, Math.min(39, week));
-            return weeks2024 + (w - 1);
-        }
+        // 날짜 파라미터 누락 시 400
+        throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE);
     }
     
 }
