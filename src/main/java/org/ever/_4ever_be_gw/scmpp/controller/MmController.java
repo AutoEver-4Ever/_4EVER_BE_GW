@@ -121,7 +121,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서 목록입니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1,\n        \"prNumber\": \"100000001\",\n        \"requesterId\": 123,\n        \"requesterName\": \"홍길동\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MRP\",\n        \"originRefId\": \"MRP-2025-10-01-00123\",\n        \"createdAt\": \"2025-10-05T12:30:45Z\",\n        \"createdBy\": 123,\n        \"itemCount\": 2,\n        \"hasPreferredVendor\": true\n      },\n      {\n        \"id\": 2,\n        \"prNumber\": \"100000002\",\n        \"requesterId\": 124,\n        \"requesterName\": \"김민수\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MANUAL\",\n        \"originRefId\": null,\n        \"createdAt\": \"2025-10-05T12:35:02Z\",\n        \"createdBy\": 124,\n        \"itemCount\": 1,\n        \"hasPreferredVendor\": false\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 50,\n      \"totalPages\": 3,\n      \"hasNext\": true\n    }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서 목록입니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1,\n        \"prNumber\": \"PR-2025-001\",\n        \"requesterId\": 123,\n        \"requesterName\": \"홍길동\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MRP\",\n        \"originRefId\": \"MRP-2025-10-01-00123\",\n        \"createdAt\": \"2025-10-05T12:30:45Z\",\n        \"desiredDeliveryDate\": \"2025-10-12\",\n        \"createdBy\": 123,\n        \"itemCount\": 2,\n        \"hasPreferredVendor\": true\n      },\n      {\n        \"id\": 2,\n        \"prNumber\": \"PR-2025-002\",\n        \"requesterId\": 124,\n        \"requesterName\": \"김민수\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MANUAL\",\n        \"originRefId\": null,\n        \"createdAt\": \"2025-10-05T12:35:02Z\",\n        \"desiredDeliveryDate\": \"2025-10-12\",\n        \"createdBy\": 124,\n        \"itemCount\": 1,\n        \"hasPreferredVendor\": false\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 50,\n      \"totalPages\": 3,\n      \"hasNext\": true\n    }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "403",
@@ -212,7 +212,8 @@ public class MmController {
 
             Map<String, Object> row = new java.util.LinkedHashMap<>();
             row.put("id", id);
-            row.put("prNumber", String.format("%09d", 100000001 + i));
+            // 변경: PR 번호 포맷을 PR-2025-001, PR-2025-002 ... 로 반환
+            row.put("prNumber", String.format("PR-2025-%03d", 1 + i));
             row.put("requesterId", requesterId);
             row.put("requesterName", requesterNameVal);
             long deptId = (i % 2 == 0) ? 12L : 15L;
@@ -222,6 +223,9 @@ public class MmController {
             row.put("origin", origin);
             row.put("originRefId", originRef);
             row.put("createdAt", createdAt);
+            // 추가: 납기일(desiredDeliveryDate) 반환 (샘플: 요청일 기준 +7일)
+            java.time.LocalDate desiredDeliveryDate = createdAt.atZone(java.time.ZoneOffset.UTC).toLocalDate().plusDays(7);
+            row.put("desiredDeliveryDate", desiredDeliveryDate);
             row.put("createdBy", requesterId);
             row.put("itemCount", itemCount);
             row.put("hasPreferredVendor", hasPreferred);
