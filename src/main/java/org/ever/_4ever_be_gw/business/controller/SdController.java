@@ -1326,19 +1326,27 @@ import java.util.stream.Collectors;
     @GetMapping("/analytics/sales")
     @Operation(
             summary = "매출 분석 통계 조회",
-            description = "주차 범위 내 매출 추이, 제품 비중, 상위 고객사를 조회합니다.",
+            description = "start/end(yyyy-mm-dd) 또는 주차 기준으로 매출 분석을 조회합니다.\n" +
+                    "- 날짜 기반: start가 포함된 ISO 주의 월요일부터 end가 포함된 ISO 주의 일요일까지 포함\n" +
+                    "- 제한: 최대 6개월 범위\n" +
+                    "- 응답 필드\n" +
+                    "  * period: { start, end, weekStart, weekEnd, startYear, startWeek, endYear, endWeek, weekCount }\n" +
+                    "  * trend: [{ year, month, week, sale, orderCount }] (주차별)\n" +
+                    "  * trendScale: { sale: {min,max}, orderCount: {min,max} } (차트 y축 범위)\n" +
+                    "  * productShare: 10개 품목의 매출 및 비중({ productCode, productName, sale, saleShare })\n" +
+                    "  * topCustomers: 10개 고객({ customerCode, customerName, orderCount, sale })",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 통계 데이터를 조회했습니다.\",\n  \"data\": {\n    \"trend\": [ { \"year\": 2025, \"week\": 10, \"sale\": 350000000, \"orderCount\": 120 } ],\n    \"productShare\": [ { \"productCode\": \"P-001\", \"productName\": \"OLED TV\", \"sale\": 1230000000, \"saleShare\": 35.2 } ],\n    \"topCustomers\": [ { \"customerCode\": \"C-001\", \"customerName\": \"삼성전자\", \"orderCount\": 42, \"sale\": 850000000 } ]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 통계 데이터를 조회했습니다.\",\n  \"data\": {\n    \"period\": { \"start\": \"2025-01-01\", \"end\": \"2025-03-31\", \"weekStart\": \"2024-12-30\", \"weekEnd\": \"2025-04-06\", \"startYear\": 2025, \"startWeek\": 1, \"endYear\": 2025, \"endWeek\": 14, \"weekCount\": 14 },\n    \"trend\": [ { \"year\": 2025, \"month\": 1, \"week\": 1, \"sale\": 410000000, \"orderCount\": 106 } ],\n    \"trendScale\": { \"sale\": { \"min\": 400000000, \"max\": 540000000 }, \"orderCount\": { \"min\": 100, \"max\": 140 } },\n    \"productShare\": [ { \"productCode\": \"EXT-001\", \"productName\": \"Door Panel\", \"sale\": 1260000000, \"saleShare\": 14.0 } ],\n    \"topCustomers\": [ { \"customerCode\": \"C-001\", \"customerName\": \"현대자동차\", \"orderCount\": 42, \"sale\": 850000000 } ]\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "400",
                             description = "범위 초과",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "range_too_large", value = "{\n  \"status\": 400,\n  \"success\": false,\n  \"message\": \"조회 기간은 최대 12주(3개월)까지만 가능합니다.\"\n}"))
+                                    examples = @ExampleObject(name = "range_too_large", value = "{\n  \"status\": 400,\n  \"success\": false,\n  \"message\": \"조회 기간은 최대 6개월까지만 가능합니다.\"\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "500",
@@ -1384,6 +1392,10 @@ import java.util.stream.Collectors;
             java.util.List<java.util.Map<String, Object>> trend = new java.util.ArrayList<>();
             long totalSale = 0L;
             int totalOrders = 0;
+            long minSale = Long.MAX_VALUE;
+            long maxSale = Long.MIN_VALUE;
+            int minOrders = Integer.MAX_VALUE;
+            int maxOrders = Integer.MIN_VALUE;
 
             java.time.LocalDate cursor = weekStart;
             int i = 0;
@@ -1391,7 +1403,6 @@ import java.util.stream.Collectors;
                 int weekBasedYear = cursor.get(wf.weekBasedYear());
                 int weekOfYear = cursor.get(wf.weekOfWeekBasedYear());
                 java.time.LocalDate ws = cursor.with(wf.dayOfWeek(), 1);
-                java.time.LocalDate we = cursor.with(wf.dayOfWeek(), 7);
 
                 double base = 400_000_000d;
                 double seasonal = 60_000_000d * Math.sin(2 * Math.PI * i / 13.0);
@@ -1404,15 +1415,19 @@ import java.util.stream.Collectors;
 
                 java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
                 row.put("year", weekBasedYear);
+                row.put("month", ws.getMonthValue());
                 row.put("week", weekOfYear);
-                row.put("weekStart", ws.toString());
-                row.put("weekEnd", we.toString());
                 row.put("sale", sale);
                 row.put("orderCount", orderCount);
                 trend.add(row);
 
                 totalSale += sale;
                 totalOrders += orderCount;
+
+                if (sale < minSale) minSale = sale;
+                if (sale > maxSale) maxSale = sale;
+                if (orderCount < minOrders) minOrders = orderCount;
+                if (orderCount > maxOrders) maxOrders = orderCount;
 
                 cursor = cursor.plusWeeks(1);
                 i++;
@@ -1470,11 +1485,30 @@ import java.util.stream.Collectors;
             period.put("endWeek", endW);
             period.put("weekCount", weekCount);
 
+            // y축 범위 계산 (보기 좋은 단위로 보정)
+            long saleUnit = 10_000_000L; // 1천만 단위
+            long saleMin = (minSale == Long.MAX_VALUE) ? 0 : (minSale / saleUnit) * saleUnit;
+            long saleMax = (maxSale == Long.MIN_VALUE) ? 0 : ((maxSale + saleUnit - 1) / saleUnit) * saleUnit;
+            int orderUnit = 5;
+            int orderMin = (minOrders == Integer.MAX_VALUE) ? 0 : (minOrders / orderUnit) * orderUnit;
+            int orderMax = (maxOrders == Integer.MIN_VALUE) ? 0 : ((maxOrders + orderUnit - 1) / orderUnit) * orderUnit;
+
+            java.util.Map<String, Object> trendScale = new java.util.LinkedHashMap<>();
+            java.util.Map<String, Object> saleScale = new java.util.LinkedHashMap<>();
+            saleScale.put("min", saleMin);
+            saleScale.put("max", saleMax);
+            java.util.Map<String, Object> orderScale = new java.util.LinkedHashMap<>();
+            orderScale.put("min", orderMin);
+            orderScale.put("max", orderMax);
+            trendScale.put("sale", saleScale);
+            trendScale.put("orderCount", orderScale);
+
             java.util.Map<String, Object> data = new java.util.LinkedHashMap<>();
             data.put("period", period);
             data.put("totalSale", totalSale);
             data.put("totalOrders", totalOrders);
             data.put("trend", trend);
+            data.put("trendScale", trendScale);
             data.put("productShare", productShare);
             data.put("topCustomers", topCustomers);
 
@@ -1502,14 +1536,31 @@ import java.util.stream.Collectors;
 
         // 트렌드 데이터 생성
         java.util.List<Map<String, Object>> trend = new java.util.ArrayList<>();
+        long minSale = Long.MAX_VALUE;
+        long maxSale = Long.MIN_VALUE;
+        int minOrders = Integer.MAX_VALUE;
+        int maxOrders = Integer.MIN_VALUE;
         for (int i = idxStart; i <= idxEnd; i++) {
             int year = (i < 52) ? 2024 : 2025;
             int week = (i < 52) ? (i + 1) : (i - 52 + 1);
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("year", year);
+            // ISO 주차의 월 계산: 해당 주의 월요일 기준
+            var wf2 = java.time.temporal.WeekFields.ISO;
+            java.time.LocalDate monday = java.time.LocalDate.of(year, 6, 1)
+                    .with(wf2.weekBasedYear(), year)
+                    .with(wf2.weekOfWeekBasedYear(), week)
+                    .with(wf2.dayOfWeek(), 1);
+            row.put("month", monday.getMonthValue());
             row.put("week", week);
             row.put("sale", 300_000_000L + ((i - idxStart) * 50_000_000L));
             row.put("orderCount", 100 + ((i - idxStart) * 20));
+            long s = (Long) row.get("sale");
+            int oc = (Integer) row.get("orderCount");
+            if (s < minSale) minSale = s;
+            if (s > maxSale) maxSale = s;
+            if (oc < minOrders) minOrders = oc;
+            if (oc > maxOrders) maxOrders = oc;
             trend.add(row);
         }
 
@@ -1523,7 +1574,26 @@ import java.util.stream.Collectors;
         topCustomers.add(new LinkedHashMap<>() {{ put("customerCode", "C-002"); put("customerName", "LG전자"); put("orderCount", 28); put("sale", 500_000_000L); }});
 
         Map<String, Object> data = new LinkedHashMap<>();
+        // y축 범위 계산 (보기 좋은 단위로 보정)
+        long saleUnit2 = 10_000_000L;
+        long saleMin2 = (minSale == Long.MAX_VALUE) ? 0 : (minSale / saleUnit2) * saleUnit2;
+        long saleMax2 = (maxSale == Long.MIN_VALUE) ? 0 : ((maxSale + saleUnit2 - 1) / saleUnit2) * saleUnit2;
+        int orderUnit2 = 5;
+        int orderMin2 = (minOrders == Integer.MAX_VALUE) ? 0 : (minOrders / orderUnit2) * orderUnit2;
+        int orderMax2 = (maxOrders == Integer.MIN_VALUE) ? 0 : ((maxOrders + orderUnit2 - 1) / orderUnit2) * orderUnit2;
+
+        Map<String, Object> trendScale2 = new LinkedHashMap<>();
+        Map<String, Object> saleScale2 = new LinkedHashMap<>();
+        saleScale2.put("min", saleMin2);
+        saleScale2.put("max", saleMax2);
+        Map<String, Object> orderScale2 = new LinkedHashMap<>();
+        orderScale2.put("min", orderMin2);
+        orderScale2.put("max", orderMax2);
+        trendScale2.put("sale", saleScale2);
+        trendScale2.put("orderCount", orderScale2);
+
         data.put("trend", trend);
+        data.put("trendScale", trendScale2);
         data.put("productShare", productShare);
         data.put("topCustomers", topCustomers);
 

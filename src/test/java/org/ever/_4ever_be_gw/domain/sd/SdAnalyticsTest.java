@@ -35,7 +35,6 @@ class SdAnalyticsTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("매출 통계 데이터를 조회했습니다."))
-                .andExpect(jsonPath("$.data.currency").value("KRW"))
                 .andExpect(jsonPath("$.data.period.start").value("2025-01-01"))
                 .andExpect(jsonPath("$.data.period.end").value("2025-05-31"))
                 .andExpect(jsonPath("$.data.trend").isArray())
