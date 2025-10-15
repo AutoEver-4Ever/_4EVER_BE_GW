@@ -1085,7 +1085,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"id\": 1,\n    \"poNumber\": \"PO-2024-001\",\n    \"supplierName\": \"대한철강\",\n    \"supplierContact\": \"02-1234-5678\",\n    \"supplierEmail\": \"order@steel.co.kr\",\n    \"orderDate\": \"2024-01-18\",\n    \"deliveryDate\": \"2024-01-25\",\n    \"status\": \"승인됨\",\n    \"totalAmount\": 5000000,\n    \"items\": [\n      { \"itemName\": \"강판\", \"spec\": \"SS400 10mm\", \"quantity\": 500, \"unit\": \"kg\", \"unitPrice\": 8000, \"amount\": 4000000 },\n      { \"itemName\": \"알루미늄\", \"spec\": \"A6061 5mm\", \"quantity\": 300, \"unit\": \"kg\", \"unitPrice\": 3333, \"amount\": 1000000 }\n    ],\n    \"deliveryAddress\": \"경기도 안산시 단원구 공장로 456\",\n    \"requestedDeliveryDate\": \"2024-01-25\",\n    \"specialInstructions\": \"오전 배송 요청\",\n    \"paymentTerms\": \"월말 결제\",\n    \"memo\": \"1월 생산용 원자재 주문\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"id\": 1,\n    \"poNumber\": \"PO-2024-001\",\n    \"supplierName\": \"대한철강\",\n    \"supplierContact\": \"02-1234-5678\",\n    \"supplierEmail\": \"order@steel.co.kr\",\n    \"orderDate\": \"2024-01-18\",\n    \"deliveryDate\": \"2024-01-25\",\n    \"status\": \"승인됨\",\n    \"totalAmount\": 5000000,\n    \"items\": [\n      { \"itemName\": \"강판\", \"spec\": \"SS400 10mm\", \"quantity\": 500, \"unit\": \"kg\", \"unitPrice\": 8000, \"amount\": 4000000 },\n      { \"itemName\": \"알루미늄\", \"spec\": \"A6061 5mm\", \"quantity\": 300, \"unit\": \"kg\", \"unitPrice\": 3333, \"amount\": 1000000 }\n    ],\n    \"deliveryAddress\": \"경기도 안산시 단원구 공장로 456\",\n    \"requestedDeliveryDate\": \"2024-01-25\",\n    \"specialInstructions\": \"오전 배송 요청\",\n    \"paymentTerms\": \"월말 결제\",\n    \"note\": \"1월 생산용 원자재 주문\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1167,7 +1167,7 @@ public class MmController {
 
         data.put("items", items);
         data.put("totalAmount", 5_000_000);
-        data.put("memo", "1월 생산용 원자재 주문");
+        data.put("note", "1월 생산용 원자재 주문");
 
         // 생성/수정 일시 (orderDate 기준 09:00Z와 +5분)
         java.time.LocalDate od = java.time.LocalDate.parse(orderDates[idx]);
