@@ -93,8 +93,8 @@ class MmVendorCreateTest {
                 .andExpect(jsonPath("$.data.vendorId").value(101))
                 .andExpect(jsonPath("$.data.vendorCode").value("SUP-2025-0001"))
                 .andExpect(jsonPath("$.data.companyName").value("대한철강"))
-                .andExpect(jsonPath("$.data.contactPerson").value("홍길동"))
-                .andExpect(jsonPath("$.data.email").value("contact@koreasteel.com"))
+                .andExpect(jsonPath("$.data.managerName").value("홍길동"))
+                .andExpect(jsonPath("$.data.managerEmail").value("contact@koreasteel.com"))
                 .andExpect(jsonPath("$.data.createdAt").value("2025-10-13T10:00:00Z"));
     }
 
