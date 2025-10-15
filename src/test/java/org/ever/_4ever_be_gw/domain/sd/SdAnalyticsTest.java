@@ -60,14 +60,12 @@ class SdAnalyticsTest {
     }
 
     @Test
-    @DisplayName("매출 분석 통계 조회 실패 - 서버 오류(모킹)")
+    @DisplayName("매출 분석 통계 조회 실패 - 서버 오류(모킹, 날짜 기반)")
     void getSalesAnalytics_serverError_500() throws Exception {
         mockMvc.perform(get("/api/business/sd/analytics/sales")
                         .servletPath("/api")
-                        .queryParam("startYear", "5000")
-                        .queryParam("startWeek", "1")
-                        .queryParam("endYear", "2025")
-                        .queryParam("endWeek", "2")
+                        .queryParam("start", "5000-01-01")
+                        .queryParam("end", "5000-01-31")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))

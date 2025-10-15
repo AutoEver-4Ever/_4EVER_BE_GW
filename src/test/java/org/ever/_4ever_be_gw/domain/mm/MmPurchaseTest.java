@@ -162,7 +162,7 @@ class MmPurchaseTest {
                 .andExpect(jsonPath("$.message").value("요청 파라미터 검증에 실패했습니다."))
                 .andExpect(jsonPath("$.errors").isArray())
                 .andExpect(jsonPath("$.errors[0].field").value("status"))
-                .andExpect(jsonPath("$.errors[0].reason").value("ALLOWED_VALUES: APPROVED, PENDING, REJECTED, DELIVERED"));
+                .andExpect(jsonPath("$.errors[0].reason").value("ALLOWED_VALUES: APPROVED, PENDING, REJECTED, DELIVERED, ALL"));
     }
 
     @Test

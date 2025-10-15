@@ -121,7 +121,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서 목록입니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1,\n        \"prNumber\": \"100000001\",\n        \"requesterId\": 123,\n        \"requesterName\": \"홍길동\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MRP\",\n        \"originRefId\": \"MRP-2025-10-01-00123\",\n        \"createdAt\": \"2025-10-05T12:30:45Z\",\n        \"createdBy\": 123,\n        \"itemCount\": 2,\n        \"hasPreferredVendor\": true\n      },\n      {\n        \"id\": 2,\n        \"prNumber\": \"100000002\",\n        \"requesterId\": 124,\n        \"requesterName\": \"김민수\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MANUAL\",\n        \"originRefId\": null,\n        \"createdAt\": \"2025-10-05T12:35:02Z\",\n        \"createdBy\": 124,\n        \"itemCount\": 1,\n        \"hasPreferredVendor\": false\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 50,\n      \"totalPages\": 3,\n      \"hasNext\": true\n    }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서 목록입니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1,\n        \"prNumber\": \"PR-2025-001\",\n        \"requesterId\": 123,\n        \"requesterName\": \"홍길동\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MRP\",\n        \"originRefId\": \"MRP-2025-10-01-00123\",\n        \"createdAt\": \"2025-10-05T12:30:45Z\",\n        \"desiredDeliveryDate\": \"2025-10-12\",\n        \"createdBy\": 123,\n        \"itemCount\": 2,\n        \"hasPreferredVendor\": true\n      },\n      {\n        \"id\": 2,\n        \"prNumber\": \"PR-2025-002\",\n        \"requesterId\": 124,\n        \"requesterName\": \"김민수\",\n        \"departmentId\": 12,\n        \"departmentName\": \"영업1팀\",\n        \"origin\": \"MANUAL\",\n        \"originRefId\": null,\n        \"createdAt\": \"2025-10-05T12:35:02Z\",\n        \"desiredDeliveryDate\": \"2025-10-12\",\n        \"createdBy\": 124,\n        \"itemCount\": 1,\n        \"hasPreferredVendor\": false\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 50,\n      \"totalPages\": 3,\n      \"hasNext\": true\n    }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "403",
@@ -212,7 +212,8 @@ public class MmController {
 
             Map<String, Object> row = new java.util.LinkedHashMap<>();
             row.put("id", id);
-            row.put("prNumber", String.format("%09d", 100000001 + i));
+            // 변경: PR 번호 포맷을 PR-2025-001, PR-2025-002 ... 로 반환
+            row.put("prNumber", String.format("PR-2025-%03d", 1 + i));
             row.put("requesterId", requesterId);
             row.put("requesterName", requesterNameVal);
             long deptId = (i % 2 == 0) ? 12L : 15L;
@@ -222,6 +223,9 @@ public class MmController {
             row.put("origin", origin);
             row.put("originRefId", originRef);
             row.put("createdAt", createdAt);
+            // 추가: 납기일(desiredDeliveryDate) 반환 (샘플: 요청일 기준 +7일)
+            java.time.LocalDate desiredDeliveryDate = createdAt.atZone(java.time.ZoneOffset.UTC).toLocalDate().plusDays(7);
+            row.put("desiredDeliveryDate", desiredDeliveryDate);
             row.put("createdBy", requesterId);
             row.put("itemCount", itemCount);
             row.put("hasPreferredVendor", hasPreferred);
@@ -361,7 +365,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서 상세입니다.\",\n  \"data\": {\n    \"id\": 1,\n    \"prNumber\": \"PR-2024-001\",\n    \"requesterId\": 123,\n    \"requesterName\": \"김철수\",\n    \"departmentId\": 77,\n    \"departmentName\": \"생산팀\",\n    \"createdAt\": \"2024-01-15T00:00:00Z\",\n    \"desiredDeliveryDate\": \"2024-01-25\",\n    \"status\": \"APPROVED\",\n    \"statusLabel\": \"승인\",\n    \"currency\": \"KRW\",\n    \"items\": [\n      {\n        \"id\": 900001,\n        \"lineNo\": 1,\n        \"itemId\": 40000123,\n        \"itemName\": \"강판\",\n        \"quantity\": 500,\n        \"uomCode\": \"EA\",\n        \"unitPrice\": 5000,\n        \"amount\": 2500000,\n        \"deliveryDate\": \"2024-01-25\",\n        \"note\": null\n      },\n      {\n        \"id\": 900002,\n        \"lineNo\": 2,\n        \"itemId\": 987654321,\n        \"itemName\": \"볼트\",\n        \"quantity\": 100,\n        \"uomCode\": \"EA\",\n        \"unitPrice\": 500,\n        \"amount\": 50000,\n        \"deliveryDate\": \"2024-01-25\",\n        \"note\": null\n      }\n    ],\n    \"totalAmount\": 2550000\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서 상세입니다.\",\n  \"data\": {\n    \"id\": 1,\n    \"prNumber\": \"PR-2024-001\",\n    \"requesterId\": 123,\n    \"requesterName\": \"김철수\",\n    \"departmentId\": 77,\n    \"departmentName\": \"생산팀\",\n    \"createdAt\": \"2024-01-15T00:00:00Z\",\n    \"desiredDeliveryDate\": \"2024-01-25\",\n    \"status\": \"APPROVED\",\n    \"currency\": \"KRW\",\n    \"items\": [\n      {\n        \"id\": 900001,\n        \"lineNo\": 1,\n        \"itemId\": 40000123,\n        \"itemName\": \"강판\",\n        \"quantity\": 500,\n        \"uomCode\": \"EA\",\n        \"unitPrice\": 5000,\n        \"amount\": 2500000,\n        \"deliveryDate\": \"2024-01-25\",\n        \"note\": null\n      },\n      {\n        \"id\": 900002,\n        \"lineNo\": 2,\n        \"itemId\": 987654321,\n        \"itemName\": \"볼트\",\n        \"quantity\": 100,\n        \"uomCode\": \"EA\",\n        \"unitPrice\": 500,\n        \"amount\": 50000,\n        \"deliveryDate\": \"2024-01-25\",\n        \"note\": null\n      }\n    ],\n    \"totalAmount\": 2550000\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "403",
@@ -406,7 +410,7 @@ public class MmController {
         data.put("createdAt", java.time.Instant.parse("2024-01-15T00:00:00Z"));
         data.put("desiredDeliveryDate", java.time.LocalDate.parse("2024-01-25"));
         data.put("status", "APPROVED");
-        data.put("statusLabel", "승인");
+        // statusLabel 제거: statusCode/status만 제공
         data.put("currency", "KRW");
 
         java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
@@ -906,7 +910,7 @@ public class MmController {
                             responseCode = "422",
                             description = "검증 실패",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [ { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: APPROVED, PENDING, REJECTED, DELIVERED\" } ]\n}"))
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [ { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: APPROVED, PENDING, REJECTED, DELIVERED, ALL\" } ]\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "500",
@@ -917,7 +921,7 @@ public class MmController {
             }
     )
     public ResponseEntity<ApiResponse<Object>> getPurchaseOrders(
-            @Parameter(description = "상태 필터: PENDING, APPROVED, REJECTED, DELIVERED")
+            @Parameter(description = "상태 필터: PENDING, APPROVED, REJECTED, DELIVERED, ALL(전체)")
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "공급업체명 검색")
             @RequestParam(name = "supplierName", required = false) String supplierName,
@@ -939,9 +943,12 @@ public class MmController {
         java.time.LocalDate to = null;
 
         if (status != null) {
-            var allowed = java.util.Set.of("APPROVED", "PENDING", "REJECTED", "DELIVERED");
-            if (!allowed.contains(status)) {
-                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: APPROVED, PENDING, REJECTED, DELIVERED"));
+            String st = status.toUpperCase(Locale.ROOT);
+            if (!"ALL".equals(st)) {
+                var allowed = java.util.Set.of("APPROVED", "PENDING", "REJECTED", "DELIVERED");
+                if (!allowed.contains(st)) {
+                    errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: APPROVED, PENDING, REJECTED, DELIVERED, ALL"));
+                }
             }
         }
         if (orderDateFrom != null) {
@@ -1008,7 +1015,9 @@ public class MmController {
         java.util.List<Map<String, Object>> filtered = all;
         if (status != null) {
             String st = status.toUpperCase(Locale.ROOT);
-            filtered = filtered.stream().filter(m -> st.equals(m.get("status"))).toList();
+            if (!"ALL".equals(st)) {
+                filtered = filtered.stream().filter(m -> st.equals(m.get("status"))).toList();
+            }
         }
         if (supplierName != null && !supplierName.isBlank()) {
             String keyword = supplierName.toLowerCase(Locale.ROOT);
@@ -1125,7 +1134,6 @@ public class MmController {
         String[] orderDates = {"2024-01-18","2024-01-17","2024-01-16","2024-01-15","2024-01-14","2024-01-13","2024-01-12","2024-01-11","2024-01-10","2024-01-09"};
         String[] deliveryDates = {"2024-01-25","2024-01-24","2024-01-23","2024-01-22","2024-01-21","2024-01-20","2024-01-19","2024-01-18","2024-01-17","2024-01-16"};
         String[] statusCodes = {"APPROVED","PENDING","REJECTED","APPROVED","PENDING","APPROVED","REJECTED","PENDING","APPROVED","PENDING"};
-        String[] statusLabels = {"승인","대기","반려","승인","대기","승인","반려","대기","승인","대기"};
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", purchaseId);
@@ -1138,7 +1146,6 @@ public class MmController {
         data.put("orderDate", orderDates[idx]);
         data.put("requestedDeliveryDate", deliveryDates[idx]);
         data.put("statusCode", statusCodes[idx]);
-        data.put("statusLabel", statusLabels[idx]);
 
         // 품목
         java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
@@ -1184,7 +1191,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"vendorId\": 1,\n        \"vendorCode\": \"SUP001\",\n        \"companyName\": \"한국철강\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@koreasteel.com\",\n        \"category\": \"원자재\",\n        \"leadTimeDays\": 3,\n        \"leadTimeLabel\": \"3일\",\n        \"statusCode\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"actions\": [\"view\"],\n        \"createdAt\": \"2025-10-07T00:00:00Z\",\n        \"updatedAt\": \"2025-10-07T00:00:00Z\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 50,\n      \"totalPages\": 5,\n      \"hasNext\": true\n    }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"vendorId\": 1,\n        \"vendorCode\": \"SUP001\",\n        \"companyName\": \"한국철강\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@koreasteel.com\",\n        \"category\": \"원자재\",\n        \"leadTimeDays\": 3,\n        \"leadTimeLabel\": \"3일\",\n        \"statusCode\": \"ACTIVE\",\n        \"actions\": [\"view\"],\n        \"createdAt\": \"2025-10-07T00:00:00Z\",\n        \"updatedAt\": \"2025-10-07T00:00:00Z\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 50,\n      \"totalPages\": 5,\n      \"hasNext\": true\n    }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1202,12 +1209,12 @@ public class MmController {
                             responseCode = "422",
                             description = "검증 실패",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: ACTIVE, INACTIVE\" },\n    { \"field\": \"page\", \"reason\": \"MIN_0\" },\n    { \"field\": \"size\", \"reason\": \"MAX_200\" }\n  ]\n}"))
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"status\", \"reason\": \"ALLOWED_VALUES: ACTIVE, INACTIVE, ALL\" },\n    { \"field\": \"page\", \"reason\": \"MIN_0\" },\n    { \"field\": \"size\", \"reason\": \"MAX_200\" }\n  ]\n}"))
                     )
             }
     )
     public ResponseEntity<ApiResponse<Object>> getVendors(
-            @Parameter(description = "상태 필터: ACTIVE, INACTIVE")
+            @Parameter(description = "상태 필터: ACTIVE, INACTIVE, ALL(전체)")
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "카테고리 필터", example = "부품")
             @RequestParam(name = "category", required = false) String category,
@@ -1219,9 +1226,12 @@ public class MmController {
         // 검증
         List<Map<String, String>> errors = new java.util.ArrayList<>();
         if (status != null) {
-            var allowed = java.util.Set.of("ACTIVE", "INACTIVE");
-            if (!allowed.contains(status)) {
-                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ACTIVE, INACTIVE"));
+            String st = status.toUpperCase(Locale.ROOT);
+            if (!"ALL".equals(st)) {
+                var allowed = java.util.Set.of("ACTIVE", "INACTIVE");
+                if (!allowed.contains(st)) {
+                    errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ACTIVE, INACTIVE, ALL"));
+                }
             }
         }
         if (page != null && page < 0) {
@@ -1247,7 +1257,6 @@ public class MmController {
         String[] phones = {"02-1234-5678","031-987-6543","051-555-0123","02-3456-7890","02-9999-1111","02-7777-8888","031-3333-4444","02-2222-1111","051-777-0000","032-101-2020"};
         String[] emails = {"contact@koreasteel.com","sales@dahanelec.com","info@globalchem.co.kr","info@hanbits.com","service@smartlogistics.kr","sales@taesung.com","contact@kwangmyung.co.kr","info@hanseong.com","sales@greenchem.co.kr","contact@ajumetal.co.kr"};
         String[] statusCodeArr = {"ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE"};
-        String[] statusLabelArr = {"활성","활성","비활성","활성","활성","비활성","활성","활성","비활성","활성"};
         for (int i = 0; i < 50; i++) {
             int idx = i % 10;
             Map<String, Object> v = new LinkedHashMap<>();
@@ -1260,7 +1269,6 @@ public class MmController {
             v.put("leadTimeDays", leadDays[idx]);
             v.put("leadTimeLabel", leadDays[idx] == 0 ? "당일 배송" : leadDays[idx] + "일");
             v.put("statusCode", statusCodeArr[idx]);
-            v.put("statusLabel", statusLabelArr[idx]);
             v.put("actions", java.util.List.of("view"));
             v.put("createdAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
             v.put("updatedAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
@@ -1270,9 +1278,11 @@ public class MmController {
         java.util.List<Map<String, Object>> filtered = allVendors;
         if (status != null) {
             final String expectedStatus = status.toUpperCase(Locale.ROOT);
-            filtered = filtered.stream()
-                    .filter(v -> expectedStatus.equals(String.valueOf(v.get("statusCode"))))
-                    .toList();
+            if (!"ALL".equals(expectedStatus)) {
+                filtered = filtered.stream()
+                        .filter(v -> expectedStatus.equals(String.valueOf(v.get("statusCode"))))
+                        .toList();
+            }
         }
         if (category != null && !category.isBlank()) {
             final String expectedCategory = category.trim();
@@ -1394,7 +1404,7 @@ public class MmController {
                             responseCode = "200",
                             description = "승인 성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서를 승인했습니다.\",\n  \"data\": {\n    \"id\": 1001,\n    \"poNumber\": \"PO-2024-001\",\n    \"statusCode\": \"APPROVED\",\n    \"statusLabel\": \"승인\",\n    \"approvedAt\": \"2025-10-07T09:15:00Z\",\n    \"approvedBy\": \"홍길동\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서를 승인했습니다.\",\n  \"data\": {\n    \"id\": 1001,\n    \"poNumber\": \"PO-2024-001\",\n    \"statusCode\": \"APPROVED\",\n    \"approvedAt\": \"2025-10-07T09:15:00Z\",\n    \"approvedBy\": \"홍길동\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1467,7 +1477,7 @@ public class MmController {
         data.put("id", poId);
         data.put("poNumber", String.format("PO-2024-%03d", idxFull + 1));
         data.put("statusCode", "APPROVED");
-        data.put("statusLabel", "승인");
+        // statusLabel 제거
         data.put("approvedAt", java.time.Instant.parse("2025-10-07T09:15:00Z"));
         data.put("approvedBy", "홍길동");
 
@@ -1483,7 +1493,7 @@ public class MmController {
                             responseCode = "200",
                             description = "반려 성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서를 반려했습니다.\",\n  \"data\": {\n    \"id\": 1001,\n    \"poNumber\": \"PO-2024-001\",\n    \"statusCode\": \"REJECTED\",\n    \"statusLabel\": \"반려\",\n    \"rejectedAt\": \"2025-10-14T10:00:00Z\",\n    \"rejectedBy\": \"홍길동\",\n    \"reason\": \"납기일 미확정\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서를 반려했습니다.\",\n  \"data\": {\n    \"id\": 1001,\n    \"poNumber\": \"PO-2024-001\",\n    \"statusCode\": \"REJECTED\",\n    \"rejectedAt\": \"2025-10-14T10:00:00Z\",\n    \"rejectedBy\": \"홍길동\",\n    \"reason\": \"납기일 미확정\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1557,7 +1567,7 @@ public class MmController {
         data.put("id", poId);
         data.put("poNumber", String.format("PO-2024-%03d", idxFull + 1));
         data.put("statusCode", "REJECTED");
-        data.put("statusLabel", "반려");
+        // statusLabel 제거
         data.put("rejectedAt", java.time.Instant.parse("2025-10-14T10:00:00Z"));
         data.put("rejectedBy", "홍길동");
         data.put("reason", request.getReason());
@@ -1575,7 +1585,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"vendorId\": 1,\n    \"companyName\": \"한국철강\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"contact@koreasteel.com\",\n    \"category\": \"원자재\",\n    \"leadTimeDays\": 3,\n    \"leadTimeLabel\": \"3일 소요\",\n    \"statusCode\": \"ACTIVE\",\n    \"statusLabel\": \"활성\",\n    \"materials\": [\"철강재\", \"스테인리스\", \"알루미늄\"],\n    \"createdAt\": \"2025-10-07T00:00:00Z\",\n    \"updatedAt\": \"2025-10-07T00:00:00Z\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"vendorId\": 1,\n    \"companyName\": \"한국철강\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"contact@koreasteel.com\",\n    \"category\": \"원자재\",\n    \"leadTimeDays\": 3,\n    \"leadTimeLabel\": \"3일 소요\",\n    \"statusCode\": \"ACTIVE\",\n    \"materials\": [\"철강재\", \"스테인리스\", \"알루미늄\"],\n    \"createdAt\": \"2025-10-07T00:00:00Z\",\n    \"updatedAt\": \"2025-10-07T00:00:00Z\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1626,7 +1636,6 @@ public class MmController {
         String[] phones = {"02-1234-5678","031-987-6543","051-555-0123","02-3456-7890","02-9999-1111","02-7777-8888","031-3333-4444","02-2222-1111","051-777-0000","032-101-2020"};
         String[] emails = {"contact@koreasteel.com","sales@dahanelec.com","info@globalchem.co.kr","info@hanbits.com","service@smartlogistics.kr","sales@taesung.com","contact@kwangmyung.co.kr","info@hanseong.com","sales@greenchem.co.kr","contact@ajumetal.co.kr"};
         String[] statusCode = {"ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE"};
-        String[] statusLabel = {"활성","활성","비활성","활성","활성","비활성","활성","활성","비활성","활성"};
         java.util.List<java.util.List<String>> materialsByVendor = java.util.List.of(
                 java.util.List.of("철강재", "스테인리스", "알루미늄"),
                 java.util.List.of("커넥터", "PCB", "센서"),
@@ -1650,7 +1659,6 @@ public class MmController {
         data.put("leadTimeDays", leadDays[idx]);
         data.put("leadTimeLabel", leadDays[idx] == 0 ? "당일 배송" : leadDays[idx] + "일 소요");
         data.put("statusCode", statusCode[idx]);
-        data.put("statusLabel", statusLabel[idx]);
         data.put("materials", materialsByVendor.get(idx));
         // 간단한 시계열 생성
         data.put("createdAt", java.time.Instant.parse("2025-10-07T00:00:00Z"));
