@@ -1140,9 +1140,9 @@ import java.util.stream.Collectors;
             String statusCode = codes[arrIndex % codes.length];
 
             var manager = org.ever._4ever_be_gw.business.dto.order.ManagerDto.builder()
-                    .name(contacts[arrIndex % contacts.length])
-                    .mobile("02-1234-5678")
-                    .email("contact@example.com")
+                    .managerName(contacts[arrIndex % contacts.length])
+                    .managerPhone("02-1234-5678")
+                    .managerEmail("contact@example.com")
                     .build();
 
             var item = org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto.builder()
@@ -1172,7 +1172,7 @@ import java.util.stream.Collectors;
             filtered = filtered.stream()
                     .filter(m -> m.getSoNumber().toLowerCase(Locale.ROOT).contains(kw)
                             || m.getCustomerName().toLowerCase(Locale.ROOT).contains(kw)
-                            || (m.getManager() != null && m.getManager().getName() != null && m.getManager().getName().toLowerCase(Locale.ROOT).contains(kw)))
+                            || (m.getManager() != null && m.getManager().getManagerName() != null && m.getManager().getManagerName().toLowerCase(Locale.ROOT).contains(kw)))
                     .toList();
         }
         if (from != null) {
