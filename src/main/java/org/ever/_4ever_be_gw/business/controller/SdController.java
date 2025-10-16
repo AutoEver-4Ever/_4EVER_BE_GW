@@ -1048,7 +1048,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1001,\n        \"soNumber\": \"SO-2024-001\",\n        \"customerId\": 301,\n        \"customerName\": \"(주)대한제조\",\n        \"contactName\": \"김영수\",\n        \"contactPhone\": \"010-1111-1111\",\n        \"orderDate\": \"2024-01-15\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"totalAmount\": 15000000,\n        \"statusCode\": \"PRODUCTION\",\n        \"actions\": [\"view\"]\n      },\n      {\n        \"id\": 1002,\n        \"soNumber\": \"SO-2024-002\",\n        \"customerId\": 302,\n        \"customerName\": \"(주)테크솔루션\",\n        \"contactName\": \"박민수\",\n        \"contactPhone\": \"010-2222-2222\",\n        \"orderDate\": \"2024-01-17\",\n        \"deliveryDate\": \"2024-01-30\",\n        \"totalAmount\": 8900000,\n        \"statusCode\": \"DELIVERING\",\n        \"actions\": [\"view\"]\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 2, \"totalPages\": 1, \"hasNext\": false }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"soId\": 1,\n        \"soNumber\": \"SO-2024-001\",\n        \"customerName\": \"(주)테크솔루션\",\n        \"manager\": { \"managerName\": \"김영수\", \"managerPhone\": \"02-1234-5678\", \"managerEmail\": \"contact@example.com\" },\n        \"orderDate\": \"2024-01-15\",\n        \"deliveryDate\": \"2024-01-25\",\n        \"totalAmount\": 15500000,\n        \"statusCode\": \"IN_PRODUCTION\"\n      },\n      {\n        \"soId\": 2,\n        \"soNumber\": \"SO-2024-002\",\n        \"customerName\": \"(주)대한제조\",\n        \"manager\": { \"managerName\": \"박민수\", \"managerPhone\": \"02-1234-5678\", \"managerEmail\": \"contact@example.com\" },\n        \"orderDate\": \"2024-01-16\",\n        \"deliveryDate\": \"2024-01-27\",\n        \"totalAmount\": 15150000,\n        \"statusCode\": \"DELIVERING\"\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 50, \"totalPages\": 5, \"hasNext\": true }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1076,14 +1076,14 @@ import java.util.stream.Collectors;
                     )
             }
     )
-    public ResponseEntity<ApiResponse<Object>> getSalesOrders(
+    public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.business.dto.order.SalesOrderListResponseDto>> getSalesOrders(
             @Parameter(description = "검색 시작일(YYYY-MM-DD)")
             @RequestParam(name = "startDate", required = false) String startDate,
             @Parameter(description = "검색 종료일(YYYY-MM-DD)")
             @RequestParam(name = "endDate", required = false) String endDate,
             @Parameter(description = "주문번호/고객사명/고객명 검색 키워드")
             @RequestParam(name = "keyword", required = false) String keyword,
-            @Parameter(description = "상태: ALL, MATERIAL_PREPARATION, PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED")
+            @Parameter(description = "상태: ALL, MATERIAL_PREPARATION, IN_PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED")
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "페이지 번호(0-base)")
             @RequestParam(name = "page", required = false) Integer page,
@@ -1108,9 +1108,9 @@ import java.util.stream.Collectors;
             errors.add(Map.of("field", "startDate/endDate", "reason", "FROM_AFTER_TO"));
         }
         if (status != null) {
-            var allowed = java.util.Set.of("ALL", "MATERIAL_PREPARATION", "PRODUCTION", "READY_FOR_SHIPMENT", "DELIVERING", "DELIVERED");
+            var allowed = java.util.Set.of("ALL", "MATERIAL_PREPARATION", "IN_PRODUCTION", "READY_FOR_SHIPMENT", "DELIVERING", "DELIVERED");
             if (!allowed.contains(status)) {
-                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ALL, MATERIAL_PREPARATION, PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED"));
+                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ALL, MATERIAL_PREPARATION, IN_PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED"));
             }
         }
         if (page != null && page < 0) {
@@ -1126,91 +1126,96 @@ import java.util.stream.Collectors;
         int pageIndex = (page == null || page < 0) ? 0 : page;
         int pageSize = (size == null || size < 1) ? 10 : size;
 
-        // 목업 데이터 생성(50건) 및 상세 ID 연결: id=soId(1201~1250)
-        List<Map<String, Object>> all = new ArrayList<>();
+        // 목업 데이터 생성(1~50): 상세 API와 동일한 규칙으로 생성
+        java.util.List<org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto> all = new ArrayList<>();
         String[] customers = {"(주)테크솔루션","(주)대한제조","현대기공","포스코엠텍","세아베스틸","네오머티리얼","스마트팩","그린테크","동방기계","에이치파워"};
         String[] contacts = {"김영수","박민수","이주연","최은정","홍길동","정우성","김하늘","박서준","한소라","장나라"};
-        String[] contactPhones = {"010-1111-1111","010-2222-2222","010-3333-3333","010-4444-4444","010-5555-5555","010-6666-6666","010-7777-7777","010-8888-8888","010-9999-9999","010-0000-0000"};
-        String[] codes = {"MATERIAL_PREPARATION","PRODUCTION","READY_FOR_SHIPMENT","DELIVERING","DELIVERED"};
+        String[] codes = {"IN_PRODUCTION","DELIVERING","MATERIAL_PREPARATION","READY_FOR_SHIPMENT","DELIVERED"};
         java.time.LocalDate baseOrder = java.time.LocalDate.of(2024, 1, 15);
         for (int i = 0; i < 50; i++) {
-            Map<String, Object> row = new LinkedHashMap<>();
-            int soSeq = 1201 + i;
-            row.put("id", soSeq);
-            row.put("soNumber", String.format("SO-2024-%03d", i + 1));
-            row.put("customerId", 301 + (i % 50));
-            row.put("customerName", customers[i % customers.length]);
-            // 표준화: manager { name, mobile }
-            Map<String, Object> rowManager = new LinkedHashMap<>();
-            rowManager.put("name", contacts[i % contacts.length]);
-            rowManager.put("mobile", contactPhones[i % contactPhones.length]);
-            row.put("manager", rowManager);
-            // 하위 호환 키
-            row.put("contactName", contacts[i % contacts.length]);
-            row.put("contactPhone", contactPhones[i % contactPhones.length]);
-            java.time.LocalDate od = baseOrder.plusDays(i % 20);
-            java.time.LocalDate dd = od.plusDays(10 + (i % 5));
-            row.put("orderDate", od.toString());
-            row.put("deliveryDate", dd.toString());
-            row.put("totalAmount", 15_000_000L - (i * 120_000L));
-            String statusCode = codes[i % codes.length];
-            row.put("statusCode", statusCode);
-            // statusLabel 제거: statusCode만 반환
-            row.put("actions", List.of("view"));
-            all.add(row);
+            int soIdVal = i + 1;               // 1..50
+            int arrIndex = i;                   // 0..49
+            java.time.LocalDate od = baseOrder.plusDays(arrIndex % 20);
+            java.time.LocalDate dd = od.plusDays(10 + (arrIndex % 5));
+            String statusCode = codes[arrIndex % codes.length];
+
+            var manager = org.ever._4ever_be_gw.business.dto.order.ManagerDto.builder()
+                    .managerName(contacts[arrIndex % contacts.length])
+                    .managerPhone("02-1234-5678")
+                    .managerEmail("contact@example.com")
+                    .build();
+
+            var item = org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto.builder()
+                    .soId((long) soIdVal)
+                    .soNumber(String.format("SO-2024-%03d", soIdVal))
+                    .customerName(customers[arrIndex % customers.length])
+                    .manager(manager)
+                    .orderDate(od.toString())
+                    .deliveryDate(dd.toString())
+                    .totalAmount(15_500_000L - (arrIndex * 350_000L))
+                    .statusCode(statusCode)
+                    .build();
+
+            all.add(item);
         }
 
         // 필터 적용
-        List<Map<String, Object>> filtered = all;
+        java.util.List<org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto> filtered = all;
         if (status != null && !status.equalsIgnoreCase("ALL")) {
             final String st = status.toUpperCase(Locale.ROOT);
-            filtered = filtered.stream().filter(m -> st.equals(String.valueOf(m.get("statusCode")))).toList();
+            filtered = filtered.stream()
+                    .filter(m -> st.equals(String.valueOf(m.getStatusCode())))
+                    .toList();
         }
         if (keyword != null && !keyword.isBlank()) {
             final String kw = keyword.toLowerCase(Locale.ROOT);
-            filtered = filtered.stream().filter(m -> {
-                String so = String.valueOf(m.get("soNumber")).toLowerCase(Locale.ROOT);
-                String cn = String.valueOf(m.get("customerName")).toLowerCase(Locale.ROOT);
-                Object nameVal;
-                if (m.containsKey("manager") && m.get("manager") instanceof Map) {
-                    Map<?,?> mgr = (Map<?,?>) m.get("manager");
-                    nameVal = mgr.get("name");
-                } else {
-                    nameVal = m.get("contactName");
-                }
-                String pn = (nameVal == null ? "" : String.valueOf(nameVal)).toLowerCase(Locale.ROOT);
-                return so.contains(kw) || cn.contains(kw) || pn.contains(kw);
-            }).toList();
+            filtered = filtered.stream()
+                    .filter(m -> m.getSoNumber().toLowerCase(Locale.ROOT).contains(kw)
+                            || m.getCustomerName().toLowerCase(Locale.ROOT).contains(kw)
+                            || (m.getManager() != null && m.getManager().getManagerName() != null && m.getManager().getManagerName().toLowerCase(Locale.ROOT).contains(kw)))
+                    .toList();
         }
         if (from != null) {
             final java.time.LocalDate min = from;
             filtered = filtered.stream()
-                    .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))).isBefore(min))
+                    .filter(m -> !java.time.LocalDate.parse(m.getOrderDate()).isBefore(min))
                     .toList();
         }
         if (to != null) {
             final java.time.LocalDate max = to;
             filtered = filtered.stream()
-                    .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))).isAfter(max))
+                    .filter(m -> !java.time.LocalDate.parse(m.getOrderDate()).isAfter(max))
                     .toList();
         }
 
-        // 정렬: orderDate desc, id asc 보조
+        // 정렬: orderDate desc, soId asc 보조
         filtered = filtered.stream()
                 .sorted(java.util.Comparator
-                        .comparing((Map<String, Object> m) -> java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))))
+                        .comparing((org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto m) -> java.time.LocalDate.parse(m.getOrderDate()))
                         .reversed()
-                        .thenComparing(m -> ((Number) m.get("id")).longValue()))
+                        .thenComparing(org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto::getSoId))
                 .toList();
 
         int total = filtered.size();
         int fromIdx = Math.min(pageIndex * pageSize, total);
         int toIdx2 = Math.min(fromIdx + pageSize, total);
-        List<Map<String, Object>> pageContent = filtered.subList(fromIdx, toIdx2);
+        java.util.List<org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto> pageContent = filtered.subList(fromIdx, toIdx2);
 
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("content", pageContent);
-        data.put("page", PageResponseUtils.buildPage(pageIndex, pageSize, total));
+        // PageDto 구성 (공통)
+        int totalPages = pageSize == 0 ? 0 : (int) Math.ceil((double) total / pageSize);
+        boolean hasNext = pageIndex + 1 < totalPages;
+        var pageDto = org.ever._4ever_be_gw.common.dto.PageDto.builder()
+                .number(pageIndex)
+                .size(pageSize)
+                .totalElements(total)
+                .totalPages(totalPages)
+                .hasNext(hasNext)
+                .build();
+
+        var data = org.ever._4ever_be_gw.business.dto.order.SalesOrderListResponseDto.builder()
+                .content(pageContent)
+                .page(pageDto)
+                .build();
 
         return ResponseEntity.ok(ApiResponse.success(data, "주문 목록 조회에 성공했습니다.", HttpStatus.OK));
     }
@@ -1225,13 +1230,13 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문서 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"order\": {\n      \"soId\": 1201,\n      \"soNumber\": \"SO-2024-001\",\n      \"orderDate\": \"2024-01-15\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"statusCode\": \"IN_PRODUCTION\",\n      \"totalAmount\": 15500000\n    },\n    \"customer\": {\n      \"customerId\": 301,\n      \"customerName\": \"(주)테크솔루션\",\n      \"manager\": { \"name\": \"김영수\", \"mobile\": \"02-1234-5678\", \"email\": \"techsolution@company.com\" },\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"items\": [\n      { \"productName\": \"산업용 모터 5HP\", \"quantity\": 5, \"unit\": \"개\", \"unitPrice\": 850000, \"amount\": 4250000 },\n      { \"productName\": \"제어판넬\", \"quantity\": 2, \"unit\": \"개\", \"unitPrice\": 1200000, \"amount\": 2400000 }\n    ],\n    \"note\": \"긴급 주문 - 우선 처리 요청\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문서 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"order\": {\n      \"soId\": 1,\n      \"soNumber\": \"SO-2024-001\",\n      \"orderDate\": \"2024-01-15\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"statusCode\": \"IN_PRODUCTION\",\n      \"totalAmount\": 15500000\n    },\n    \"customer\": {\n      \"customerId\": 301,\n      \"customerName\": \"(주)테크솔루션\",\n      \"manager\": { \"managerName\": \"김영수\", \"managerPhone\": \"02-1234-5678\", \"managerEmail\": \"contact@example.com\" }\n    },\n    \"items\": [\n      { \"productName\": \"산업용 모터 5HP\", \"quantity\": 5, \"unit\": \"개\", \"unitPrice\": 850000, \"amount\": 4250000 },\n      { \"productName\": \"제어판넬\", \"quantity\": 2, \"unit\": \"개\", \"unitPrice\": 1200000, \"amount\": 2400000 }\n    ],\n    \"note\": \"긴급 주문 - 우선 처리 요청\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
                             description = "성공(예시 업데이트)",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success_updated", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문서 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"order\": {\n      \"soId\": 1201,\n      \"soNumber\": \"SO-2024-001\",\n      \"orderDate\": \"2024-01-15\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"statusCode\": \"IN_PRODUCTION\",\n      \"totalAmount\": 15500000\n    },\n    \"customer\": {\n      \"customerId\": 301,\n      \"customerName\": \"(주)테크솔루션\",\n      \"manager\": { \"name\": \"김영수\", \"mobile\": \"02-1234-5678\", \"email\": \"techsolution@company.com\" },\n      \"address\": \"서울시 강남구 테헤란로 123\"\n    },\n    \"items\": [\n      { \"productName\": \"산업용 모터 5HP\", \"quantity\": 5, \"unit\": \"개\", \"unitPrice\": 850000, \"amount\": 4250000 },\n      { \"productName\": \"제어판넬\", \"quantity\": 2, \"unit\": \"개\", \"unitPrice\": 1200000, \"amount\": 2400000 }\n    ],\n    \"note\": \"긴급 주문 - 우선 처리 요청\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success_updated", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문서 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"order\": {\n      \"soId\": 1,\n      \"soNumber\": \"SO-2024-001\",\n      \"orderDate\": \"2024-01-15\",\n      \"deliveryDate\": \"2024-01-25\",\n      \"statusCode\": \"IN_PRODUCTION\",\n      \"totalAmount\": 15500000\n    },\n    \"customer\": {\n      \"customerId\": 301,\n      \"customerName\": \"(주)테크솔루션\",\n      \"manager\": { \"managerName\": \"김영수\", \"managerPhone\": \"02-1234-5678\", \"managerEmail\": \"contact@example.com\" }\n    },\n    \"items\": [\n      { \"productName\": \"산업용 모터 5HP\", \"quantity\": 5, \"unit\": \"개\", \"unitPrice\": 850000, \"amount\": 4250000 },\n      { \"productName\": \"제어판넬\", \"quantity\": 2, \"unit\": \"개\", \"unitPrice\": 1200000, \"amount\": 2400000 }\n    ],\n    \"note\": \"긴급 주문 - 우선 처리 요청\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1259,78 +1264,73 @@ import java.util.stream.Collectors;
                     )
             }
     )
-    public ResponseEntity<ApiResponse<Object>> getSalesOrderDetail(
+    public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.business.dto.order.SalesOrderDetailDto>> getSalesOrderDetail(
             @Parameter(description = "주문서 ID")
             @org.springframework.web.bind.annotation.PathVariable("soId") Long soId
     ) {
-        // 유효 범위: 1201~1250 (목업)
-        if (soId == null || soId < 1201L || soId > 1250L) {
+        // 유효 범위: 1~50
+        if (soId == null || soId < 1L || soId > 50L) {
             throw new BusinessException(ErrorCode.ORDER_NOT_FOUND, "soId=" + soId);
         }
 
-        int idx = (int)(soId - 1201);
+        // 1~50 인덱스 그대로 사용 (로직 매핑 제거)
+        int idx = soId.intValue();
         String[] customers = {"(주)테크솔루션","(주)대한제조","현대기공","포스코엠텍","세아베스틸","네오머티리얼","스마트팩","그린테크","동방기계","에이치파워"};
         String[] contacts = {"김영수","박민수","이주연","최은정","홍길동","정우성","김하늘","박서준","한소라","장나라"};
 
         // 상태코드(상세): IN_PRODUCTION 포함
         String[] codes = {"IN_PRODUCTION","DELIVERING","MATERIAL_PREPARATION","READY_FOR_SHIPMENT","DELIVERED"};
+        int arrIndex = (idx - 1);
+        java.time.LocalDate od = java.time.LocalDate.of(2024,1,15).plusDays(arrIndex % 20);
+        java.time.LocalDate dd = od.plusDays(10 + (arrIndex % 5));
+        String code = codes[arrIndex % codes.length];
 
-        Map<String, Object> order = new LinkedHashMap<>();
-        order.put("soId", soId);
-        order.put("soNumber", String.format("SO-2024-%03d", idx + 1));
-        java.time.LocalDate od = java.time.LocalDate.of(2024,1,15).plusDays(idx % 20);
-        java.time.LocalDate dd = od.plusDays(10 + (idx % 5));
-        order.put("orderDate", od.toString());
-        order.put("deliveryDate", dd.toString());
-        String code = codes[idx % codes.length];
-        order.put("statusCode", code);
-        // statusLabel 제거: statusCode만 반환
-        order.put("totalAmount", 15_500_000L - (idx * 350_000L));
-        // createdAt/updatedAt 제거 (응답 단순화)
+        // DTO를 이용하여 목업데이터 생성
+        var orderDto = org.ever._4ever_be_gw.business.dto.order.OrderSummaryDto.builder()
+                .soId(soId)
+                .soNumber(String.format("SO-2024-%03d", idx))
+                .orderDate(od.toString())
+                .deliveryDate(dd.toString())
+                .statusCode(code)
+                .totalAmount(15_500_000L - (arrIndex * 350_000L))
+                .build();
 
-        Map<String, Object> customer = new LinkedHashMap<>();
-        customer.put("customerId", 301 + idx);
-        customer.put("customerName", customers[idx]);
-        Map<String, Object> custManager = new LinkedHashMap<>();
-        custManager.put("name", contacts[idx]);
-        custManager.put("mobile", "02-1234-5678");
-        custManager.put("email", "contact@example.com");
-        customer.put("manager", custManager);
-        // 하위 호환 필드 유지
-        customer.put("contactName", contacts[idx]);
-        customer.put("contactPhone", "02-1234-5678");
-        customer.put("contactEmail", "contact@example.com");
-        customer.put("address", "서울시 강남구 테헤란로 123");
+        var managerDto = org.ever._4ever_be_gw.business.dto.order.ManagerDto.builder()
+                .managerName(contacts[arrIndex % contacts.length])
+                .managerPhone("02-1234-5678")
+                .managerEmail("contact@example.com")
+                .build();
 
-        // 배송 정보(shipping) 제거
+        var customerDto = org.ever._4ever_be_gw.business.dto.order.CustomerSummaryDto.builder()
+                .customerId(300L + idx)
+                .customerName(customers[arrIndex % customers.length])
+                .manager(managerDto)
+                .build();
 
-        java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
-        Map<String, Object> it1 = new LinkedHashMap<>();
-        it1.put("productName", "산업용 모터 5HP");
-        // 사양(spec) 제거
-        it1.put("quantity", 5);
-        it1.put("unit", "개");
-        it1.put("unitPrice", 850_000);
-        it1.put("amount", 4_250_000);
-        items.add(it1);
+        java.util.List<org.ever._4ever_be_gw.business.dto.order.OrderItemDto> items = new java.util.ArrayList<>();
+        items.add(org.ever._4ever_be_gw.business.dto.order.OrderItemDto.builder()
+                .productName("산업용 모터 5HP")
+                .quantity(5)
+                .uonName("개")
+                .unitPrice(850_000L)
+                .amount(4_250_000L)
+                .build());
+        items.add(org.ever._4ever_be_gw.business.dto.order.OrderItemDto.builder()
+                .productName("제어판넬")
+                .quantity(2)
+                .uonName("개")
+                .unitPrice(1_200_000L)
+                .amount(2_400_000L)
+                .build());
 
-        Map<String, Object> it2 = new LinkedHashMap<>();
-        it2.put("productName", "제어판넬");
-        // 사양(spec) 제거
-        it2.put("quantity", 2);
-        it2.put("unit", "개");
-        it2.put("unitPrice", 1_200_000);
-        it2.put("amount", 2_400_000);
-        items.add(it2);
+        var detail = org.ever._4ever_be_gw.business.dto.order.SalesOrderDetailDto.builder()
+                .order(orderDto)
+                .customer(customerDto)
+                .items(items)
+                .note("긴급 주문 - 우선 처리 요청")
+                .build();
 
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("order", order);
-        data.put("customer", customer);
-        // 배송 정보(shipping) 제거
-        data.put("items", items);
-        data.put("note", "긴급 주문 - 우선 처리 요청");
-
-        return ResponseEntity.ok(ApiResponse.success(data, "주문서 상세 정보를 조회했습니다.", HttpStatus.OK));
+        return ResponseEntity.ok(ApiResponse.success(detail, "주문서 상세 정보를 조회했습니다.", HttpStatus.OK));
     }
 
     // -------- Analytics (R) - week params (kept for tests) --------
