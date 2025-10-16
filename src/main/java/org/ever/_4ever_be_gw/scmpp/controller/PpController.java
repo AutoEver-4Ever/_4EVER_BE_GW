@@ -18,7 +18,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/scm-pp/pp")
 @Tag(name = "Production Management", description = "생산 관리 API")
-public class ProductionController {
+public class PpController {
     @PostMapping("/boms")
     @Operation(
             summary = "BOM 생성",
