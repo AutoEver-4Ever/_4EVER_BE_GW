@@ -10,7 +10,6 @@ import org.ever._4ever_be_gw.scmpp.dto.PeriodMetricsDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
-import org.ever._4ever_be_gw.common.util.PageResponseUtils;
 import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionCreateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionUpdateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionRejectRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.MmVendorCreateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.MmSupplierCreateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.MmVendorUpdateRequestDto;
 
 @RestController
@@ -1365,7 +1364,7 @@ public class MmController {
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(value = "{\n  \"companyName\": \"대한철강\",\n  \"category\": \"원자재\",\n  \"contactPerson\": \"홍길동\",\n  \"contactPhone\": \"02-1234-5678\",\n  \"email\": \"contact@koreasteel.com\",\n  \"deliveryLeadTime\": 3,\n  \"address\": \"서울시 강남구 테헤란로 123\",\n  \"materialList\": [\n    {\n      \"materialName\": \"철강재\",\n      \"unit\": \"kg\",\n      \"unitPrice\": 1500\n    },\n    {\n      \"materialName\": \"스테인리스\",\n      \"unit\": \"kg\",\n      \"unitPrice\": 2500\n    },\n    {\n      \"materialName\": \"알루미늄\",\n      \"unit\": \"kg\",\n      \"unitPrice\": 2200\n    }\n  ]\n}"))
             )
-            @RequestBody MmVendorCreateRequestDto request
+            @RequestBody MmSupplierCreateRequestDto request
     ) {
         if (authorization == null || authorization.isBlank()) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
