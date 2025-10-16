@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.domain.mm;
+package org.ever._4ever_be_gw.domain.mm.supplier;
 
 import org.ever._4ever_be_gw.scmpp.controller.MmController;
 import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
@@ -25,8 +25,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "spring.mvc.servlet.path=/api"
 })
-@Import(MmVendorTest.MockConfig.class)
-class MmVendorTest {
+@Import(MmSupplierTest.MockConfig.class)
+class MmSupplierTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -50,7 +50,7 @@ class MmVendorTest {
     @Test
     @DisplayName("공급업체 목록 기본 조회 성공")
     void getVendors_success() throws Exception {
-        mockMvc.perform(get("/api/scm-pp/mm/vendors")
+        mockMvc.perform(get("/api/scm-pp/mm/supplier")
                         .servletPath("/api")
                         .queryParam("page", "0")
                         .queryParam("size", "10")
@@ -60,8 +60,8 @@ class MmVendorTest {
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("공급업체 목록을 조회했습니다."))
                 .andExpect(jsonPath("$.data.content").isArray())
-                .andExpect(jsonPath("$.data.content[0].vendorId").value(1))
-                .andExpect(jsonPath("$.data.content[0].vendorCode").value("SUP001"))
+                .andExpect(jsonPath("$.data.content[0].supplierInfo").exists())
+                .andExpect(jsonPath("$.data.content[0].supplierInfo.supplierName").exists())
                 .andExpect(jsonPath("$.data.page.number").value(0))
                 .andExpect(jsonPath("$.data.page.size").value(10))
                 .andExpect(jsonPath("$.data.page.totalElements").value(50))
@@ -71,7 +71,7 @@ class MmVendorTest {
     @Test
     @DisplayName("공급업체 목록 검증 실패 422")
     void getVendors_validationErrors() throws Exception {
-        mockMvc.perform(get("/api/scm-pp/mm/vendors")
+        mockMvc.perform(get("/api/scm-pp/mm/supplier")
                         .servletPath("/api")
                         .queryParam("status", "BAD")
                         .queryParam("page", "-1")
@@ -88,7 +88,7 @@ class MmVendorTest {
     @Test
     @DisplayName("공급업체 목록 권한 없음 403(모킹)")
     void getVendors_forbidden() throws Exception {
-        mockMvc.perform(get("/api/scm-pp/mm/vendors")
+        mockMvc.perform(get("/api/scm-pp/mm/supplier")
                         .servletPath("/api")
                         .queryParam("category", "금지")
                         .accept(MediaType.APPLICATION_JSON))
@@ -101,25 +101,24 @@ class MmVendorTest {
     @Test
     @DisplayName("공급업체 상세 조회 성공(1~10)")
     void getVendorDetail_success() throws Exception {
-        mockMvc.perform(get("/api/scm-pp/mm/vendors/{vendorId}", 1L)
+        mockMvc.perform(get("/api/scm-pp/mm/supplier/{supplierId}", 1L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("공급업체 상세 정보를 조회했습니다."))
-                .andExpect(jsonPath("$.data.vendorId").value(1))
-                .andExpect(jsonPath("$.data.vendorCode").value("SUP001"))
-                .andExpect(jsonPath("$.data.companyName").exists())
-                .andExpect(jsonPath("$.data.leadTimeLabel").value("3일 소요"))
-                .andExpect(jsonPath("$.data.statusCode").value("ACTIVE"))
-                .andExpect(jsonPath("$.data.materials").isArray());
+                .andExpect(jsonPath("$.data.supplierInfo").exists())
+                .andExpect(jsonPath("$.data.supplierInfo.supplierName").exists())
+                .andExpect(jsonPath("$.data.supplierInfo.deliveryLeadTime").isNumber())
+                .andExpect(jsonPath("$.data.managerInfo").exists())
+                .andExpect(jsonPath("$.data.managerInfo.managerEmail").exists());
     }
 
     @Test
     @DisplayName("공급업체 상세 권한 없음 403(모킹)")
     void getVendorDetail_forbidden() throws Exception {
-        mockMvc.perform(get("/api/scm-pp/mm/vendors/{vendorId}", 403001L)
+        mockMvc.perform(get("/api/scm-pp/mm/supplier/{supplierId}", 403001L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
@@ -131,7 +130,7 @@ class MmVendorTest {
     @Test
     @DisplayName("공급업체 상세 미존재 404")
     void getVendorDetail_notFound() throws Exception {
-        mockMvc.perform(get("/api/scm-pp/mm/vendors/{vendorId}", 51L)
+        mockMvc.perform(get("/api/scm-pp/mm/supplier/{supplierId}", 51L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
@@ -143,7 +142,7 @@ class MmVendorTest {
     @Test
     @DisplayName("공급업체 상세 서버 오류 500(모킹)")
     void getVendorDetail_serverError() throws Exception {
-        mockMvc.perform(get("/api/scm-pp/mm/vendors/{vendorId}", 500001L)
+        mockMvc.perform(get("/api/scm-pp/mm/supplier/{supplierId}", 500001L)
                         .servletPath("/api")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
