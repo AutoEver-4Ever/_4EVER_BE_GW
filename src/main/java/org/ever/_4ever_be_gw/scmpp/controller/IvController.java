@@ -18,7 +18,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/scm-pp")
 @Tag(name = "Inventory Management", description = "재고 관리 API")
-public class InventoryController {
+public class IvController {
 
     @GetMapping("/inventory/shortage/count/critical/statistic")
     @Operation(

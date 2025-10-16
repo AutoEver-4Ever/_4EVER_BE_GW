@@ -10,7 +10,6 @@ import org.ever._4ever_be_gw.scmpp.dto.PeriodMetricsDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
-import org.ever._4ever_be_gw.common.util.PageResponseUtils;
 import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,8 +34,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionCreateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionUpdateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionRejectRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.MmVendorCreateRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.MmVendorUpdateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierCreateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierUpdateRequestDto;
 
 @RestController
 @RequestMapping("/scm-pp/mm")
@@ -1348,7 +1347,7 @@ public class MmController {
                             responseCode = "422",
                             description = "검증 실패",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"companyName\", \"reason\": \"필수 입력값입니다.\" },\n    { \"field\": \"email\", \"reason\": \"올바른 이메일 형식이 아닙니다.\" }\n  ]\n}"))
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"supplierName\", \"reason\": \"필수 입력값입니다.\" },\n    { \"field\": \"supplierEmail\", \"reason\": \"올바른 이메일 형식이 아닙니다.\" }\n  ]\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "500",
@@ -1363,9 +1362,9 @@ public class MmController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\n  \"companyName\": \"대한철강\",\n  \"category\": \"원자재\",\n  \"contactPerson\": \"홍길동\",\n  \"contactPhone\": \"02-1234-5678\",\n  \"email\": \"contact@koreasteel.com\",\n  \"deliveryLeadTime\": 3,\n  \"address\": \"서울시 강남구 테헤란로 123\",\n  \"materialList\": [\n    {\n      \"materialName\": \"철강재\",\n      \"unit\": \"kg\",\n      \"unitPrice\": 1500\n    },\n    {\n      \"materialName\": \"스테인리스\",\n      \"unit\": \"kg\",\n      \"unitPrice\": 2500\n    },\n    {\n      \"materialName\": \"알루미늄\",\n      \"unit\": \"kg\",\n      \"unitPrice\": 2200\n    }\n  ]\n}"))
+                            examples = @ExampleObject(value = "{\n  \"supplierInfo\": {\n    \"supplierName\": \"대한철강\",\n    \"supplierEmail\": \"contact@koreasteel.com\",\n    \"supplierBaseAddress\": \"서울시 강남구 테헤란로 123\",\n    \"supplierDetailAddress\": \"B동 2층\",\n    \"category\": \"원자재\",\n    \"deliveryLeadTime\": 3\n  },\n  \"managerInfo\": {\n    \"managerName\": \"홍길동\",\n    \"managerPhone\": \"02-1234-5678\",\n    \"managerEmail\": \"contact@koreasteel.com\"\n  },\n  \"materialList\": [\n    { \"materialName\": \"철강재\", \"uomCode\": \"KG\", \"unitPrice\": 1500 },\n    { \"materialName\": \"스테인리스\", \"uomCode\": \"KG\", \"unitPrice\": 2500 },\n    { \"materialName\": \"알루미늄\", \"uomCode\": \"KG\", \"unitPrice\": 2200 }\n  ]\n}"))
             )
-            @RequestBody MmVendorCreateRequestDto request
+            @RequestBody MmSupplierCreateRequestDto request
     ) {
         if (authorization == null || authorization.isBlank()) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
@@ -1380,11 +1379,13 @@ public class MmController {
         }
 
         List<Map<String, String>> errors = new java.util.ArrayList<>();
-        if (request == null || request.getCompanyName() == null || request.getCompanyName().isBlank()) {
-            errors.add(Map.of("field", "companyName", "reason", "필수 입력값입니다."));
+        var sInfo = (request == null) ? null : request.getSupplierInfo();
+        var mInfo = (request == null) ? null : request.getManagerInfo();
+        if (sInfo == null || sInfo.getSupplierName() == null || sInfo.getSupplierName().isBlank()) {
+            errors.add(Map.of("field", "supplierName", "reason", "필수 입력값입니다."));
         }
-        if (request == null || request.getEmail() == null || request.getEmail().isBlank() || !request.getEmail().contains("@")) {
-            errors.add(Map.of("field", "email", "reason", "올바른 이메일 형식이 아닙니다."));
+        if (sInfo == null || sInfo.getSupplierEmail() == null || sInfo.getSupplierEmail().isBlank() || !sInfo.getSupplierEmail().contains("@")) {
+            errors.add(Map.of("field", "supplierEmail", "reason", "올바른 이메일 형식이 아닙니다."));
         }
         if (!errors.isEmpty()) {
             throw new ValidationException(ErrorCode.VENDOR_CREATE_VALIDATION_FAILED, errors);
@@ -1393,9 +1394,12 @@ public class MmController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("vendorId", 101L);
         data.put("vendorCode", "SUP-2025-0001");
-        data.put("companyName", request.getCompanyName());
-        data.put("managerName", request.getContactPerson());
-        data.put("managerEmail", request.getEmail());
+        data.put("companyName", sInfo.getSupplierName());
+        String managerName = (mInfo != null && mInfo.getManagerName() != null) ? mInfo.getManagerName() : null;
+        data.put("managerName", managerName);
+        // managerEmail이 없으면 supplierEmail로 대체
+        String managerEmail = (mInfo != null && mInfo.getManagerEmail() != null && !mInfo.getManagerEmail().isBlank()) ? mInfo.getManagerEmail() : sInfo.getSupplierEmail();
+        data.put("managerEmail", managerEmail);
         data.put("createdAt", java.time.Instant.parse("2025-10-13T10:00:00Z"));
 
         return ResponseEntity.ok(ApiResponse.success(data, "공급업체가 정상적으로 등록되었습니다.", HttpStatus.OK));
@@ -1762,8 +1766,8 @@ public class MmController {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
                             description = "수정 성공",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 정보를 수정했습니다.\",\n  \"data\": {\n    \"vendorId\": 1,\n    \"vendorCode\": \"V-001\",\n    \"companyName\": \"대한철강\",\n    \"category\": \"원자재\",\n    \"address\": \"서울특별시 강남구 테헤란로 123\",\n    \"leadTimeDays\": 3,\n    \"materialList\": [\"철강재\", \"스테인리스\"],\n    \"statusCode\": \"ACTIVE\",\n    \"contactPerson\": \"홍길동\",\n    \"contactPosition\": \"영업팀장\",\n    \"contactPhone\": \"010-1234-5678\",\n    \"contactEmail\": \"contact@koreasteel.com\",\n    \"createdAt\": \"2025-10-07T00:00:00Z\",\n    \"updatedAt\": \"2025-10-13T12:00:00Z\"\n  }\n}"))
+            content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체 정보를 수정했습니다.\",\n  \"data\": {\n    \"vendorId\": 1,\n    \"vendorCode\": \"V-001\",\n    \"companyName\": \"대한철강\",\n    \"category\": \"원자재\",\n    \"address\": \"서울특별시 강남구 테헤란로 123 B동 2층\",\n    \"leadTimeDays\": 3,\n    \"materialList\": [\"철강재\", \"스테인리스\"],\n    \"statusCode\": \"ACTIVE\",\n    \"managerName\": \"홍길동\",\n    \"managerPosition\": \"영업팀장\",\n    \"managerPhone\": \"010-1234-5678\",\n    \"managerEmail\": \"contact@koreasteel.com\",\n    \"createdAt\": \"2025-10-07T00:00:00Z\",\n    \"updatedAt\": \"2025-10-13T12:00:00Z\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1786,8 +1790,8 @@ public class MmController {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "422",
                             description = "검증 실패",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 본문 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"contactPerson\", \"reason\": \"FIELD_NOT_EDITABLE_BY_ADMIN\" },\n    { \"field\": \"contactPhone\", \"reason\": \"FIELD_NOT_EDITABLE_BY_ADMIN\" }\n  ]\n}"))
+            content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 본문 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"managerName\", \"reason\": \"FIELD_NOT_EDITABLE_BY_ADMIN\" },\n    { \"field\": \"managerPhone\", \"reason\": \"FIELD_NOT_EDITABLE_BY_ADMIN\" }\n  ]\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "500",
@@ -1800,7 +1804,7 @@ public class MmController {
     public ResponseEntity<ApiResponse<Object>> updateVendor(
             @PathVariable("vendorId") Long vendorId,
             @RequestHeader(value = "Authorization", required = false) String authorization,
-            @RequestBody(required = false) MmVendorUpdateRequestDto request
+            @RequestBody(required = false) MmSupplierUpdateRequestDto request
     ) {
         if (authorization == null || authorization.isBlank()) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
@@ -1816,20 +1820,24 @@ public class MmController {
 
         java.util.List<Map<String, String>> errors = new java.util.ArrayList<>();
         if (request != null) {
-            if (request.getContactPerson() != null) {
-                errors.add(Map.of("field", "contactPerson", "reason", "FIELD_NOT_EDITABLE_BY_ADMIN"));
-            }
-            if (request.getContactPhone() != null) {
-                errors.add(Map.of("field", "contactPhone", "reason", "FIELD_NOT_EDITABLE_BY_ADMIN"));
-            }
-            if (request.getContactEmail() != null) {
-                errors.add(Map.of("field", "contactEmail", "reason", "FIELD_NOT_EDITABLE_BY_ADMIN"));
+            var mInfo = request.getManagerInfo();
+            if (mInfo != null) {
+                if (mInfo.getManagerName() != null) {
+                    errors.add(Map.of("field", "managerName", "reason", "FIELD_NOT_EDITABLE_BY_ADMIN"));
+                }
+                if (mInfo.getManagerPhone() != null) {
+                    errors.add(Map.of("field", "managerPhone", "reason", "FIELD_NOT_EDITABLE_BY_ADMIN"));
+                }
+                if (mInfo.getManagerEmail() != null) {
+                    errors.add(Map.of("field", "managerEmail", "reason", "FIELD_NOT_EDITABLE_BY_ADMIN"));
+                }
             }
             if (request.getStatusCode() != null && !java.util.Set.of("ACTIVE", "INACTIVE").contains(request.getStatusCode())) {
                 errors.add(Map.of("field", "statusCode", "reason", "ALLOWED_VALUES: ACTIVE, INACTIVE"));
             }
-            if (request.getLeadTimeDays() != null && request.getLeadTimeDays() < 0) {
-                errors.add(Map.of("field", "leadTimeDays", "reason", "MUST_BE_POSITIVE_OR_ZERO"));
+            var sInfo = request.getSupplierInfo();
+            if (sInfo != null && sInfo.getDeliveryLeadTime() != null && sInfo.getDeliveryLeadTime() < 0) {
+                errors.add(Map.of("field", "deliveryLeadTime", "reason", "MUST_BE_POSITIVE_OR_ZERO"));
             }
         }
         if (!errors.isEmpty()) {
@@ -1843,11 +1851,25 @@ public class MmController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("vendorId", vendorId);
         data.put("vendorCode", "V-001");
-        data.put("companyName", request != null && request.getCompanyName() != null ? request.getCompanyName() : "대한철강");
-        data.put("category", request != null && request.getCategory() != null ? request.getCategory() : "원자재");
-        data.put("address", request != null && request.getAddress() != null ? request.getAddress() : "서울특별시 강남구 테헤란로 123");
-        data.put("leadTimeDays", request != null && request.getLeadTimeDays() != null ? request.getLeadTimeDays() : 3);
-        data.put("materialList", request != null && request.getMaterialList() != null ? request.getMaterialList() : java.util.List.of("철강재", "스테인리스"));
+        var sInfo = request != null ? request.getSupplierInfo() : null;
+        String companyName = (sInfo != null && sInfo.getSupplierName() != null) ? sInfo.getSupplierName() : "대한철강";
+        data.put("companyName", companyName);
+        data.put("category", (sInfo != null && sInfo.getCategory() != null) ? sInfo.getCategory() : "원자재");
+        String addrBase = (sInfo != null && sInfo.getSupplierBaseAddress() != null) ? sInfo.getSupplierBaseAddress() : "서울특별시 강남구 테헤란로 123";
+        String addrDetail = (sInfo != null && sInfo.getSupplierDetailAddress() != null) ? sInfo.getSupplierDetailAddress() : null;
+        String composedAddr = addrBase + (addrDetail != null && !addrDetail.isBlank() ? (" " + addrDetail) : "");
+        data.put("address", composedAddr);
+        Integer lead = (sInfo != null) ? sInfo.getDeliveryLeadTime() : null;
+        data.put("leadTimeDays", lead != null ? lead : 3);
+        if (request != null && request.getMaterialList() != null) {
+            java.util.List<String> names = request.getMaterialList().stream()
+                    .map(mi -> mi != null ? String.valueOf(mi.getMaterialName()) : null)
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            data.put("materialList", names);
+        } else {
+            data.put("materialList", java.util.List.of("철강재", "스테인리스"));
+        }
         data.put("statusCode", request != null && request.getStatusCode() != null ? request.getStatusCode() : "ACTIVE");
         data.put("managerName", "홍길동");
         data.put("managerPosition", "영업팀장");

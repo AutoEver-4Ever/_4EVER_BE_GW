@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.domain.mm;
+package org.ever._4ever_be_gw.domain.mm.supplier;
 
 import org.ever._4ever_be_gw.scmpp.controller.MmController;
 import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
@@ -17,7 +17,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.hasItem;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -26,8 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "spring.mvc.servlet.path=/api"
 })
-@Import(MmVendorUpdateTest.MockConfig.class)
-class MmVendorUpdateTest {
+@Import(MmSupplierCreateTest.MockConfig.class)
+class MmSupplierCreateTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -48,42 +48,58 @@ class MmVendorUpdateTest {
         }
     }
 
-    private String body() {
+    private String validBody() {
         return "{\n" +
-                "  \"companyName\": \"대한철강\",\n" +
-                "  \"address\": \"서울특별시 강남구 테헤란로 123\",\n" +
-                "  \"leadTimeDays\": 3,\n" +
-                "  \"materialList\": [\"철강재\", \"스테인리스\"],\n" +
-                "  \"statusCode\": \"ACTIVE\"\n" +
+                "  \"supplierInfo\": {\n" +
+                "    \"supplierName\": \"대한철강\",\n" +
+                "    \"supplierEmail\": \"contact@koreasteel.com\",\n" +
+                "    \"supplierBaseAddress\": \"서울시 강남구 테헤란로 123\",\n" +
+                "    \"supplierDetailAddress\": \"B동 2층\",\n" +
+                "    \"category\": \"원자재\",\n" +
+                "    \"deliveryLeadTime\": 3\n" +
+                "  },\n" +
+                "  \"managerInfo\": {\n" +
+                "    \"managerName\": \"홍길동\",\n" +
+                "    \"managerPhone\": \"02-1234-5678\",\n" +
+                "    \"managerEmail\": \"contact@koreasteel.com\"\n" +
+                "  },\n" +
+                "  \"materialList\": [\n" +
+                "    { \"materialName\": \"철강재\", \"uomCode\": \"KG\", \"unitPrice\": 1500 },\n" +
+                "    { \"materialName\": \"스테인리스\", \"uomCode\": \"KG\", \"unitPrice\": 2500 },\n" +
+                "    { \"materialName\": \"알루미늄\", \"uomCode\": \"KG\", \"unitPrice\": 2200 }\n" +
+                "  ]\n" +
                 "}";
     }
 
     @Test
-    @DisplayName("공급업체 정보 수정 성공")
-    void updateVendor_success() throws Exception {
-        mockMvc.perform(patch("/api/scm-pp/mm/vendors/{vendorId}", 1L)
+    @DisplayName("공급업체 등록 성공")
+    void createVendor_success() throws Exception {
+        mockMvc.perform(post("/api/scm-pp/mm/vendors")
                         .servletPath("/api")
                         .header("Authorization", "Bearer token-with-ADMIN")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body())
+                        .content(validBody())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
-                .andExpect(jsonPath("$.message").value("공급업체 정보를 수정했습니다."))
-                .andExpect(jsonPath("$.data.vendorId").value(1))
+                .andExpect(jsonPath("$.message").value("공급업체가 정상적으로 등록되었습니다."))
+                .andExpect(jsonPath("$.data.vendorId").value(101))
+                .andExpect(jsonPath("$.data.vendorCode").value("SUP-2025-0001"))
                 .andExpect(jsonPath("$.data.companyName").value("대한철강"))
-                .andExpect(jsonPath("$.data.statusCode").value("ACTIVE"))
-                .andExpect(jsonPath("$.data.updatedAt").value("2025-10-13T12:00:00Z"));
+                .andExpect(jsonPath("$.data.managerName").value("홍길동"))
+                .andExpect(jsonPath("$.data.managerEmail").value("contact@koreasteel.com"))
+                .andExpect(jsonPath("$.data.createdAt").value("2025-10-13T10:00:00Z"));
     }
 
     @Test
     @DisplayName("Authorization 없으면 401")
-    void updateVendor_unauthorized() throws Exception {
-        mockMvc.perform(patch("/api/scm-pp/mm/vendors/{vendorId}", 1L)
+    void createVendor_unauthorized() throws Exception {
+        mockMvc.perform(post("/api/scm-pp/mm/vendors")
                         .servletPath("/api")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body()))
+                        .content(validBody())
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.status").value(401));
@@ -91,26 +107,30 @@ class MmVendorUpdateTest {
 
     @Test
     @DisplayName("권한 없는 토큰이면 403")
-    void updateVendor_forbidden() throws Exception {
-        mockMvc.perform(patch("/api/scm-pp/mm/vendors/{vendorId}", 1L)
+    void createVendor_forbidden() throws Exception {
+        mockMvc.perform(post("/api/scm-pp/mm/vendors")
                         .servletPath("/api")
                         .header("Authorization", "Bearer user-token")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body()))
+                        .content(validBody())
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.message").value("공급업체 수정 권한이 없습니다."));
+                .andExpect(jsonPath("$.message").value("공급업체 등록 권한이 없습니다."));
     }
 
     @Test
-    @DisplayName("담당자 필드 수정 시 422")
-    void updateVendor_contactFieldsForbidden() throws Exception {
+    @DisplayName("검증 실패 422 - 필수값/이메일 형식")
+    void createVendor_validationErrors() throws Exception {
         String invalidBody = "{\n" +
-                "  \"contactPerson\": \"홍길동\"\n" +
+                "  \"supplierInfo\": {\n" +
+                "    \"supplierName\": \"\",\n" +
+                "    \"supplierEmail\": \"invalid-email\"\n" +
+                "  }\n" +
                 "}";
 
-        mockMvc.perform(patch("/api/scm-pp/mm/vendors/{vendorId}", 1L)
+        mockMvc.perform(post("/api/scm-pp/mm/vendors")
                         .servletPath("/api")
                         .header("Authorization", "Bearer token-with-ADMIN")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -119,36 +139,23 @@ class MmVendorUpdateTest {
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.status").value(422))
-                .andExpect(jsonPath("$.message").value("요청 본문 검증에 실패했습니다."))
-                .andExpect(jsonPath("$.errors[*].reason", hasItem("FIELD_NOT_EDITABLE_BY_ADMIN")));
+                .andExpect(jsonPath("$.message").value("요청 파라미터 검증에 실패했습니다."))
+                .andExpect(jsonPath("$.errors[*].reason", hasItem("필수 입력값입니다.")))
+                .andExpect(jsonPath("$.errors[*].reason", hasItem("올바른 이메일 형식이 아닙니다.")));
     }
 
     @Test
-    @DisplayName("미존재 공급업체 404")
-    void updateVendor_notFound() throws Exception {
-        mockMvc.perform(patch("/api/scm-pp/mm/vendors/{vendorId}", 9999L)
-                        .servletPath("/api")
-                        .header("Authorization", "Bearer token-with-ADMIN")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body()))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("수정할 공급업체를 찾을 수 없습니다."));
-    }
-
-    @Test
-    @DisplayName("처리 오류 500")
-    void updateVendor_processingError() throws Exception {
-        mockMvc.perform(patch("/api/scm-pp/mm/vendors/{vendorId}", 1L)
+    @DisplayName("처리 중 오류 500(모킹)")
+    void createVendor_processingError() throws Exception {
+        mockMvc.perform(post("/api/scm-pp/mm/vendors")
                         .servletPath("/api")
                         .header("Authorization", "Bearer ADMIN-ERROR")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body()))
+                        .content(validBody())
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.status").value(500))
-                .andExpect(jsonPath("$.message").value("공급업체 정보 수정 처리 중 오류가 발생했습니다."));
+                .andExpect(jsonPath("$.message").value("공급업체 등록 처리 중 오류가 발생했습니다."));
     }
 }
-
