@@ -13,6 +13,7 @@ public class MmSupplierCreateRequestDto {
     public static class SupplierInfo {
         private String supplierName;            // 공급업체 이름
         private String supplierEmail;           // 공급업체 이메일
+        private String supplierPhone;           // 공급업체 전화번호
         private String supplierBaseAddress;     // 공급업체 기본 주소
         private String supplierDetailAddress;   // 공급업체 상세 주소
         private String category;                // 제공하는 자재의 카테고리
