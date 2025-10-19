@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.scmpp.dto;
+package org.ever._4ever_be_gw.scmpp.dto.inventory;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,17 +9,17 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShortageItemDetailDto {
-    private String itemName;
+public class InventoryItemDto {
+    private Long itemId;
     private String itemCode;
+    private String itemName;
     private String category;
     private int currentStock;
-    private String currentUnit;
     private int safetyStock;
-    private String safetyUnit;
-    private int unitPrice;
+    private String unit;
+    private int price;
     private int totalValue;
     private String warehouseName;
-    private String warehouseCode;
+    private String warehouseType;
     private String status;
 }

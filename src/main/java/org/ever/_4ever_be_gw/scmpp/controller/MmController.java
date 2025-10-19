@@ -11,6 +11,7 @@ import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
+import org.ever._4ever_be_gw.scmpp.dto.po.MmPurchaseOrderRejectRequestDto;
 import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,9 +33,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionCreateRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionUpdateRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionRejectRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionCreateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionUpdateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionRejectRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierCreateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierUpdateRequestDto;
 
@@ -1756,7 +1757,7 @@ public class MmController {
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(value = "{ \"reason\": \"납기일 미확정\" }"))
             )
-            @RequestBody org.ever._4ever_be_gw.scmpp.dto.MmPurchaseOrderRejectRequestDto request
+            @RequestBody MmPurchaseOrderRejectRequestDto request
     ) {
         if (authorization == null || authorization.isBlank()) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);

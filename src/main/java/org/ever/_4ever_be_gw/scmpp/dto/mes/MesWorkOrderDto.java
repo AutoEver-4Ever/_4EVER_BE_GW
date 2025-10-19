@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.scmpp.dto;
+package org.ever._4ever_be_gw.scmpp.dto.mes;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

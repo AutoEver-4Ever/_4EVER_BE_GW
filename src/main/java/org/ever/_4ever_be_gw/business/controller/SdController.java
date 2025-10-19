@@ -7,8 +7,8 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ever._4ever_be_gw.business.dto.QuotationRequestDto;
 import org.ever._4ever_be_gw.business.dto.QuotationConfirmRequestDto;
-import org.ever._4ever_be_gw.business.dto.CustomerCreateRequestDto;
-import org.ever._4ever_be_gw.business.dto.CustomerUpdateRequestDto;
+import org.ever._4ever_be_gw.business.dto.customer.CustomerCreateRequestDto;
+import org.ever._4ever_be_gw.business.dto.customer.CustomerUpdateRequestDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
@@ -495,7 +495,7 @@ import java.util.stream.Collectors;
                             responseCode = "201",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"고객사가 등록되었습니다.\",\n  \"data\": {\n    \"customerId\": 501,\n    \"customerCode\": \"C-0001\",\n    \"companyName\": \"삼성전자\",\n    \"ceoName\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"contact@samsung.com\",\n    \"zipCode\": \"06236\",\n    \"address\": \"서울시 강남구 테헤란로 123\",\n    \"detailAddress\": \"4층\",\n    \"manager\": { \"name\": \"김철수\", \"mobile\": \"010-1234-5678\", \"email\": \"kim@samsung.com\" },\n    \"totalOrders\": 0,\n    \"totalTransactionAmount\": 0,\n    \"currency\": \"KRW\",\n    \"note\": \"주요 고객사, 정기 거래처\",\n    \"createdAt\": \"2025-10-12T12:34:56Z\",\n    \"updatedAt\": \"2025-10-12T12:34:56Z\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"고객사가 등록되었습니다.\",\n  \"data\": {\n    \"customerId\": 501,\n    \"customerCode\": \"C-0001\",\n    \"companyName\": \"삼성전자\",\n    \"ceoName\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"contact@samsung.com\",\n    \"zipCode\": \"06236\",\n    \"address\": \"서울시 강남구 테헤란로 123\",\n    \"detailAddress\": \"4층\",\n    \"manager\": { \"name\": \"김철수\", \"mobile\": \"010-1234-5678\", \"email\": \"kim@samsung.com\" },\n    \"totalOrders\": 0,\n    \"totalTransactionAmount\": 0,\n    \"currency\": \"KRW\",\n    \"note\": \"주요 고객사, 정기 거래처\",\n    \"createdAt\": \"2025-10-12\",\n    \"updatedAt\": \"2025-10-12\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "400",
@@ -596,9 +596,9 @@ import java.util.stream.Collectors;
         data.put("totalTransactionAmount", 0);
         data.put("currency", "KRW");
         data.put("note", request.getNote());
-        java.time.Instant now = java.time.Instant.now();
-        data.put("createdAt", now);
-        data.put("updatedAt", now);
+        java.time.LocalDate today = java.time.LocalDate.now();
+        data.put("createdAt", today);
+        data.put("updatedAt", today);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(data, "고객사가 등록되었습니다.", HttpStatus.CREATED));

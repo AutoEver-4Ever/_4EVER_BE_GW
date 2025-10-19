@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.scmpp.dto;
+package org.ever._4ever_be_gw.scmpp.dto.warehouse;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +9,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateWarehouseDto {
-    private String warehouseName;
+public class WarehouseDto {
+    private Long warehouseId;
     private String warehouseCode;
+    private String warehouseName;
+    private String status;
     private String warehouseType;
     private String location;
     private String manager;
