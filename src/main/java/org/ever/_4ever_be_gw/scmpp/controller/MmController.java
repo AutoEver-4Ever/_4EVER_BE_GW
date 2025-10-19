@@ -17,6 +17,7 @@ import org.ever._4ever_be_gw.scmpp.dto.po.PoItemDto;
 import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -679,6 +680,63 @@ public class MmController {
         data.put("items", items);
 
         return ResponseEntity.ok(ApiResponse.success(data, "구매요청서가 수정되었습니다.", HttpStatus.OK));
+    }
+
+    @DeleteMapping("/purchase-requisitions/{prId}")
+    @Operation(
+            summary = "구매요청서 삭제",
+            description = "대기(PENDING) 상태인 구매요청서를 삭제합니다. 삭제된 문서는 복구할 수 없습니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "삭제 성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서가 삭제되었습니다.\",\n  \"data\": {\n    \"id\": 102345,\n    \"prNumber\": \"PR-NS-2025-00001\",\n    \"status\": \"DELETED\",\n    \"deletedAt\": \"2025-10-07T11:15:00Z\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "구매요청서 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"해당 구매요청서를 찾을 수 없습니다: prId=999999\",\n  \"errors\": { \"code\": 1012 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "409",
+                            description = "삭제 불가 상태",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "conflict", value = "{\n  \"status\": 409,\n  \"success\": false,\n  \"message\": \"대기 상태인 구매요청서만 삭제할 수 있습니다.\",\n  \"errors\": { \"code\": 1050 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "처리 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\",\n  \"errors\": { \"code\": 1014 }\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> deletePurchaseRequisition(
+            @Parameter(description = "구매요청 ID", example = "102345")
+            @PathVariable("prId") Long prId
+    ) {
+        if (prId == null || prId < 100000L) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
+        }
+        if (Long.valueOf(102346L).equals(prId) || Long.valueOf(102348L).equals(prId)) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_DELETE_CONFLICT);
+        }
+        if (Long.valueOf(102399L).equals(prId)) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+        if (!Long.valueOf(102345L).equals(prId)) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", prId);
+        data.put("prNumber", "PR-NS-2025-00001");
+        data.put("status", "DELETED");
+        data.put("deletedAt", java.time.Instant.parse("2025-10-07T11:15:00Z"));
+
+        return ResponseEntity.ok(ApiResponse.success(data, "구매요청서가 삭제되었습니다.", HttpStatus.OK));
     }
 
     @PostMapping("/purchase-requisitions/{prId}/release")
