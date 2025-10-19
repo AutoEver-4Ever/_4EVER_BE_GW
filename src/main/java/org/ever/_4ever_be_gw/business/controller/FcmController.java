@@ -6,18 +6,23 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.ever._4ever_be_gw.business.dto.FcmPeriodMetricsDto;
 import org.ever._4ever_be_gw.business.dto.StatementUpdateRequestDto;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +38,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Finance & Cost Management", description = "재무 관리 API")
 public class FcmController {
 
+	private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
+
 	// ==================== 재무 관리 통계 ====================
 
 	@GetMapping("/statictics")
@@ -43,37 +50,62 @@ public class FcmController {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(
 					responseCode = "200",
 					description = "성공",
-					content = @Content(mediaType = "application/json",
-						examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 현황 정보를 성공적으로 조회했습니다.\",\n  \"data\": {\n    \"totalSales\": 125000000,\n    \"totalSalesChange\": 12.5,\n    \"totalPurchases\": 85000000,\n    \"totalPurchasesChange\": 8.2,\n    \"netProfit\": 40000000,\n    \"netProfitChange\": 15.3,\n    \"accountsReceivable\": 25000000,\n    \"accountsReceivableChange\": -3.2\n  }\n}"))
-			)
+						content = @Content(mediaType = "application/json",
+							examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재무 통계 데이터를 성공적으로 조회했습니다.\",\n  \"data\": {\n    \"week\": {\n      \"total_sales\": { \"value\": 68500000, \"delta_rate\": 0.082 },\n      \"total_purchases\": { \"value\": 43200000, \"delta_rate\": 0.054 },\n      \"net_profit\": { \"value\": 21000000, \"delta_rate\": 0.097 },\n      \"accounts_receivable\": { \"value\": 12500000, \"delta_rate\": -0.012 }\n    },\n    \"month\": {\n      \"total_sales\": { \"value\": 275000000, \"delta_rate\": 0.125 },\n      \"total_purchases\": { \"value\": 189000000, \"delta_rate\": 0.083 },\n      \"net_profit\": { \"value\": 86000000, \"delta_rate\": 0.153 },\n      \"accounts_receivable\": { \"value\": 25000000, \"delta_rate\": -0.032 }\n    }\n  }\n}"))
+				)
 		}
 	)
-	public ResponseEntity<ApiResponse<Object>> getStatistics(
-		@Parameter(description = "검색 기간: WEEK, MONTH, QUARTER, YEAR", example = "MONTH")
-		@RequestParam(name = "period", required = false, defaultValue = "MONTH") String period
+	public ResponseEntity<ApiResponse<Map<String, FcmPeriodMetricsDto>>> getStatistics(
+		@Parameter(description = "조회 기간 목록(콤마 구분)")
+		@RequestParam(name = "periods", required = false) String periods
 	) {
-		List<Map<String, String>> errors = new ArrayList<>();
-		if (period != null) {
-			var allowed = Set.of("WEEK", "MONTH", "QUARTER", "YEAR");
-			if (!allowed.contains(period)) {
-				errors.add(Map.of("field", "period", "reason", "ALLOWED_VALUES: WEEK, MONTH, QUARTER, YEAR"));
-			}
-		}
-		if (!errors.isEmpty()) {
-			throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
+		List<String> requested = periods == null || periods.isBlank()
+			? List.of("week", "month", "quarter", "year")
+			: Arrays.stream(periods.split(","))
+			.map(String::trim)
+			.map(String::toLowerCase)
+			.collect(Collectors.toList());
+
+		List<String> invalid = requested.stream().filter(p -> !ALLOWED_PERIODS.contains(p)).toList();
+		if (periods != null && !periods.isBlank() && (!invalid.isEmpty() || requested.stream().noneMatch(ALLOWED_PERIODS::contains))) {
+			throw new ValidationException(ErrorCode.VALIDATION_FAILED, List.of(Map.of("field", "periods", "reason", "ALLOWED_VALUES: WEEK, MONTH, QUARTER, YEAR")));
 		}
 
-		Map<String, Object> data = new LinkedHashMap<>();
-		data.put("totalSales", 125000000);
-		data.put("totalSalesChange", 12.5);
-		data.put("totalPurchases", 85000000);
-		data.put("totalPurchasesChange", 8.2);
-		data.put("netProfit", 40000000);
-		data.put("netProfitChange", 15.3);
-		data.put("accountsReceivable", 25000000);
-		data.put("accountsReceivableChange", -3.2);
+		List<String> finalPeriods = requested.stream().filter(ALLOWED_PERIODS::contains).toList();
+		Map<String, FcmPeriodMetricsDto> data = new LinkedHashMap<>();
 
-		return ResponseEntity.ok(ApiResponse.success(data, "매출 현황 정보를 성공적으로 조회했습니다.", HttpStatus.OK));
+		if (finalPeriods.contains("week")) {
+			data.put("week", buildMetrics(68_500_000L, new BigDecimal("0.082"), 43_200_000L, new BigDecimal("0.054"), 21_000_000L, new BigDecimal("0.097"), 12_500_000L, new BigDecimal("-0.012")));
+		}
+		if (finalPeriods.contains("month")) {
+			data.put("month", buildMetrics(275_000_000L, new BigDecimal("0.125"), 189_000_000L, new BigDecimal("0.083"), 86_000_000L, new BigDecimal("0.153"), 25_000_000L, new BigDecimal("-0.032")));
+		}
+		if (finalPeriods.contains("quarter")) {
+			data.put("quarter", buildMetrics(812_000_000L, new BigDecimal("0.094"), 596_000_000L, new BigDecimal("0.071"), 248_000_000L, new BigDecimal("0.118"), 74_000_000L, new BigDecimal("-0.021")));
+		}
+		if (finalPeriods.contains("year")) {
+			data.put("year", buildMetrics(3_215_000_000L, new BigDecimal("0.068"), 2_425_000_000L, new BigDecimal("0.057"), 978_000_000L, new BigDecimal("0.103"), 315_000_000L, new BigDecimal("-0.018")));
+		}
+
+		return ResponseEntity.ok(ApiResponse.success(data, "재무 통계 데이터를 성공적으로 조회했습니다.", HttpStatus.OK));
+	}
+
+	private FcmPeriodMetricsDto buildMetrics(
+		long totalSales,
+		BigDecimal totalSalesChange,
+		long totalPurchases,
+		BigDecimal totalPurchasesChange,
+		long netProfit,
+		BigDecimal netProfitChange,
+		long accountsReceivable,
+		BigDecimal accountsReceivableChange
+	) {
+		return FcmPeriodMetricsDto.builder()
+			.totalSales(PeriodStatDto.builder().value(totalSales).deltaRate(totalSalesChange).build())
+			.totalPurchases(PeriodStatDto.builder().value(totalPurchases).deltaRate(totalPurchasesChange).build())
+			.netProfit(PeriodStatDto.builder().value(netProfit).deltaRate(netProfitChange).build())
+			.accountsReceivable(PeriodStatDto.builder().value(accountsReceivable).deltaRate(accountsReceivableChange).build())
+			.build();
 	}
 
 	// ==================== 전표 목록 조회 (AP: 매입, AS: 매출) ====================

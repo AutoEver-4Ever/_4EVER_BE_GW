@@ -14,12 +14,12 @@ import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.common.util.PageResponseUtils;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
-import org.ever._4ever_be_gw.business.dto.SdPeriodMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -66,7 +66,7 @@ import java.util.stream.Collectors;
                     )
             }
     )
-    public ResponseEntity<ApiResponse<Map<String, SdPeriodMetricsDto>>> getStatistics(
+    public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getStatistics(
             @Parameter(name = "periods", description = "조회 기간 목록(콤마 구분)")
             @RequestParam(name = "periods", required = false) String periods
     ) {
@@ -84,32 +84,33 @@ import java.util.stream.Collectors;
 
         List<String> finalPeriods = requested.stream().filter(ALLOWED_PERIODS::contains).toList();
 
-        Map<String, SdPeriodMetricsDto> data = new LinkedHashMap<>();
+        StatsResponseDto.StatsResponseDtoBuilder<StatsMetricsDto> builder = StatsResponseDto.<StatsMetricsDto>builder();
         if (finalPeriods.contains("week")) {
-            data.put("week", SdPeriodMetricsDto.builder()
-                    .salesAmount(new PeriodStatDto(152_300_000L, new BigDecimal("0.105")))
-                    .newOrdersCount(new PeriodStatDto(42L, new BigDecimal("0.067")))
+            builder.week(StatsMetricsDto.builder()
+                    .put("sales_amount", new PeriodStatDto(152_300_000L, new BigDecimal("0.105")))
+                    .put("new_orders_count", new PeriodStatDto(42L, new BigDecimal("0.067")))
                     .build());
         }
         if (finalPeriods.contains("month")) {
-            data.put("month", SdPeriodMetricsDto.builder()
-                    .salesAmount(new PeriodStatDto(485_200_000L, new BigDecimal("0.125")))
-                    .newOrdersCount(new PeriodStatDto(127L, new BigDecimal("0.082")))
+            builder.month(StatsMetricsDto.builder()
+                    .put("sales_amount", new PeriodStatDto(485_200_000L, new BigDecimal("0.125")))
+                    .put("new_orders_count", new PeriodStatDto(127L, new BigDecimal("0.082")))
                     .build());
         }
         if (finalPeriods.contains("quarter")) {
-            data.put("quarter", SdPeriodMetricsDto.builder()
-                    .salesAmount(new PeriodStatDto(1_385_200_000L, new BigDecimal("0.047")))
-                    .newOrdersCount(new PeriodStatDto(392L, new BigDecimal("0.031")))
+            builder.quarter(StatsMetricsDto.builder()
+                    .put("sales_amount", new PeriodStatDto(1_385_200_000L, new BigDecimal("0.047")))
+                    .put("new_orders_count", new PeriodStatDto(392L, new BigDecimal("0.031")))
                     .build());
         }
         if (finalPeriods.contains("year")) {
-            data.put("year", SdPeriodMetricsDto.builder()
-                    .salesAmount(new PeriodStatDto(5_485_200_000L, new BigDecimal("0.036")))
-                    .newOrdersCount(new PeriodStatDto(4_217L, new BigDecimal("0.028")))
+            builder.year(StatsMetricsDto.builder()
+                    .put("sales_amount", new PeriodStatDto(5_485_200_000L, new BigDecimal("0.036")))
+                    .put("new_orders_count", new PeriodStatDto(4_217L, new BigDecimal("0.028")))
                     .build());
         }
 
+        StatsResponseDto<StatsMetricsDto> data = builder.build();
         return ResponseEntity.ok(ApiResponse.success(data, "OK", HttpStatus.OK));
     }
 
