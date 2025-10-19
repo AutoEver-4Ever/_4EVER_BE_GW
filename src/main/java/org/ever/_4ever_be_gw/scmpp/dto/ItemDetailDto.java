@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -24,7 +25,7 @@ public class ItemDetailDto {
     private int totalValue;
     private String warehouseName;
     private String warehouseCode;
-    private String lastModified;
+    private LocalDate lastModified;
     private String description;
     private String specification;
     private List<StockMovementDto> stockMovements;
@@ -39,7 +40,7 @@ public class ItemDetailDto {
         private String unit;
         private String from;
         private String to;
-        private String date;
+        private LocalDate date;
         private String manager;
         private String locationCode;
         private String note;

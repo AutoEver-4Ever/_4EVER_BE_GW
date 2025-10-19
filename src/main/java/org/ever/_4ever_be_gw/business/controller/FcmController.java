@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -122,7 +121,7 @@ public class FcmController {
 					responseCode = "200",
 					description = "성공",
 						content = @Content(mediaType = "application/json",
-							examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매입 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"statementId\": 1,\n        \"statementCode\": \"AP-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14T19:31:50.123456789\",\n        \"dueDate\": \"2025-11-14T19:31:50.123456789\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"PO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
+							examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매입 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"statementId\": 1,\n        \"statementCode\": \"AP-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14\",\n        \"dueDate\": \"2025-11-14\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"PO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
 			)
 		}
 	)
@@ -145,11 +144,11 @@ public class FcmController {
 		summary = "매출 전표 목록 조회",
 		description = "매출(AS) 전표 목록을 조회합니다.",
 		responses = {
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(
-					responseCode = "200",
-					description = "성공",
-						content = @Content(mediaType = "application/json",
-							examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"statementId\": 1,\n        \"statementCode\": \"AR-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14T19:31:50.123456789\",\n        \"dueDate\": \"2025-11-14T19:31:50.123456789\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"SO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"statementId\": 1,\n        \"statementCode\": \"AR-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14\",\n        \"dueDate\": \"2025-11-14\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"SO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
 			)
 		}
 	)
@@ -174,11 +173,11 @@ public class FcmController {
 		summary = "매입 전표 상세 조회",
 		description = "매입(AP) 전표 상세 정보를 조회합니다.",
 		responses = {
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(
-					responseCode = "200",
-					description = "성공",
-					content = @Content(mediaType = "application/json",
-						examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"statementId\": 1,\n    \"statementCode\": \"AR-2024-001\",\n    \"connection\": {\n      \"connectionId\": 1,\n      \"connectionCode\": \"C-001\",\n      \"connectionName\": \"현대자동차\"\n    },\n    \"totalAmount\": 10000000,\n    \"issueDate\": \"2025-10-14T19:31:50.123456789\",\n    \"dueDate\": \"2025-11-14T19:31:50.123456789\",\n    \"status\": \"UNPAID\",\n    \"reference\": {\n      \"referenceId\": 1,\n      \"referenceCode\": \"SO-2024-001\"\n    },\n    \"note\": \"도어 패널 100개 납품\",\n    \"items\": [{\n      \"itemName\": \"강판 A급\",\n      \"quantity\": 50,\n      \"unit\": \"매\",\n      \"unitPrice\": 80000,\n      \"totalPrice\": 4000000\n    }]\n  }\n}"))
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"statementId\": 1,\n    \"statementCode\": \"AR-2024-001\",\n    \"connection\": {\n      \"connectionId\": 1,\n      \"connectionCode\": \"C-001\",\n      \"connectionName\": \"현대자동차\"\n    },\n    \"totalAmount\": 10000000,\n    \"issueDate\": \"2025-10-14\",\n    \"dueDate\": \"2025-11-14\",\n    \"status\": \"UNPAID\",\n    \"reference\": {\n      \"referenceId\": 1,\n      \"referenceCode\": \"SO-2024-001\"\n    },\n    \"note\": \"도어 패널 100개 납품\",\n    \"items\": [{\n      \"itemName\": \"강판 A급\",\n      \"quantity\": 50,\n      \"unit\": \"매\",\n      \"unitPrice\": 80000,\n      \"totalPrice\": 4000000\n    }]\n  }\n}"))
 			)
 		}
 	)
@@ -198,7 +197,7 @@ public class FcmController {
 					responseCode = "200",
 					description = "성공",
 					content = @Content(mediaType = "application/json",
-						examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"statementId\": 1,\n    \"statementCode\": \"AR-2024-001\",\n    \"connection\": {\n      \"connectionId\": 1,\n      \"connectionCode\": \"C-001\",\n      \"connectionName\": \"현대자동차\"\n    },\n    \"totalAmount\": 10000000,\n    \"issueDate\": \"2025-10-14T19:31:50.123456789\",\n    \"dueDate\": \"2025-11-14T19:31:50.123456789\",\n    \"status\": \"UNPAID\",\n    \"reference\": {\n      \"referenceId\": 1,\n      \"referenceCode\": \"PO-2024-001\"\n    },\n    \"note\": \"도어 패널 100개 납품\",\n    \"items\": [{\n      \"itemName\": \"강판 A급\",\n      \"quantity\": 50,\n      \"unit\": \"매\",\n      \"unitPrice\": 80000,\n      \"totalPrice\": 4000000\n    }]\n  }\n}"))
+						examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"statementId\": 1,\n    \"statementCode\": \"AR-2024-001\",\n    \"connection\": {\n      \"connectionId\": 1,\n      \"connectionCode\": \"C-001\",\n      \"connectionName\": \"현대자동차\"\n    },\n    \"totalAmount\": 10000000,\n    \"issueDate\": \"2025-10-14\",\n    \"dueDate\": \"2025-11-14\",\n    \"status\": \"UNPAID\",\n    \"reference\": {\n      \"referenceId\": 1,\n      \"referenceCode\": \"PO-2024-001\"\n    },\n    \"note\": \"도어 패널 100개 납품\",\n    \"items\": [{\n      \"itemName\": \"강판 A급\",\n      \"quantity\": 50,\n      \"unit\": \"매\",\n      \"unitPrice\": 80000,\n      \"totalPrice\": 4000000\n    }]\n  }\n}"))
 			)
 		}
 	)
@@ -252,18 +251,18 @@ public class FcmController {
 
 	private Map<String, Object> generateStatementListMock(int page, int size, String type) {
 		List<Map<String, Object>> content = new ArrayList<>();
-		content.add(buildStatementRow(1L, type.equals("AP") ? "AP-2024-001" : "AR-2024-001",
-				1L, "C-001", "현대자동차", 10_000_000,
-				LocalDateTime.parse("2025-10-14T19:31:50.123456789"),
-				LocalDateTime.parse("2025-11-14T19:31:50.123456789"),
-				"UNPAID",
-				type.equals("AP") ? "PO-2024-001" : "SO-2024-001"));
-		content.add(buildStatementRow(2L, type.equals("AP") ? "AP-2024-002" : "AR-2024-002",
-				2L, "C-002", "삼성전자", 25_000_000,
-				LocalDateTime.parse("2025-10-10T11:00:00.000000000"),
-				LocalDateTime.parse("2025-11-10T11:00:00.000000000"),
-				"PENDING",
-				type.equals("AP") ? "PO-2024-005" : "SO-2024-025"));
+			content.add(buildStatementRow(1L, type.equals("AP") ? "AP-2024-001" : "AR-2024-001",
+					1L, "C-001", "현대자동차", 10_000_000,
+					LocalDate.parse("2025-10-14"),
+					LocalDate.parse("2025-11-14"),
+					"UNPAID",
+					type.equals("AP") ? "PO-2024-001" : "SO-2024-001"));
+			content.add(buildStatementRow(2L, type.equals("AP") ? "AP-2024-002" : "AR-2024-002",
+					2L, "C-002", "삼성전자", 25_000_000,
+					LocalDate.parse("2025-10-10"),
+					LocalDate.parse("2025-11-10"),
+					"PENDING",
+					type.equals("AP") ? "PO-2024-005" : "SO-2024-025"));
 
 		int totalElements = 15;
 		int totalPages = size <= 0 ? 0 : (int) Math.ceil((double) totalElements / size);
@@ -287,18 +286,18 @@ public class FcmController {
 		return response;
 	}
 
-	private Map<String, Object> buildStatementRow(
-		Long statementId,
-		String statementCode,
-		Long connectionId,
-		String connectionCode,
-		String connectionName,
-		int totalAmount,
-		LocalDateTime issueDate,
-		LocalDateTime dueDate,
-		String status,
-		String referenceCode
-	) {
+		private Map<String, Object> buildStatementRow(
+			Long statementId,
+			String statementCode,
+			Long connectionId,
+			String connectionCode,
+			String connectionName,
+			int totalAmount,
+			LocalDate issueDate,
+			LocalDate dueDate,
+			String status,
+			String referenceCode
+		) {
 		Map<String, Object> row = new LinkedHashMap<>();
 		row.put("statementId", statementId);
 		row.put("statementCode", statementCode);
@@ -329,8 +328,8 @@ public class FcmController {
 		connection.put("connectionName", "현대자동차");
 		data.put("connection", connection);
 		data.put("totalAmount", 10_000_000);
-		data.put("issueDate", LocalDateTime.parse("2025-10-14T19:31:50.123456789"));
-		data.put("dueDate", LocalDateTime.parse("2025-11-14T19:31:50.123456789"));
+		data.put("issueDate", LocalDate.parse("2025-10-14"));
+		data.put("dueDate", LocalDate.parse("2025-11-14"));
 		data.put("status", "UNPAID");
 		Map<String, Object> reference = new LinkedHashMap<>();
 		reference.put("referenceId", 1L);

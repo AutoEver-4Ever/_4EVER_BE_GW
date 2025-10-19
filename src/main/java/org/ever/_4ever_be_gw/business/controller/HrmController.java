@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.ever._4ever_be_gw.business.dto.*;
+import org.ever._4ever_be_gw.business.dto.employee.EmployeeCreateRequestDto;
+import org.ever._4ever_be_gw.business.dto.employee.EmployeeUpdateRequestDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.ever._4ever_be_gw.common.dto.PageDto;
@@ -157,7 +159,7 @@ public class HrmController {
                 responseCode = "200",
                 description = "성공",
                 content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"직원 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"employeeId\": 1,\n        \"employeeNumber\": \"EMP001\",\n        \"name\": \"김철수\",\n        \"email\": \"kim@company.com\",\n        \"phone\": \"010-1234-5678\",\n        \"position\": \"대리\",\n        \"department\": \"개발팀\",\n        \"status\": \"ACTIVE\",\n        \"statusLabel\": \"재직\",\n        \"hireDate\": \"2023-01-15\",\n        \"birthDate\": \"1990-05-20\",\n        \"address\": \"서울시 강남구\",\n        \"emergencyContact\": \"김영희\",\n        \"emergencyPhone\": \"010-9876-5432\",\n        \"bankAccount\": \"1234567890\",\n        \"bankName\": \"국민은행\",\n        \"accountHolder\": \"김철수\",\n        \"createdAt\": \"2023-01-15T09:00:00Z\",\n        \"updatedAt\": \"2024-01-15T09:00:00Z\",\n        \"skills\": [\"Java\", \"Spring Boot\", \"React\"],\n        \"managerName\": \"박영수\",\n        \"managerId\": 2,\n        \"workLocation\": \"본사\",\n        \"employmentType\": \"정규직\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 150,\n      \"totalPages\": 8,\n      \"hasNext\": true\n    }\n  }\n}"))
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"직원 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"employeeId\": 1,\n        \"employeeNumber\": \"EMP001\",\n        \"name\": \"김철수\",\n        \"email\": \"kim@company.com\",\n        \"phone\": \"010-1234-5678\",\n        \"position\": \"대리\",\n        \"department\": \"개발팀\",\n        \"status\": \"ACTIVE\",\n        \"statusLabel\": \"재직\",\n        \"hireDate\": \"2023-01-15\",\n        \"birthDate\": \"1990-05-20\",\n        \"address\": \"서울시 강남구\",\n        \"emergencyContact\": \"김영희\",\n        \"emergencyPhone\": \"010-9876-5432\",\n        \"bankAccount\": \"1234567890\",\n        \"bankName\": \"국민은행\",\n        \"accountHolder\": \"김철수\",\n        \"createdAt\": \"2023-01-15\",\n        \"updatedAt\": \"2024-01-15\",\n        \"skills\": [\"Java\", \"Spring Boot\", \"React\"],\n        \"managerName\": \"박영수\",\n        \"managerId\": 2,\n        \"workLocation\": \"본사\",\n        \"employmentType\": \"정규직\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 150,\n      \"totalPages\": 8,\n      \"hasNext\": true\n    }\n  }\n}"))
             )
         }
     )
@@ -222,7 +224,7 @@ public class HrmController {
                 responseCode = "200",
                 description = "성공",
                 content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"직원 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"employeeId\": 1,\n    \"employeeNumber\": \"EMP001\",\n    \"name\": \"김철수\",\n    \"email\": \"kim@company.com\",\n    \"phone\": \"010-1234-5678\",\n    \"position\": \"대리\",\n    \"department\": \"개발팀\",\n    \"status\": \"ACTIVE\",\n    \"statusLabel\": \"재직\",\n    \"hireDate\": \"2023-01-15\",\n    \"birthDate\": \"1990-05-20\",\n    \"address\": \"서울시 강남구 테헤란로 123\",\n    \"emergencyContact\": \"김영희\",\n    \"emergencyPhone\": \"010-9876-5432\",\n    \"bankAccount\": \"1234567890\",\n    \"bankName\": \"국민은행\",\n    \"accountHolder\": \"김철수\",\n    \"createdAt\": \"2023-01-15T09:00:00Z\",\n    \"updatedAt\": \"2024-01-15T09:00:00Z\",\n    \"skills\": [\"Java\", \"Spring Boot\", \"React\", \"MySQL\"],\n    \"managerName\": \"박영수\",\n    \"managerId\": 2,\n    \"workLocation\": \"본사\",\n    \"employmentType\": \"정규직\"\n  }\n}"))
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"직원 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"employeeId\": 1,\n    \"employeeNumber\": \"EMP001\",\n    \"name\": \"김철수\",\n    \"email\": \"kim@company.com\",\n    \"phone\": \"010-1234-5678\",\n    \"position\": \"대리\",\n    \"department\": \"개발팀\",\n    \"status\": \"ACTIVE\",\n    \"statusLabel\": \"재직\",\n    \"hireDate\": \"2023-01-15\",\n    \"birthDate\": \"1990-05-20\",\n    \"address\": \"서울시 강남구 테헤란로 123\",\n    \"emergencyContact\": \"김영희\",\n    \"emergencyPhone\": \"010-9876-5432\",\n    \"bankAccount\": \"1234567890\",\n    \"bankName\": \"국민은행\",\n    \"accountHolder\": \"김철수\",\n    \"createdAt\": \"2023-01-15\",\n    \"updatedAt\": \"2024-01-15\",\n    \"skills\": [\"Java\", \"Spring Boot\", \"React\", \"MySQL\"],\n    \"managerName\": \"박영수\",\n    \"managerId\": 2,\n    \"workLocation\": \"본사\",\n    \"employmentType\": \"정규직\"\n  }\n}"))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
@@ -257,7 +259,7 @@ public class HrmController {
                 responseCode = "200",
                 description = "성공",
                 content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"부서 목록을 조회했습니다.\",\n  \"data\": {\n    \"total\": 8,\n    \"page\": 1,\n    \"size\": 10,\n    \"totalPages\": 1,\n    \"hasNext\": false,\n    \"hasPrev\": false,\n    \"departments\": [\n      {\n        \"departmentId\": 1,\n        \"departmentCode\": \"DEV\",\n        \"departmentName\": \"개발팀\",\n        \"description\": \"소프트웨어 개발 및 유지보수\",\n        \"managerName\": \"박영수\",\n        \"managerId\": 2,\n        \"location\": \"본사 3층\",\n        \"status\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"employeeCount\": 25,\n        \"budget\": 500000000.0,\n        \"budgetCurrency\": \"KRW\",\n        \"establishedDate\": \"2020-01-01\",\n        \"createdAt\": \"2020-01-01T00:00:00Z\",\n        \"updatedAt\": \"2024-01-01T00:00:00Z\",\n        \"responsibilities\": [\"소프트웨어 개발\", \"시스템 유지보수\", \"기술 연구\"],\n        \"parentDepartment\": \"IT본부\",\n        \"parentDepartmentId\": 1\n      }\n    ]\n  }\n}"))
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"부서 목록을 조회했습니다.\",\n  \"data\": {\n    \"total\": 8,\n    \"page\": 1,\n    \"size\": 10,\n    \"totalPages\": 1,\n    \"hasNext\": false,\n    \"hasPrev\": false,\n    \"departments\": [\n      {\n        \"departmentId\": 1,\n        \"departmentCode\": \"DEV\",\n        \"departmentName\": \"개발팀\",\n        \"description\": \"소프트웨어 개발 및 유지보수\",\n        \"managerName\": \"박영수\",\n        \"managerId\": 2,\n        \"location\": \"본사 3층\",\n        \"status\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"employeeCount\": 25,\n        \"budget\": 500000000.0,\n        \"budgetCurrency\": \"KRW\",\n        \"establishedDate\": \"2020-01-01\",\n        \"createdAt\": \"2020-01-01\",\n        \"updatedAt\": \"2024-01-01\",\n        \"responsibilities\": [\"소프트웨어 개발\", \"시스템 유지보수\", \"기술 연구\"],\n        \"parentDepartment\": \"IT본부\",\n        \"parentDepartmentId\": 1\n      }\n    ]\n  }\n}"))
             )
         }
     )
@@ -383,7 +385,7 @@ public class HrmController {
                 responseCode = "200",
                 description = "성공",
                 content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"출퇴근 기록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"attendanceId\": 1,\n        \"employeeId\": 1,\n        \"employeeName\": \"김철수\",\n        \"employeeNumber\": \"EMP001\",\n        \"attendanceDate\": \"2024-01-15\",\n        \"checkInTime\": \"09:00:00\",\n        \"checkOutTime\": \"18:00:00\",\n        \"status\": \"NORMAL\",\n        \"statusLabel\": \"정상\",\n        \"workType\": \"OFFICE\",\n        \"workTypeLabel\": \"사무실\",\n        \"location\": \"본사\",\n        \"notes\": \"\",\n        \"workingHours\": 8.0,\n        \"overtimeHours\": 0.0,\n        \"approvalStatus\": \"APPROVED\",\n        \"approvalStatusLabel\": \"승인\",\n        \"approverName\": \"박영수\",\n        \"approverId\": 2,\n        \"createdAt\": \"2024-01-15T09:00:00Z\",\n        \"updatedAt\": \"2024-01-15T18:00:00Z\",\n        \"department\": \"개발팀\",\n        \"position\": \"대리\",\n        \"isLate\": false,\n        \"isEarlyLeave\": false,\n        \"lateReason\": null,\n        \"earlyLeaveReason\": null\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 500,\n      \"totalPages\": 25,\n      \"hasNext\": true\n    }\n  }\n}"))
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"출퇴근 기록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"attendanceId\": 1,\n        \"employeeId\": 1,\n        \"employeeName\": \"김철수\",\n        \"employeeNumber\": \"EMP001\",\n        \"attendanceDate\": \"2024-01-15\",\n        \"checkInTime\": \"09:00:00\",\n        \"checkOutTime\": \"18:00:00\",\n        \"status\": \"NORMAL\",\n        \"statusLabel\": \"정상\",\n        \"workType\": \"OFFICE\",\n        \"workTypeLabel\": \"사무실\",\n        \"location\": \"본사\",\n        \"notes\": \"\",\n        \"workingHours\": 8.0,\n        \"overtimeHours\": 0.0,\n        \"approvalStatus\": \"APPROVED\",\n        \"approvalStatusLabel\": \"승인\",\n        \"approverName\": \"박영수\",\n        \"approverId\": 2,\n        \"createdAt\": \"2024-01-15\",\n        \"updatedAt\": \"2024-01-15\",\n        \"department\": \"개발팀\",\n        \"position\": \"대리\",\n        \"isLate\": false,\n        \"isEarlyLeave\": false,\n        \"lateReason\": null,\n        \"earlyLeaveReason\": null\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 500,\n      \"totalPages\": 25,\n      \"hasNext\": true\n    }\n  }\n}"))
             )
         }
     )
@@ -469,7 +471,7 @@ public class HrmController {
                 responseCode = "200",
                 description = "성공",
                 content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"leaveRequestId\": 1,\n        \"employeeId\": 1,\n        \"employeeName\": \"김철수\",\n        \"employeeNumber\": \"EMP001\",\n        \"leaveType\": \"ANNUAL\",\n        \"leaveTypeLabel\": \"연차\",\n        \"reason\": \"개인사정\",\n        \"description\": \"가족 행사 참석\",\n        \"startDate\": \"2024-01-20\",\n        \"endDate\": \"2024-01-22\",\n        \"totalDays\": 3.0,\n        \"status\": \"PENDING\",\n        \"statusLabel\": \"대기\",\n        \"approvalStatus\": \"PENDING\",\n        \"approvalStatusLabel\": \"승인대기\",\n        \"approverName\": \"박영수\",\n        \"approverId\": 2,\n        \"approverComment\": null,\n        \"requestDate\": \"2024-01-15T09:00:00Z\",\n        \"approvalDate\": null,\n        \"createdAt\": \"2024-01-15T09:00:00Z\",\n        \"updatedAt\": \"2024-01-15T09:00:00Z\",\n        \"department\": \"개발팀\",\n        \"position\": \"대리\",\n        \"emergencyContact\": \"김영희\",\n        \"emergencyPhone\": \"010-9876-5432\",\n        \"isPaidLeave\": true,\n        \"remainingLeaveDays\": 12.0,\n        \"attachmentUrl\": null,\n        \"attachments\": []\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 80,\n      \"totalPages\": 4,\n      \"hasNext\": true\n    }\n  }\n}"))
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"leaveRequestId\": 1,\n        \"employeeId\": 1,\n        \"employeeName\": \"김철수\",\n        \"employeeNumber\": \"EMP001\",\n        \"leaveType\": \"ANNUAL\",\n        \"leaveTypeLabel\": \"연차\",\n        \"reason\": \"개인사정\",\n        \"description\": \"가족 행사 참석\",\n        \"startDate\": \"2024-01-20\",\n        \"endDate\": \"2024-01-22\",\n        \"totalDays\": 3.0,\n        \"status\": \"PENDING\",\n        \"statusLabel\": \"대기\",\n        \"approvalStatus\": \"PENDING\",\n        \"approvalStatusLabel\": \"승인대기\",\n        \"approverName\": \"박영수\",\n        \"approverId\": 2,\n        \"approverComment\": null,\n        \"requestDate\": \"2024-01-15\",\n        \"approvalDate\": null,\n        \"createdAt\": \"2024-01-15\",\n        \"updatedAt\": \"2024-01-15\",\n        \"department\": \"개발팀\",\n        \"position\": \"대리\",\n        \"emergencyContact\": \"김영희\",\n        \"emergencyPhone\": \"010-9876-5432\",\n        \"isPaidLeave\": true,\n        \"remainingLeaveDays\": 12.0,\n        \"attachmentUrl\": null,\n        \"attachments\": []\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 80,\n      \"totalPages\": 4,\n      \"hasNext\": true\n    }\n  }\n}"))
             )
         }
     )
@@ -691,7 +693,7 @@ public class HrmController {
         dept.put("managerId", 1);
         dept.put("managerName", "박영수");
         dept.put("employeeCount", 25);
-        dept.put("establishedDate", LocalDateTime.now());
+        dept.put("establishedDate", LocalDate.now());
         dept.put("description", "소프트웨어 개발 및 유지보수");
         dept.put("employees", generateEmployeePartMockData(5)); // 부서 소속 직원 5명
 
@@ -784,8 +786,8 @@ public class HrmController {
             record.put("approvalStatusLabel", "승인");
             record.put("approverName", "박영수");
             record.put("approverId", 2L);
-            record.put("createdAt", LocalDateTime.now().minusDays(i));
-            record.put("updatedAt", LocalDateTime.now().minusDays(i));
+            record.put("createdAt", LocalDate.now().minusDays(i));
+            record.put("updatedAt", LocalDate.now().minusDays(i));
             record.put("department", "개발팀");
             record.put("position", "대리");
             record.put("isLate", i % 4 == 1);
@@ -822,10 +824,10 @@ public class HrmController {
             request.put("approvalStatusLabel", statusLabels[i % statusLabels.length]);
             request.put("approverName", "박영수");
             request.put("approverId", 2L);
-            request.put("requestDate", LocalDateTime.now().minusDays(i));
-            request.put("approvalDate", i % 3 == 1 ? LocalDateTime.now().minusDays(i - 1) : null);
-            request.put("createdAt", LocalDateTime.now().minusDays(i));
-            request.put("updatedAt", LocalDateTime.now().minusDays(i));
+            request.put("requestDate", LocalDate.now().minusDays(i));
+            request.put("approvalDate", i % 3 == 1 ? LocalDate.now().minusDays(i - 1) : null);
+            request.put("createdAt", LocalDate.now().minusDays(i));
+            request.put("updatedAt", LocalDate.now().minusDays(i));
             request.put("department", "개발팀");
             request.put("position", "대리");
             requests.add(request);
@@ -1019,7 +1021,7 @@ public class HrmController {
         data.put("pay", pay);
 
         data.put("status", "COMPLETED");
-        data.put("expectedDate", LocalDateTime.now().withDayOfMonth(25));
+        data.put("expectedDate", LocalDate.now().withDayOfMonth(25));
 
         return data;
     }
@@ -1157,7 +1159,7 @@ public class HrmController {
                 responseCode = "200",
                 description = "성공",
                 content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청이 승인되었습니다.\",\n  \"data\": {\n    \"leaveRequestId\": 201,\n    \"status\": \"APPROVED\",\n    \"approvedAt\": \"2025-01-15T10:30:00\"\n  }\n}"))
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청이 승인되었습니다.\",\n  \"data\": {\n    \"leaveRequestId\": 201,\n    \"status\": \"APPROVED\",\n    \"approvedAt\": \"2025-01-15\"\n  }\n}"))
             )
         }
     )
@@ -1172,7 +1174,7 @@ public class HrmController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("leaveRequestId", requestId);
         data.put("status", "APPROVED");
-        data.put("approvedAt", LocalDateTime.now());
+        data.put("approvedAt", LocalDate.now());
 
         return ResponseEntity.ok(ApiResponse.success(
             data, "휴가 신청이 승인되었습니다.", HttpStatus.OK
@@ -1188,7 +1190,7 @@ public class HrmController {
                 responseCode = "200",
                 description = "성공",
                 content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청이 반려되었습니다.\",\n  \"data\": {\n    \"leaveRequestId\": 201,\n    \"status\": \"REJECTED\",\n    \"rejectedAt\": \"2025-01-15T10:30:00\"\n  }\n}"))
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청이 반려되었습니다.\",\n  \"data\": {\n    \"leaveRequestId\": 201,\n    \"status\": \"REJECTED\",\n    \"rejectedAt\": \"2025-01-15\"\n  }\n}"))
             )
         }
     )
@@ -1203,7 +1205,7 @@ public class HrmController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("leaveRequestId", requestId);
         data.put("status", "REJECTED");
-        data.put("rejectedAt", LocalDateTime.now());
+        data.put("rejectedAt", LocalDate.now());
 
         return ResponseEntity.ok(ApiResponse.success(
             data, "휴가 신청이 반려되었습니다.", HttpStatus.OK
@@ -1729,7 +1731,7 @@ public class HrmController {
                 responseCode = "200",
                 description = "성공",
                 content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"교육 프로그램 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"programId\": 1,\n    \"programName\": \"신입사원 온보딩\",\n    \"category\": \"BASIC_TRAINING\",\n    \"trainingHour\": 4,\n    \"isOnline\": true,\n    \"startDate\": \"2025-10-07T14:30:00Z\",\n    \"status\": \"IN_PROGRESS\",\n    \"designatedEmployee\": [{\n      \"employeeId\": 1,\n      \"employeeName\": \"김신입\",\n      \"department\": \"개발팀\",\n      \"position\": \"사원\",\n      \"status\": \"INCOMPLETED\",\n      \"completedAt\": null\n    }]}\n  }\n}"))
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"교육 프로그램 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"programId\": 1,\n    \"programName\": \"신입사원 온보딩\",\n    \"category\": \"BASIC_TRAINING\",\n    \"trainingHour\": 4,\n    \"isOnline\": true,\n    \"startDate\": \"2025-10-07\",\n    \"status\": \"IN_PROGRESS\",\n    \"designatedEmployee\": [{\n      \"employeeId\": 1,\n      \"employeeName\": \"김신입\",\n      \"department\": \"개발팀\",\n      \"position\": \"사원\",\n      \"status\": \"INCOMPLETED\",\n      \"completedAt\": null\n    }]}\n  }\n}"))
             )
         }
     )
@@ -1821,7 +1823,7 @@ public class HrmController {
         row.put("programId", programId);
         row.put("programName", name);
         row.put("programStatus", status);
-        row.put("date", date.atStartOfDay());
+        row.put("date", date);
         return row;
     }
 
@@ -1879,13 +1881,13 @@ public class HrmController {
         data.put("category", "BASIC_TRAINING");
         data.put("trainingHour", 4);
         data.put("isOnline", true);
-        data.put("startDate", java.time.LocalDateTime.of(2025, 10, 7, 14, 30, 0));
+        data.put("startDate", LocalDate.of(2025, 10, 7));
         data.put("status", "IN_PROGRESS");
 
         List<Map<String, Object>> designated = new ArrayList<>();
         designated.add(buildDesignatedEmployee(1L, "김신입", "개발팀", "사원", "INCOMPLETED", null));
         designated.add(buildDesignatedEmployee(10L, "이초롱", "마케팅팀", "사원", "COMPLETED",
-            java.time.LocalDateTime.of(2025, 10, 14, 18, 0, 0)));
+            LocalDate.of(2025, 10, 14)));
         designated.add(buildDesignatedEmployee(12L, "박새싹", "기획팀", "사원", "INCOMPLETED", null));
         data.put("designatedEmployee", designated);
         return data;
@@ -1897,7 +1899,7 @@ public class HrmController {
         String department,
         String position,
         String status,
-        java.time.LocalDateTime completedAt
+        LocalDate completedAt
     ) {
         Map<String, Object> row = new LinkedHashMap<>();
         row.put("employeeId", employeeId);

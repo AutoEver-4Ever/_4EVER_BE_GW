@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -16,7 +16,7 @@ public class StockTransferDetailDto {
     private int quantity;
     private String unit;
     private String itemName;
-    private LocalDateTime workTime;
+    private LocalDate workDate;
     private String manager;
     private String locationCode;
     private String warehouseCode;

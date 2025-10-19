@@ -14,11 +14,15 @@ import org.ever._4ever_be_gw.scmpp.dto.*;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
+import org.ever._4ever_be_gw.scmpp.dto.inventory.*;
+import org.ever._4ever_be_gw.scmpp.dto.warehouse.WarehouseDetailDto;
+import org.ever._4ever_be_gw.scmpp.dto.warehouse.WarehouseDto;
+import org.ever._4ever_be_gw.scmpp.dto.warehouse.WarehouseStatisticDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.*;
 
 @RestController
@@ -251,7 +255,7 @@ public class ImController {
                             description = "성공",
                             content = @Content(
                                     mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 이력 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"type\": \"입고\",\n        \"quantity\": 50,\n        \"unit\": \"EA\",\n        \"itemName\": \"스테인리스 스틸 파이프\",\n        \"workTime\": \"2024-01-15T14:30:00\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"PO-2024-001\",\n        \"warehouseCode\": \"A-01-01\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 200,\n        \"unit\": \"EA\",\n        \"itemName\": \"볼트 M8x20\",\n        \"workTime\": \"2024-01-15T11:20:00\",\n        \"manager\": \"이생산\",\n        \"locationCode\": \"WO-2024-005\",\n        \"warehouseCode\": \"B-02-03\"\n      },\n      {\n        \"type\": \"입고\",\n        \"quantity\": 100,\n        \"unit\": \"M\",\n        \"itemName\": \"알루미늄 프로파일\",\n        \"workTime\": \"2024-01-14T16:45:00\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"PO-2024-002\",\n        \"warehouseCode\": \"A-02-01\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 10,\n        \"unit\": \"EA\",\n        \"itemName\": \"베어링 6205\",\n        \"workTime\": \"2024-01-13T13:30:00\",\n        \"manager\": \"이생산\",\n        \"locationCode\": \"WO-2024-004\",\n        \"warehouseCode\": \"B-01-05\"\n      },\n      {\n        \"type\": \"입고\",\n        \"quantity\": 500,\n        \"unit\": \"EA\",\n        \"itemName\": \"고무 패킹\",\n        \"workTime\": \"2024-01-13T10:15:00\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"PO-2024-003\",\n        \"warehouseCode\": \"D-01-01\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 6,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 이력 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"type\": \"입고\",\n        \"quantity\": 50,\n        \"unit\": \"EA\",\n        \"itemName\": \"스테인리스 스틸 파이프\",\n        \"workDate\": \"2024-01-15\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"PO-2024-001\",\n        \"warehouseCode\": \"A-01-01\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 200,\n        \"unit\": \"EA\",\n        \"itemName\": \"볼트 M8x20\",\n        \"workDate\": \"2024-01-15\",\n        \"manager\": \"이생산\",\n        \"locationCode\": \"WO-2024-005\",\n        \"warehouseCode\": \"B-02-03\"\n      },\n      {\n        \"type\": \"입고\",\n        \"quantity\": 100,\n        \"unit\": \"M\",\n        \"itemName\": \"알루미늄 프로파일\",\n        \"workDate\": \"2024-01-14\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"PO-2024-002\",\n        \"warehouseCode\": \"A-02-01\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 10,\n        \"unit\": \"EA\",\n        \"itemName\": \"베어링 6205\",\n        \"workDate\": \"2024-01-13\",\n        \"manager\": \"이생산\",\n        \"locationCode\": \"WO-2024-004\",\n        \"warehouseCode\": \"B-01-05\"\n      },\n      {\n        \"type\": \"입고\",\n        \"quantity\": 500,\n        \"unit\": \"EA\",\n        \"itemName\": \"고무 패킹\",\n        \"workDate\": \"2024-01-13\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"PO-2024-003\",\n        \"warehouseCode\": \"D-01-01\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 6,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
                             )
                     )
             }
@@ -268,7 +272,7 @@ public class ImController {
                         .quantity(50)
                         .unit("EA")
                         .itemName("스테인리스 스틸 파이프")
-                        .workTime(LocalDateTime.parse("2024-01-15T14:30:00"))
+                        .workDate(LocalDate.parse("2024-01-15"))
                         .manager("김구매")
                         .locationCode("PO-2024-001")
                         .warehouseCode("A-01-01")
@@ -278,7 +282,7 @@ public class ImController {
                         .quantity(200)
                         .unit("EA")
                         .itemName("볼트 M8x20")
-                        .workTime(LocalDateTime.parse("2024-01-15T11:20:00"))
+                        .workDate(LocalDate.parse("2024-01-15"))
                         .manager("이생산")
                         .locationCode("WO-2024-005")
                         .warehouseCode("B-02-03")
@@ -288,7 +292,7 @@ public class ImController {
                         .quantity(100)
                         .unit("M")
                         .itemName("알루미늄 프로파일")
-                        .workTime(LocalDateTime.parse("2024-01-14T16:45:00"))
+                        .workDate(LocalDate.parse("2024-01-14"))
                         .manager("김구매")
                         .locationCode("PO-2024-002")
                         .warehouseCode("A-02-01")
@@ -298,7 +302,7 @@ public class ImController {
                         .quantity(10)
                         .unit("EA")
                         .itemName("베어링 6205")
-                        .workTime(LocalDateTime.parse("2024-01-13T13:30:00"))
+                        .workDate(LocalDate.parse("2024-01-13"))
                         .manager("이생산")
                         .locationCode("WO-2024-004")
                         .warehouseCode("B-01-05")
@@ -308,7 +312,7 @@ public class ImController {
                         .quantity(500)
                         .unit("EA")
                         .itemName("고무 패킹")
-                        .workTime(LocalDateTime.parse("2024-01-13T10:15:00"))
+                        .workDate(LocalDate.parse("2024-01-13"))
                         .manager("김구매")
                         .locationCode("PO-2024-003")
                         .warehouseCode("D-01-01")
@@ -340,7 +344,7 @@ public class ImController {
                             description = "성공",
                             content = @Content(
                                     mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 이력 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"type\": \"입고\",\n        \"quantity\": 50,\n        \"unit\": \"EA\",\n        \"itemName\": \"스테인리스 스틸 파이프\",\n        \"workTime\": \"2024-01-15T14:30:00\",\n        \"manager\": \"김구매\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 200,\n        \"unit\": \"EA\",\n        \"itemName\": \"볼트 M8x20\",\n        \"workTime\": \"2024-01-15T11:20:00\",\n        \"manager\": \"이생산\"\n      },\n      {\n        \"type\": \"입고\",\n        \"quantity\": 100,\n        \"unit\": \"M\",\n        \"itemName\": \"알루미늄 프로파일\",\n        \"workTime\": \"2024-01-14T16:45:00\",\n        \"manager\": \"김구매\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 10,\n        \"unit\": \"EA\",\n        \"itemName\": \"베어링 6205\",\n        \"workTime\": \"2024-01-13T13:30:00\",\n        \"manager\": \"이생산\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 5,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 이력 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"type\": \"입고\",\n        \"quantity\": 50,\n        \"unit\": \"EA\",\n        \"itemName\": \"스테인리스 스틸 파이프\",\n        \"workDate\": \"2024-01-15\",\n        \"manager\": \"김구매\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 200,\n        \"unit\": \"EA\",\n        \"itemName\": \"볼트 M8x20\",\n        \"workDate\": \"2024-01-15\",\n        \"manager\": \"이생산\"\n      },\n      {\n        \"type\": \"입고\",\n        \"quantity\": 100,\n        \"unit\": \"M\",\n        \"itemName\": \"알루미늄 프로파일\",\n        \"workDate\": \"2024-01-14\",\n        \"manager\": \"김구매\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 10,\n        \"unit\": \"EA\",\n        \"itemName\": \"베어링 6205\",\n        \"workDate\": \"2024-01-13\",\n        \"manager\": \"이생산\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 5,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
                             )
                     )
             }
@@ -357,7 +361,7 @@ public class ImController {
                         .quantity(50)
                         .unit("EA")
                         .itemName("스테인리스 스틸 파이프")
-                        .workTime(LocalDateTime.parse("2024-01-15T14:30:00"))
+                        .workDate(LocalDate.parse("2024-01-15"))
                         .manager("김구매")
                         .build(),
                 StockTransferDto.builder()
@@ -365,7 +369,7 @@ public class ImController {
                         .quantity(200)
                         .unit("EA")
                         .itemName("볼트 M8x20")
-                        .workTime(LocalDateTime.parse("2024-01-15T11:20:00"))
+                        .workDate(LocalDate.parse("2024-01-15"))
                         .manager("이생산")
                         .build(),
                 StockTransferDto.builder()
@@ -373,7 +377,7 @@ public class ImController {
                         .quantity(100)
                         .unit("M")
                         .itemName("알루미늄 프로파일")
-                        .workTime(LocalDateTime.parse("2024-01-14T16:45:00"))
+                        .workDate(LocalDate.parse("2024-01-14"))
                         .manager("김구매")
                         .build(),
                 StockTransferDto.builder()
@@ -381,7 +385,7 @@ public class ImController {
                         .quantity(10)
                         .unit("EA")
                         .itemName("베어링 6205")
-                        .workTime(LocalDateTime.parse("2024-01-13T13:30:00"))
+                        .workDate(LocalDate.parse("2024-01-13"))
                         .manager("이생산")
                         .build()
         );
@@ -583,7 +587,7 @@ public class ImController {
                             description = "성공",
                             content = @Content(
                                     mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"itemId\": 1,\n    \"itemCode\": \"SS-PIPE-001\",\n    \"itemName\": \"스테인리스 스틸 파이프\",\n    \"category\": \"원자재\",\n    \"supplier\": \"스테인리스코리아\",\n    \"status\": \"정상\",\n    \"currentStock\": 150,\n    \"unit\": \"EA\",\n    \"price\": 25000,\n    \"totalValue\": 3750000,\n    \"warehouseName\": \"제1창고\",\n    \"warehouseCode\": \"A-01-01\",\n    \"lastModified\": \"2024-01-15\",\n    \"description\": \"고품질 스테인리스 스틸 파이프, 내식성 우수\",\n    \"specification\": \"직경 50mm, 두께 3mm, 길이 6m\",\n    \"stockMovements\": [\n      {\n        \"type\": \"입고\",\n        \"quantity\": 50,\n        \"unit\": \"EA\",\n        \"from\": null,\n        \"to\": \"제1창고 (A-01-01)\",\n        \"date\": \"2024-01-15T14:30\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"TR-2024-001\",\n        \"note\": \"정기 구매입고\"\n      },\n      {\n        \"type\": \"이동\",\n        \"quantity\": 20,\n        \"unit\": \"EA\",\n        \"from\": \"제1창고 (A-01-01)\",\n        \"to\": \"제2창고 (C-02-05)\",\n        \"date\": \"2024-01-12T11:20\",\n        \"manager\": \"이관리\",\n        \"locationCode\": \"TR-2024-002\",\n        \"note\": \"생산 라인 공급을 위한 이동\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 30,\n        \"unit\": \"EA\",\n        \"from\": \"제1창고 (A-01-01)\",\n        \"to\": null,\n        \"date\": \"2024-01-10T09:15\",\n        \"manager\": \"박생산\",\n        \"locationCode\": \"WO-2024-001\",\n        \"note\": \"제품 생산을 위한 출고\"\n      }\n    ]\n  }\n}")
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"itemId\": 1,\n    \"itemCode\": \"SS-PIPE-001\",\n    \"itemName\": \"스테인리스 스틸 파이프\",\n    \"category\": \"원자재\",\n    \"supplier\": \"스테인리스코리아\",\n    \"status\": \"정상\",\n    \"currentStock\": 150,\n    \"unit\": \"EA\",\n    \"price\": 25000,\n    \"totalValue\": 3750000,\n    \"warehouseName\": \"제1창고\",\n    \"warehouseCode\": \"A-01-01\",\n    \"lastModified\": \"2024-01-15\",\n    \"description\": \"고품질 스테인리스 스틸 파이프, 내식성 우수\",\n    \"specification\": \"직경 50mm, 두께 3mm, 길이 6m\",\n    \"stockMovements\": [\n      {\n        \"type\": \"입고\",\n        \"quantity\": 50,\n        \"unit\": \"EA\",\n        \"from\": null,\n        \"to\": \"제1창고 (A-01-01)\",\n        \"date\": \"2024-01-15\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"TR-2024-001\",\n        \"note\": \"정기 구매입고\"\n      },\n      {\n        \"type\": \"이동\",\n        \"quantity\": 20,\n        \"unit\": \"EA\",\n        \"from\": \"제1창고 (A-01-01)\",\n        \"to\": \"제2창고 (C-02-05)\",\n        \"date\": \"2024-01-12\",\n        \"manager\": \"이관리\",\n        \"locationCode\": \"TR-2024-002\",\n        \"note\": \"생산 라인 공급을 위한 이동\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 30,\n        \"unit\": \"EA\",\n        \"from\": \"제1창고 (A-01-01)\",\n        \"to\": null,\n        \"date\": \"2024-01-10\",\n        \"manager\": \"박생산\",\n        \"locationCode\": \"WO-2024-001\",\n        \"note\": \"제품 생산을 위한 출고\"\n      }\n    ]\n  }\n}")
                             )
                     )
             }
@@ -599,7 +603,7 @@ public class ImController {
                         .unit("EA")
                         .from(null)
                         .to("제1창고 (A-01-01)")
-                        .date("2024-01-15T14:30")
+                        .date(LocalDate.parse("2024-01-15"))
                         .manager("김구매")
                         .locationCode("TR-2024-001")
                         .note("정기 구매입고")
@@ -610,7 +614,7 @@ public class ImController {
                         .unit("EA")
                         .from("제1창고 (A-01-01)")
                         .to("제2창고 (C-02-05)")
-                        .date("2024-01-12T11:20")
+                        .date(LocalDate.parse("2024-01-12"))
                         .manager("이관리")
                         .locationCode("TR-2024-002")
                         .note("생산 라인 공급을 위한 이동")
@@ -621,7 +625,7 @@ public class ImController {
                         .unit("EA")
                         .from("제1창고 (A-01-01)")
                         .to(null)
-                        .date("2024-01-10T09:15")
+                        .date(LocalDate.parse("2024-01-10"))
                         .manager("박생산")
                         .locationCode("WO-2024-001")
                         .note("제품 생산을 위한 출고")
@@ -641,7 +645,7 @@ public class ImController {
                 .totalValue(3750000)
                 .warehouseName("제1창고")
                 .warehouseCode("A-01-01")
-                .lastModified("2024-01-15")
+                .lastModified(LocalDate.parse("2024-01-15"))
                 .description("고품질 스테인리스 스틸 파이프, 내식성 우수")
                 .specification("직경 50mm, 두께 3mm, 길이 6m")
                 .stockMovements(stockMovements)
