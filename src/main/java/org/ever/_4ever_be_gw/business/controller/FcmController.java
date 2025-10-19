@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.ever._4ever_be_gw.business.dto.StatementUpdateRequestDto;
@@ -120,8 +121,8 @@ public class FcmController {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(
 					responseCode = "200",
 					description = "성공",
-					content = @Content(mediaType = "application/json",
-						examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"statementId\": 1,\n        \"statementCode\": \"AR-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14T19:31:50.123456789\",\n        \"dueDate\": \"2025-11-14T19:31:50.123456789\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"SO-2024-001\",\n        \"reference\": {\n          \"referenceId\": 1,\n          \"referenceCode\": \"SO-2024-001\"\n        }\n      }\n    ],\n    \"pageable\": {\n      \"sort\": {\n        \"sorted\": false,\n        \"unsorted\": true,\n        \"empty\": true\n      },\n      \"offset\": 0,\n      \"pageNumber\": 0,\n      \"pageSize\": 10,\n      \"paged\": true,\n      \"unpaged\": false\n    },\n    \"totalPages\": 2,\n    \"totalElements\": 15,\n    \"last\": true,\n    \"size\": 10,\n    \"number\": 0,\n    \"sort\": {\n      \"sorted\": false,\n      \"unsorted\": true,\n      \"empty\": true\n    },\n    \"numberOfElements\": 2,\n    \"first\": true,\n    \"empty\": false\n  }\n}"))
+						content = @Content(mediaType = "application/json",
+							examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매입 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"statementId\": 1,\n        \"statementCode\": \"AP-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14T19:31:50.123456789\",\n        \"dueDate\": \"2025-11-14T19:31:50.123456789\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"PO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
 			)
 		}
 	)
@@ -147,8 +148,8 @@ public class FcmController {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(
 					responseCode = "200",
 					description = "성공",
-					content = @Content(mediaType = "application/json",
-						examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"statementId\": 1,\n        \"statementCode\": \"AR-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14T19:31:50.123456789\",\n        \"dueDate\": \"2025-11-14T19:31:50.123456789\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"SO-2024-001\",\n        \"reference\": {\n          \"referenceId\": 1,\n          \"referenceCode\": \"PO-2024-001\"\n        }\n      }\n    ]\n  }\n}"))
+						content = @Content(mediaType = "application/json",
+							examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"statementId\": 1,\n        \"statementCode\": \"AR-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14T19:31:50.123456789\",\n        \"dueDate\": \"2025-11-14T19:31:50.123456789\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"SO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
 			)
 		}
 	)
@@ -251,14 +252,12 @@ public class FcmController {
 
 	private Map<String, Object> generateStatementListMock(int page, int size, String type) {
 		List<Map<String, Object>> content = new ArrayList<>();
-		// Row 1
 		content.add(buildStatementRow(1L, type.equals("AP") ? "AP-2024-001" : "AR-2024-001",
 				1L, "C-001", "현대자동차", 10_000_000,
 				LocalDateTime.parse("2025-10-14T19:31:50.123456789"),
 				LocalDateTime.parse("2025-11-14T19:31:50.123456789"),
 				"UNPAID",
 				type.equals("AP") ? "PO-2024-001" : "SO-2024-001"));
-		// Row 2
 		content.add(buildStatementRow(2L, type.equals("AP") ? "AP-2024-002" : "AR-2024-002",
 				2L, "C-002", "삼성전자", 25_000_000,
 				LocalDateTime.parse("2025-10-10T11:00:00.000000000"),
@@ -266,29 +265,24 @@ public class FcmController {
 				"PENDING",
 				type.equals("AP") ? "PO-2024-005" : "SO-2024-025"));
 
-		Map<String, Object> pageable = new LinkedHashMap<>();
-		Map<String, Object> sort = new LinkedHashMap<>();
-		sort.put("sorted", false);
-		sort.put("unsorted", true);
-		sort.put("empty", true);
-		pageable.put("sort", sort);
-		pageable.put("offset", page * size);
-		pageable.put("pageNumber", page);
-		pageable.put("pageSize", size);
-		pageable.put("paged", true);
-		pageable.put("unpaged", false);
+		int totalElements = 15;
+		int totalPages = size <= 0 ? 0 : (int) Math.ceil((double) totalElements / size);
+		PageDto pageInfo = PageDto.builder()
+			.number(page)
+			.size(size)
+			.totalElements(totalElements)
+			.totalPages(totalPages)
+			.hasNext(page + 1 < totalPages)
+			.build();
 
 		Map<String, Object> response = new LinkedHashMap<>();
 		response.put("content", content);
-		response.put("pageable", pageable);
-		response.put("totalPages", 2);
-		response.put("totalElements", 15);
-		response.put("last", true);
-		response.put("size", size);
-		response.put("number", page);
-		response.put("sort", sort);
-		response.put("numberOfElements", content.size());
+		response.put("page", pageInfo);
+		response.put("totalElements", totalElements);
+		response.put("totalPages", totalPages);
 		response.put("first", page == 0);
+		response.put("last", page + 1 >= totalPages);
+		response.put("numberOfElements", content.size());
 		response.put("empty", content.isEmpty());
 		return response;
 	}

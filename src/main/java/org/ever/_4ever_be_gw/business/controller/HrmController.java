@@ -20,6 +20,7 @@ import java.util.Set;
 import org.ever._4ever_be_gw.business.dto.*;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
+import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
@@ -187,22 +188,25 @@ public class HrmController {
         }
 
         // 기본값 처리
-        int p = page == null ? 0 : page;
+        int p = (page == null || page < 0) ? 0 : page;
         int s = (size == null || size < 1) ? 20 : size;
 
         // Mock 데이터 생성
-        List<Map<String, Object>> content = generateEmployeeListMockData(10);
+        List<Map<String, Object>> content = generateEmployeeListMockData(s);
 
-        Map<String, Object> pageMeta = new LinkedHashMap<>();
-        pageMeta.put("number", p);
-        pageMeta.put("size", s);
-        pageMeta.put("totalElements", 150);
-        pageMeta.put("totalPages", 8);
-        pageMeta.put("hasNext", (p + 1) < 8);
+        int totalElements = 150;
+        int totalPages = s == 0 ? 0 : (int) Math.ceil((double) totalElements / s);
+        PageDto pageInfo = PageDto.builder()
+            .number(p)
+            .size(s)
+            .totalElements(totalElements)
+            .totalPages(totalPages)
+            .hasNext(p + 1 < totalPages)
+            .build();
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("content", content);
-        data.put("page", pageMeta);
+        data.put("page", pageInfo);
 
         return ResponseEntity.ok(ApiResponse.success(
             data, "직원 목록을 조회했습니다.", HttpStatus.OK
@@ -283,17 +287,28 @@ public class HrmController {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        // Mock 데이터 생성
         List<Map<String, Object>> departments = generateDepartmentListMockData();
 
+        int total = departments.size();
+        int pageIndex = (page == null || page < 1) ? 0 : page - 1;
+        int pageSize = (size == null || size < 1) ? total : size;
+        int totalPages = pageSize == 0 ? 0 : (int) Math.ceil((double) total / pageSize);
+        int fromIdx = Math.min(pageIndex * pageSize, total);
+        int toIdx = Math.min(fromIdx + pageSize, total);
+        List<Map<String, Object>> pageContent = departments.subList(fromIdx, toIdx);
+
+        PageDto pageInfo = PageDto.builder()
+            .number(pageIndex)
+            .size(pageSize)
+            .totalElements(total)
+            .totalPages(totalPages)
+            .hasNext(pageIndex + 1 < totalPages)
+            .build();
+
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("total", departments.size());
-        data.put("page", page);
-        data.put("size", size);
-        data.put("totalPages", 1);
-        data.put("hasNext", false);
-        data.put("hasPrev", false);
-        data.put("departments", departments);
+        data.put("total", total);
+        data.put("departments", pageContent);
+        data.put("page", pageInfo);
 
         return ResponseEntity.ok(ApiResponse.success(
             data, "부서 목록을 조회했습니다.", HttpStatus.OK
@@ -424,16 +439,19 @@ public class HrmController {
         // Mock 데이터 생성
         List<Map<String, Object>> content = generateAttendanceMockData(10);
 
-        Map<String, Object> pageMeta = new LinkedHashMap<>();
-        pageMeta.put("number", p);
-        pageMeta.put("size", s);
-        pageMeta.put("totalElements", 500);
-        pageMeta.put("totalPages", 25);
-        pageMeta.put("hasNext", (p + 1) < 25);
+        int totalElements = 500;
+        int totalPages = s == 0 ? 0 : (int) Math.ceil((double) totalElements / s);
+        PageDto pageInfo = PageDto.builder()
+            .number(p)
+            .size(s)
+            .totalElements(totalElements)
+            .totalPages(totalPages)
+            .hasNext(p + 1 < totalPages)
+            .build();
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("content", content);
-        data.put("page", pageMeta);
+        data.put("page", pageInfo);
 
         return ResponseEntity.ok(ApiResponse.success(
             data, "출퇴근 기록을 조회했습니다.", HttpStatus.OK
@@ -497,16 +515,19 @@ public class HrmController {
         // Mock 데이터 생성
         List<Map<String, Object>> content = generateLeaveRequestMockData(10);
 
-        Map<String, Object> pageMeta = new LinkedHashMap<>();
-        pageMeta.put("number", p);
-        pageMeta.put("size", s);
-        pageMeta.put("totalElements", 80);
-        pageMeta.put("totalPages", 4);
-        pageMeta.put("hasNext", (p + 1) < 4);
+        int totalElements = 80;
+        int totalPages = s == 0 ? 0 : (int) Math.ceil((double) totalElements / s);
+        PageDto pageInfo = PageDto.builder()
+            .number(p)
+            .size(s)
+            .totalElements(totalElements)
+            .totalPages(totalPages)
+            .hasNext(p + 1 < totalPages)
+            .build();
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("content", content);
-        data.put("page", pageMeta);
+        data.put("page", pageInfo);
 
         return ResponseEntity.ok(ApiResponse.success(
             data, "휴가 신청 목록을 조회했습니다.", HttpStatus.OK
@@ -818,14 +839,14 @@ public class HrmController {
     @Operation(
         summary = "월별 급여 목록 조회",
         description = "월별 사내 급여 명세서 목록을 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"급여 명세서 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [{\n      \"paystubId\": 101,\n      \"employee\": {\n        \"employeeId\": 1,\n        \"employeeName\": \"김민수\",\n        \"departmentId\": 1,\n        \"department\": \"구매관리부\",\n        \"positionId\": 1,\n        \"position\": \"과장\"\n      },\n      \"pay\": {\n        \"basePay\": 4500000,\n        \"overtimePay\": 150000,\n        \"deduction\": 450000,\n        \"netPay\": 4200000,\n        \"status\": \"COMPLETED\"\n      }\n    }],\n    \"pageable\": {\n      \"pageNumber\": 0, \"pageSize\": 10\n    },\n    \"totalPages\": 3,\n    \"totalElements\": 25\n  }\n}"))
-            )
-        }
+		responses = {
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(
+				responseCode = "200",
+				description = "성공",
+				content = @Content(mediaType = "application/json",
+					examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"급여 명세서 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [{\n      \"paystubId\": 101,\n      \"employee\": {\n        \"employeeId\": 1,\n        \"employeeName\": \"김민수\",\n        \"departmentId\": 1,\n        \"department\": \"구매관리부\",\n        \"positionId\": 1,\n        \"position\": \"과장\"\n      },\n      \"pay\": {\n        \"basePay\": 4500000,\n        \"overtimePay\": 150000,\n        \"deduction\": 450000,\n        \"netPay\": 4200000,\n        \"status\": \"COMPLETED\"\n      }\n    }],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 25,\n      \"totalPages\": 3,\n      \"hasNext\": true\n    },\n    \"first\": true,\n    \"last\": false,\n    \"numberOfElements\": 3\n  }\n}"))
+			)
+		}
     )
     public ResponseEntity<ApiResponse<Object>> getMonthlyPayrollList(
         @Parameter(description = "연도", example = "2025")
@@ -942,31 +963,23 @@ public class HrmController {
             content.add(row);
         }
 
-        Map<String, Object> pageable = new LinkedHashMap<>();
-        Map<String, Object> sort = new LinkedHashMap<>();
-        sort.put("sorted", false);
-        sort.put("unsorted", true);
-        sort.put("empty", true);
-        pageable.put("sort", sort);
-        pageable.put("offset", page * size);
-        pageable.put("pageNumber", page);
-        pageable.put("pageSize", size);
-        pageable.put("paged", true);
-        pageable.put("unpaged", false);
+        int totalElements = 25;
+        int totalPages = size <= 0 ? 0 : (int) Math.ceil((double) totalElements / size);
+        PageDto pageInfo = PageDto.builder()
+            .number(page)
+            .size(size)
+            .totalElements(totalElements)
+            .totalPages(totalPages)
+            .hasNext(page + 1 < totalPages)
+            .build();
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("content", content);
-        response.put("pageable", pageable);
-        response.put("totalPages", 3);
-        response.put("totalElements", 25);
-        response.put("last", page >= 2);
-        response.put("size", size);
-        response.put("number", page);
-        response.put("sort", sort);
-        response.put("numberOfElements", content.size());
+        response.put("page", pageInfo);
         response.put("first", page == 0);
+        response.put("last", page >= totalPages - 1);
+        response.put("numberOfElements", content.size());
         response.put("empty", content.isEmpty());
-
         return response;
     }
 
@@ -1365,31 +1378,23 @@ public class HrmController {
         content.add(buildLeaveRow(ids[2], 15L, "박서준", "마케팅팀", "팀장", "ANNUAL",
             LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 5), 5, 10));
 
-        Map<String, Object> pageable = new LinkedHashMap<>();
-        Map<String, Object> sort = new LinkedHashMap<>();
-        sort.put("sorted", false);
-        sort.put("unsorted", true);
-        sort.put("empty", true);
-        pageable.put("sort", sort);
-        pageable.put("offset", page * size);
-        pageable.put("pageNumber", page);
-        pageable.put("pageSize", size);
-        pageable.put("paged", true);
-        pageable.put("unpaged", false);
+        int totalElements = 35;
+        int totalPages = size <= 0 ? 0 : (int) Math.ceil((double) totalElements / size);
+        PageDto pageInfo = PageDto.builder()
+            .number(page)
+            .size(size)
+            .totalElements(totalElements)
+            .totalPages(totalPages)
+            .hasNext(page + 1 < totalPages)
+            .build();
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("content", content);
-        response.put("pageable", pageable);
-        response.put("totalPages", 4);
-        response.put("totalElements", 35);
-        response.put("last", page >= 3);
-        response.put("size", size);
-        response.put("number", page);
-        response.put("sort", sort);
-        response.put("numberOfElements", content.size());
+        response.put("page", pageInfo);
         response.put("first", page == 0);
+        response.put("last", page + 1 >= totalPages);
+        response.put("numberOfElements", content.size());
         response.put("empty", content.isEmpty());
-
         return response;
     }
 
@@ -1458,31 +1463,23 @@ public class HrmController {
             content.add(row);
         }
 
-        Map<String, Object> pageable = new LinkedHashMap<>();
-        Map<String, Object> sort = new LinkedHashMap<>();
-        sort.put("sorted", true);
-        sort.put("unsorted", false);
-        sort.put("empty", false);
-        pageable.put("sort", sort);
-        pageable.put("offset", page * size);
-        pageable.put("pageNumber", page);
-        pageable.put("pageSize", size);
-        pageable.put("paged", true);
-        pageable.put("unpaged", false);
+        int totalElements = 98;
+        int totalPages = size <= 0 ? 0 : (int) Math.ceil((double) totalElements / size);
+        PageDto pageInfo = PageDto.builder()
+            .number(page)
+            .size(size)
+            .totalElements(totalElements)
+            .totalPages(totalPages)
+            .hasNext(page + 1 < totalPages)
+            .build();
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("content", content);
-        response.put("pageable", pageable);
-        response.put("totalPages", 5);
-        response.put("totalElements", 98);
-        response.put("last", page >= 4);
-        response.put("size", size);
-        response.put("number", page);
-        response.put("sort", sort);
-        response.put("numberOfElements", content.size());
+        response.put("page", pageInfo);
         response.put("first", page == 0);
+        response.put("last", page + 1 >= totalPages);
+        response.put("numberOfElements", content.size());
         response.put("empty", content.isEmpty());
-
         return response;
     }
 
@@ -1760,15 +1757,19 @@ public class HrmController {
         items.add(buildStatusRow(103L, "박철수", "영업팀", "대리", 6, 3, 4, LocalDate.of(2024, 1, 5)));
         items.add(buildStatusRow(104L, "정수진", "인사팀", "팀장", 15, 1, 1, LocalDate.of(2024, 1, 12)));
 
-        Map<String, Object> pageMeta = new LinkedHashMap<>();
-        pageMeta.put("number", page);
-        pageMeta.put("size", size);
-        pageMeta.put("totalElements", items.size());
-        pageMeta.put("totalPages", 1);
+        int totalElements = items.size();
+        int totalPages = size <= 0 ? 0 : (int) Math.ceil((double) totalElements / size);
+        PageDto pageInfo = PageDto.builder()
+            .number(page)
+            .size(size)
+            .totalElements(totalElements)
+            .totalPages(totalPages)
+            .hasNext(page + 1 < totalPages)
+            .build();
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("items", items);
-        response.put("page", pageMeta);
+        response.put("page", pageInfo);
         return response;
     }
 
@@ -1835,29 +1836,22 @@ public class HrmController {
         content.add(
             buildProgramRow(4L, "디지털 마케팅 실무", "COMPLETED", "MARKETING_TRAINING", 8, true, 30));
 
-        Map<String, Object> pageable = new LinkedHashMap<>();
-        Map<String, Object> sort = new LinkedHashMap<>();
-        sort.put("sorted", false);
-        sort.put("unsorted", true);
-        sort.put("empty", true);
-        pageable.put("sort", sort);
-        pageable.put("offset", page * size);
-        pageable.put("pageNumber", page);
-        pageable.put("pageSize", size);
-        pageable.put("paged", true);
-        pageable.put("unpaged", false);
+        int totalElements = 48;
+        int totalPages = size <= 0 ? 0 : (int) Math.ceil((double) totalElements / size);
+        PageDto pageInfo = PageDto.builder()
+            .number(page)
+            .size(size)
+            .totalElements(totalElements)
+            .totalPages(totalPages)
+            .hasNext(page + 1 < totalPages)
+            .build();
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("content", content);
-        response.put("pageable", pageable);
-        response.put("totalPages", 5);
-        response.put("totalElements", 48);
-        response.put("last", page >= 4);
-        response.put("size", size);
-        response.put("number", page);
-        response.put("sort", sort);
-        response.put("numberOfElements", content.size());
+        response.put("page", pageInfo);
         response.put("first", page == 0);
+        response.put("last", page + 1 >= totalPages);
+        response.put("numberOfElements", content.size());
         response.put("empty", content.isEmpty());
         return response;
     }
