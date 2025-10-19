@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.business.dto;
+package org.ever._4ever_be_gw.business.dto.quotation;
 
 import lombok.Getter;
 
