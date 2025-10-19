@@ -17,7 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.ever._4ever_be_gw.business.dto.FcmPeriodMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.ever._4ever_be_gw.business.dto.StatementUpdateRequestDto;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
@@ -35,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/business/fcm")
-@Tag(name = "Finance & Cost Management", description = "재무 관리 API")
+@Tag(name = "재무관리(FCM)", description = "재무 관리 API")
 public class FcmController {
 
 	private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
@@ -44,7 +45,7 @@ public class FcmController {
 
 	@GetMapping("/statictics")
 	@Operation(
-		summary = "재무 관리 통계",
+		summary = "FCM 통계 조회",
 		description = "기간별 재무 관리 통계를 조회합니다.",
 		responses = {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -55,7 +56,7 @@ public class FcmController {
 				)
 		}
 	)
-	public ResponseEntity<ApiResponse<Map<String, FcmPeriodMetricsDto>>> getStatistics(
+	public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getStatistics(
 		@Parameter(description = "조회 기간 목록(콤마 구분)")
 		@RequestParam(name = "periods", required = false) String periods
 	) {
@@ -72,25 +73,26 @@ public class FcmController {
 		}
 
 		List<String> finalPeriods = requested.stream().filter(ALLOWED_PERIODS::contains).toList();
-		Map<String, FcmPeriodMetricsDto> data = new LinkedHashMap<>();
+		StatsResponseDto.StatsResponseDtoBuilder<StatsMetricsDto> builder = StatsResponseDto.<StatsMetricsDto>builder();
 
 		if (finalPeriods.contains("week")) {
-			data.put("week", buildMetrics(68_500_000L, new BigDecimal("0.082"), 43_200_000L, new BigDecimal("0.054"), 21_000_000L, new BigDecimal("0.097"), 12_500_000L, new BigDecimal("-0.012")));
+			builder.week(buildMetrics(68_500_000L, new BigDecimal("0.082"), 43_200_000L, new BigDecimal("0.054"), 21_000_000L, new BigDecimal("0.097"), 12_500_000L, new BigDecimal("-0.012")));
 		}
 		if (finalPeriods.contains("month")) {
-			data.put("month", buildMetrics(275_000_000L, new BigDecimal("0.125"), 189_000_000L, new BigDecimal("0.083"), 86_000_000L, new BigDecimal("0.153"), 25_000_000L, new BigDecimal("-0.032")));
+			builder.month(buildMetrics(275_000_000L, new BigDecimal("0.125"), 189_000_000L, new BigDecimal("0.083"), 86_000_000L, new BigDecimal("0.153"), 25_000_000L, new BigDecimal("-0.032")));
 		}
 		if (finalPeriods.contains("quarter")) {
-			data.put("quarter", buildMetrics(812_000_000L, new BigDecimal("0.094"), 596_000_000L, new BigDecimal("0.071"), 248_000_000L, new BigDecimal("0.118"), 74_000_000L, new BigDecimal("-0.021")));
+			builder.quarter(buildMetrics(812_000_000L, new BigDecimal("0.094"), 596_000_000L, new BigDecimal("0.071"), 248_000_000L, new BigDecimal("0.118"), 74_000_000L, new BigDecimal("-0.021")));
 		}
 		if (finalPeriods.contains("year")) {
-			data.put("year", buildMetrics(3_215_000_000L, new BigDecimal("0.068"), 2_425_000_000L, new BigDecimal("0.057"), 978_000_000L, new BigDecimal("0.103"), 315_000_000L, new BigDecimal("-0.018")));
+			builder.year(buildMetrics(3_215_000_000L, new BigDecimal("0.068"), 2_425_000_000L, new BigDecimal("0.057"), 978_000_000L, new BigDecimal("0.103"), 315_000_000L, new BigDecimal("-0.018")));
 		}
 
+		StatsResponseDto<StatsMetricsDto> data = builder.build();
 		return ResponseEntity.ok(ApiResponse.success(data, "재무 통계 데이터를 성공적으로 조회했습니다.", HttpStatus.OK));
 	}
 
-	private FcmPeriodMetricsDto buildMetrics(
+	private StatsMetricsDto buildMetrics(
 		long totalSales,
 		BigDecimal totalSalesChange,
 		long totalPurchases,
@@ -100,11 +102,11 @@ public class FcmController {
 		long accountsReceivable,
 		BigDecimal accountsReceivableChange
 	) {
-		return FcmPeriodMetricsDto.builder()
-			.totalSales(PeriodStatDto.builder().value(totalSales).deltaRate(totalSalesChange).build())
-			.totalPurchases(PeriodStatDto.builder().value(totalPurchases).deltaRate(totalPurchasesChange).build())
-			.netProfit(PeriodStatDto.builder().value(netProfit).deltaRate(netProfitChange).build())
-			.accountsReceivable(PeriodStatDto.builder().value(accountsReceivable).deltaRate(accountsReceivableChange).build())
+		return StatsMetricsDto.builder()
+			.put("total_sales", PeriodStatDto.builder().value(totalSales).deltaRate(totalSalesChange).build())
+			.put("total_purchases", PeriodStatDto.builder().value(totalPurchases).deltaRate(totalPurchasesChange).build())
+			.put("net_profit", PeriodStatDto.builder().value(netProfit).deltaRate(netProfitChange).build())
+			.put("accounts_receivable", PeriodStatDto.builder().value(accountsReceivable).deltaRate(accountsReceivableChange).build())
 			.build();
 	}
 

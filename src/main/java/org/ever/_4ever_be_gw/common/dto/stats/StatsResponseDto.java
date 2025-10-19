@@ -10,6 +10,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class StatsResponseDto<T> {
+    private final T today;
     private final T week;
     private final T month;
     private final T quarter;

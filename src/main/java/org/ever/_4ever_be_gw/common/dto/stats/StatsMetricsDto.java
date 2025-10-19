@@ -1,6 +1,7 @@
 package org.ever._4ever_be_gw.common.dto.stats;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 
@@ -9,6 +10,7 @@ import java.util.Map;
 
 @Getter
 public class StatsMetricsDto {
+    @JsonIgnore
     private final Map<String, PeriodStatDto> metrics;
 
     private StatsMetricsDto(Map<String, PeriodStatDto> metrics) {

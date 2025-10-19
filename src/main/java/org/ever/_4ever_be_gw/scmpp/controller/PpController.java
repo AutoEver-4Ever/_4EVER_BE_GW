@@ -5,9 +5,15 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.math.BigDecimal;
 import org.ever._4ever_be_gw.common.dto.PageDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
+import org.ever._4ever_be_gw.common.exception.BusinessException;
+import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.scmpp.dto.*;
+import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +23,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/scm-pp/pp")
-@Tag(name = "Production Management", description = "생산 관리 API")
+@Tag(name = "생산관리(PP)", description = "생산 관리 API")
 public class PpController {
     @PostMapping("/boms")
     @Operation(
@@ -42,6 +48,76 @@ public class PpController {
         response.put("bomCode", "BOM-001");
 
         return ResponseEntity.ok(ApiResponse.success(response, "BOM이 성공적으로 생성되었습니다.", HttpStatus.OK));
+    }
+
+    private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
+
+    @GetMapping("/statistics")
+    @Operation(
+            summary = "PP 통계 조회",
+            description = "생산 진행 현황 및 BOM 관련 통계를 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"생산 통계 정보를 조회했습니다.\",\n  \"data\": {\n    \"week\": {\n      \"production_in_progress\": { \"value\": 42, \"delta_rate\": 0.087 },\n      \"production_completed\": { \"value\": 35, \"delta_rate\": 0.062 },\n      \"bom_count\": { \"value\": 18, \"delta_rate\": 0.045 }\n    },\n    \"month\": {\n      \"production_in_progress\": { \"value\": 168, \"delta_rate\": 0.094 },\n      \"production_completed\": { \"value\": 147, \"delta_rate\": 0.078 },\n      \"bom_count\": { \"value\": 72, \"delta_rate\": 0.052 }\n    }\n  }\n}" )
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getProductionStatistics(
+            @Parameter(description = "조회 기간 목록(콤마 구분)")
+            @RequestParam(name = "periods", required = false) String periods
+    ) {
+        List<String> requested = periods == null || periods.isBlank()
+                ? List.of("week", "month", "quarter", "year")
+                : Arrays.stream(periods.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .toList();
+
+        List<String> invalid = requested.stream().filter(p -> !ALLOWED_PERIODS.contains(p)).toList();
+        if (periods != null && !periods.isBlank() && (!invalid.isEmpty() || requested.stream().noneMatch(ALLOWED_PERIODS::contains))) {
+            throw new BusinessException(ErrorCode.INVALID_PERIODS);
+        }
+
+        List<String> finalPeriods = requested.stream().filter(ALLOWED_PERIODS::contains).toList();
+
+        StatsResponseDto.StatsResponseDtoBuilder<StatsMetricsDto> builder = StatsResponseDto.<StatsMetricsDto>builder();
+
+        if (finalPeriods.contains("week")) {
+            builder.week(StatsMetricsDto.builder()
+                    .put("production_in_progress", PeriodStatDto.builder().value(42L).deltaRate(new BigDecimal("0.087")).build())
+                    .put("production_completed", PeriodStatDto.builder().value(35L).deltaRate(new BigDecimal("0.062")).build())
+                    .put("bom_count", PeriodStatDto.builder().value(18L).deltaRate(new BigDecimal("0.045")).build())
+                    .build());
+        }
+        if (finalPeriods.contains("month")) {
+            builder.month(StatsMetricsDto.builder()
+                    .put("production_in_progress", PeriodStatDto.builder().value(168L).deltaRate(new BigDecimal("0.094")).build())
+                    .put("production_completed", PeriodStatDto.builder().value(147L).deltaRate(new BigDecimal("0.078")).build())
+                    .put("bom_count", PeriodStatDto.builder().value(72L).deltaRate(new BigDecimal("0.052")).build())
+                    .build());
+        }
+        if (finalPeriods.contains("quarter")) {
+            builder.quarter(StatsMetricsDto.builder()
+                    .put("production_in_progress", PeriodStatDto.builder().value(498L).deltaRate(new BigDecimal("0.081")).build())
+                    .put("production_completed", PeriodStatDto.builder().value(462L).deltaRate(new BigDecimal("0.069")).build())
+                    .put("bom_count", PeriodStatDto.builder().value(210L).deltaRate(new BigDecimal("0.048")).build())
+                    .build());
+        }
+        if (finalPeriods.contains("year")) {
+            builder.year(StatsMetricsDto.builder()
+                    .put("production_in_progress", PeriodStatDto.builder().value(2_045L).deltaRate(new BigDecimal("0.073")).build())
+                    .put("production_completed", PeriodStatDto.builder().value(1_912L).deltaRate(new BigDecimal("0.061")).build())
+                    .put("bom_count", PeriodStatDto.builder().value(865L).deltaRate(new BigDecimal("0.041")).build())
+                    .build());
+        }
+
+        StatsResponseDto<StatsMetricsDto> response = builder.build();
+        return ResponseEntity.ok(ApiResponse.success(response, "생산 통계 정보를 조회했습니다.", HttpStatus.OK));
     }
 
 

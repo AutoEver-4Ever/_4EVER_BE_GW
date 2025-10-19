@@ -5,9 +5,15 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.math.BigDecimal;
 import org.ever._4ever_be_gw.common.dto.PageDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.scmpp.dto.*;
+import org.ever._4ever_be_gw.common.exception.BusinessException;
+import org.ever._4ever_be_gw.common.exception.ErrorCode;
+import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +22,11 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/scm-pp")
-@Tag(name = "Inventory Management", description = "재고 관리 API")
-public class IvController {
+@RequestMapping("/scm-pp")
+@Tag(name = "재고관리(IM)", description = "재고 관리 API")
+public class ImController {
+
+    private static final Set<String> INVENTORY_STAT_PERIODS = Set.of("week", "month", "quarter", "year");
 
     @GetMapping("/inventory/shortage/count/critical/statistic")
     @Operation(
@@ -35,22 +43,16 @@ public class IvController {
                     )
             }
     )
-    public ResponseEntity<ApiResponse<ShortageStatisticDto>> getShortageStatistics() {
-        ShortageStatisticDto.TotalItemDto totalEmergency = ShortageStatisticDto.TotalItemDto.builder()
-                .value("8")
-                .comparedPrev(2)
+    public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getShortageStatistics() {
+        StatsMetricsDto todayMetrics = StatsMetricsDto.builder()
+                .put("total_emergency", PeriodStatDto.builder().value(8L).deltaRate(BigDecimal.valueOf(2L)).build())
+                .put("total_warning", PeriodStatDto.builder().value(15L).deltaRate(BigDecimal.valueOf(3L)).build())
                 .build();
-        
-        ShortageStatisticDto.TotalItemDto totalWarning = ShortageStatisticDto.TotalItemDto.builder()
-                .value("15")
-                .comparedPrev(3)
+
+        StatsResponseDto<StatsMetricsDto> response = StatsResponseDto.<StatsMetricsDto>builder()
+                .today(todayMetrics)
                 .build();
-        
-        ShortageStatisticDto response = ShortageStatisticDto.builder()
-                .totalEmergency(totalEmergency)
-                .totalWarning(totalWarning)
-                .build();
-        
+
         return ResponseEntity.ok(ApiResponse.success(response, "부족 재고 통계 정보를 조회했습니다.", HttpStatus.OK));
     }
     
@@ -210,22 +212,32 @@ public class IvController {
                     )
             }
     )
-    public ResponseEntity<ApiResponse<StockTransferStatisticDto>> getStockTransferStatistics(
+    public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getStockTransferStatistics(
             @Parameter(name = "period", description = "기간(today, week, month)")
             @PathVariable String period
     ) {
-        StockTransferStatisticDto response = StockTransferStatisticDto.builder()
-                .period(period.toUpperCase())
-                .inbound(StockTransferStatisticDto.TransferCountDto.builder()
-                        .total(695)
-                        .periodCount(120)
-                        .build())
-                .outbound(StockTransferStatisticDto.TransferCountDto.builder()
-                        .total(610)
-                        .periodCount(105)
-                        .build())
+        String normalized = period == null ? "" : period.trim().toLowerCase(Locale.ROOT);
+        Set<String> allowedPeriods = Set.of("today", "week", "month");
+        if (!allowedPeriods.contains(normalized)) {
+            throw new BusinessException(ErrorCode.INVALID_PERIODS);
+        }
+
+        StatsMetricsDto metrics = StatsMetricsDto.builder()
+                .put("inbound_total", PeriodStatDto.builder().value(695L).deltaRate(BigDecimal.ZERO).build())
+                .put("inbound_period_count", PeriodStatDto.builder().value(120L).deltaRate(BigDecimal.ZERO).build())
+                .put("outbound_total", PeriodStatDto.builder().value(610L).deltaRate(BigDecimal.ZERO).build())
+                .put("outbound_period_count", PeriodStatDto.builder().value(105L).deltaRate(BigDecimal.ZERO).build())
                 .build();
-                
+
+        StatsResponseDto.StatsResponseDtoBuilder<StatsMetricsDto> builder = StatsResponseDto.<StatsMetricsDto>builder();
+        switch (normalized) {
+            case "today" -> builder.today(metrics);
+            case "week" -> builder.week(metrics);
+            case "month" -> builder.month(metrics);
+            default -> throw new BusinessException(ErrorCode.INVALID_PERIODS);
+        }
+
+        StatsResponseDto<StatsMetricsDto> response = builder.build();
         return ResponseEntity.ok(ApiResponse.success(response, "재고 이력 통계를 조회했습니다.", HttpStatus.OK));
     }
     
@@ -640,7 +652,7 @@ public class IvController {
     
     @GetMapping("/iv/statistic")
     @Operation(
-            summary = "재고관리 통계",
+            summary = "IM 통계 조회",
             description = "재고 및 입출고 현황 통계를 조회합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -648,35 +660,69 @@ public class IvController {
                             description = "성공",
                             content = @Content(
                                     mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 및 입출고 현황을 조회했습니다.\",\n  \"data\": {\n    \"totalStock\": {\n      \"value\": \"₩2.4억\",\n      \"comparedPrev\": 8.2\n    },\n    \"storeComplete\": {\n      \"value\": 156,\n      \"comparedPrev\": 12\n    },\n    \"storePending\": {\n      \"value\": 23,\n      \"comparedPrev\": 5\n    },\n    \"deliveryComplete\": {\n      \"value\": 89,\n      \"comparedPrev\": 7\n    },\n    \"deliveryPending\": {\n      \"value\": 14,\n      \"comparedPrev\": -3\n    }\n  }\n}")
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 및 입출고 현황을 조회했습니다.\",\n  \"data\": {\n    \"week\": {\n      \"total_stock\": { \"value\": 240000000, \"delta_rate\": 0.082 },\n      \"store_complete\": { \"value\": 156, \"delta_rate\": 0.12 },\n      \"store_pending\": { \"value\": 23, \"delta_rate\": 0.05 },\n      \"delivery_complete\": { \"value\": 89, \"delta_rate\": 0.07 },\n      \"delivery_pending\": { \"value\": 14, \"delta_rate\": -0.03 }\n    },\n    \"month\": {\n      \"total_stock\": { \"value\": 955000000, \"delta_rate\": 0.096 },\n      \"store_complete\": { \"value\": 612, \"delta_rate\": 0.087 },\n      \"store_pending\": { \"value\": 88, \"delta_rate\": 0.042 },\n      \"delivery_complete\": { \"value\": 374, \"delta_rate\": 0.058 },\n      \"delivery_pending\": { \"value\": 57, \"delta_rate\": -0.021 }\n    }\n  }\n}" )
                             )
                     )
             }
     )
-    public ResponseEntity<ApiResponse<InventoryStatisticDto>> getInventoryStatistic() {
-        InventoryStatisticDto response = InventoryStatisticDto.builder()
-                .totalStock(InventoryStatisticDto.TotalStockDto.builder()
-                        .value("₩2.4억")
-                        .comparedPrev(8.2)
-                        .build())
-                .storeComplete(InventoryStatisticDto.InventoryCountDto.builder()
-                        .value(156)
-                        .comparedPrev(12)
-                        .build())
-                .storePending(InventoryStatisticDto.InventoryCountDto.builder()
-                        .value(23)
-                        .comparedPrev(5)
-                        .build())
-                .deliveryComplete(InventoryStatisticDto.InventoryCountDto.builder()
-                        .value(89)
-                        .comparedPrev(7)
-                        .build())
-                .deliveryPending(InventoryStatisticDto.InventoryCountDto.builder()
-                        .value(14)
-                        .comparedPrev(-3)
-                        .build())
-                .build();
-        
+    public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getInventoryStatistic(
+            @Parameter(description = "조회 기간 목록(콤마 구분)")
+            @RequestParam(name = "periods", required = false) String periods
+    ) {
+        List<String> requested = periods == null || periods.isBlank()
+                ? List.of("week", "month", "quarter", "year")
+                : Arrays.stream(periods.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .toList();
+
+        List<String> invalid = requested.stream().filter(p -> !INVENTORY_STAT_PERIODS.contains(p)).toList();
+        if (periods != null && !periods.isBlank() && (!invalid.isEmpty() || requested.stream().noneMatch(INVENTORY_STAT_PERIODS::contains))) {
+            throw new BusinessException(ErrorCode.INVALID_PERIODS);
+        }
+
+        List<String> finalPeriods = requested.stream().filter(INVENTORY_STAT_PERIODS::contains).toList();
+
+        StatsResponseDto.StatsResponseDtoBuilder<StatsMetricsDto> builder = StatsResponseDto.<StatsMetricsDto>builder();
+
+        if (finalPeriods.contains("week")) {
+            builder.week(StatsMetricsDto.builder()
+                    .put("total_stock", PeriodStatDto.builder().value(240_000_000L).deltaRate(new BigDecimal("0.082")).build())
+                    .put("store_complete", PeriodStatDto.builder().value(156L).deltaRate(new BigDecimal("0.12")).build())
+                    .put("store_pending", PeriodStatDto.builder().value(23L).deltaRate(new BigDecimal("0.05")).build())
+                    .put("delivery_complete", PeriodStatDto.builder().value(89L).deltaRate(new BigDecimal("0.07")).build())
+                    .put("delivery_pending", PeriodStatDto.builder().value(14L).deltaRate(new BigDecimal("-0.03")).build())
+                    .build());
+        }
+        if (finalPeriods.contains("month")) {
+            builder.month(StatsMetricsDto.builder()
+                    .put("total_stock", PeriodStatDto.builder().value(955_000_000L).deltaRate(new BigDecimal("0.096")).build())
+                    .put("store_complete", PeriodStatDto.builder().value(612L).deltaRate(new BigDecimal("0.087")).build())
+                    .put("store_pending", PeriodStatDto.builder().value(88L).deltaRate(new BigDecimal("0.042")).build())
+                    .put("delivery_complete", PeriodStatDto.builder().value(374L).deltaRate(new BigDecimal("0.058")).build())
+                    .put("delivery_pending", PeriodStatDto.builder().value(57L).deltaRate(new BigDecimal("-0.021")).build())
+                    .build());
+        }
+        if (finalPeriods.contains("quarter")) {
+            builder.quarter(StatsMetricsDto.builder()
+                    .put("total_stock", PeriodStatDto.builder().value(2_865_000_000L).deltaRate(new BigDecimal("0.074")).build())
+                    .put("store_complete", PeriodStatDto.builder().value(1_845L).deltaRate(new BigDecimal("0.069")).build())
+                    .put("store_pending", PeriodStatDto.builder().value(275L).deltaRate(new BigDecimal("0.038")).build())
+                    .put("delivery_complete", PeriodStatDto.builder().value(1_118L).deltaRate(new BigDecimal("0.049")).build())
+                    .put("delivery_pending", PeriodStatDto.builder().value(171L).deltaRate(new BigDecimal("-0.027")).build())
+                    .build());
+        }
+        if (finalPeriods.contains("year")) {
+            builder.year(StatsMetricsDto.builder()
+                    .put("total_stock", PeriodStatDto.builder().value(11_540_000_000L).deltaRate(new BigDecimal("0.061")).build())
+                    .put("store_complete", PeriodStatDto.builder().value(7_312L).deltaRate(new BigDecimal("0.055")).build())
+                    .put("store_pending", PeriodStatDto.builder().value(1_142L).deltaRate(new BigDecimal("0.033")).build())
+                    .put("delivery_complete", PeriodStatDto.builder().value(4_572L).deltaRate(new BigDecimal("0.044")).build())
+                    .put("delivery_pending", PeriodStatDto.builder().value(682L).deltaRate(new BigDecimal("-0.019")).build())
+                    .build());
+        }
+
+        StatsResponseDto<StatsMetricsDto> response = builder.build();
         return ResponseEntity.ok(ApiResponse.success(response, "재고 및 입출고 현황을 조회했습니다.", HttpStatus.OK));
     }
     
