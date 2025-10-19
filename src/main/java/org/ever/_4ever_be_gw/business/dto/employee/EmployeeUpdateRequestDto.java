@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.business.dto;
+package org.ever._4ever_be_gw.business.dto.employee;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
