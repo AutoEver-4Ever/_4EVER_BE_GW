@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_gw.business.dto.quotation.QuotationDetailDto;
+import org.ever._4ever_be_gw.business.dto.quotation.QuotationItemDto;
 import org.ever._4ever_be_gw.business.dto.quotation.QuotationRequestDto;
 import org.ever._4ever_be_gw.business.dto.quotation.QuotationConfirmRequestDto;
 import org.ever._4ever_be_gw.business.dto.customer.CustomerCreateRequestDto;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,9 +39,9 @@ import java.util.stream.Collectors;
 
     private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
 
-    
 
-    
+
+
 
     // -------- Statistics (R) --------
     @GetMapping("/statistics")
@@ -198,6 +201,7 @@ import java.util.stream.Collectors;
         List<Map<String, Object>> items = new ArrayList<>();
         String[] customers = {"삼성전자", "LG전자", "현대자동차", "카카오", "네이버", "SK하이닉스", "포스코", "두산중공업", "한화시스템", "CJ대한통운"};
         String[] owners = {"김철수", "이영희", "박민수", "최지훈", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유"};
+        String[] ceos = {"이재용", "구광모", "장재경", "김범수", "최수연", "곽노정", "김학동", "박정원", "김동관", "손경식"};
         String[] codes = {"PENDING", "REVIEW", "APPROVED", "REJECTED"};
         for (int i = 0; i < 50; i++) {
             Map<String, Object> row = new LinkedHashMap<>();
@@ -284,7 +288,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationCode\": \"Q2024001\",\n    \"quotationDate\": \"2024-01-15\",\n    \"dueDate\": \"2024-02-15\",\n    \"statusCode\": \"PENDING\",\n    \"customerName\": \"삼성전자\",\n    \"ownerName\": \"김철수\",\n    \"items\": [\n      { \"itemId\": 900001, \"productName\": \"제품 A\", \"quantity\": 10, \"unitPrice\": 500000, \"amount\": 5000000 },\n      { \"itemId\": 900002, \"productName\": \"제품 B\", \"quantity\": 5,  \"unitPrice\": 200000, \"amount\": 1000000 }\n    ],\n    \"totalAmount\": 15000000\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationCode\": \"Q2024001\",\n    \"quotationDate\": \"2024-01-15\",\n    \"dueDate\": \"2024-02-15\",\n    \"statusCode\": \"PENDING\",\n    \"customerName\": \"삼성전자\",\n    \"ceoName\": \"이재용\",\n    \"ownerName\": \"김철수\",\n    \"items\": [\n      { \"itemId\": 900001, \"itemName\": \"제품 A\", \"quantity\": 10, \"uomName\": \"EA\", \"unitPrice\": 1000000, \"amount\": 10000000 },\n      { \"itemId\": 900011, \"itemName\": \"제품 B\", \"quantity\": 5,  \"uomName\": \"EA\", \"unitPrice\": 1000000, \"amount\": 5000000 }\n    ],\n    \"totalAmount\": 15000000\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "403",
@@ -325,41 +329,46 @@ import java.util.stream.Collectors;
 
         // 목업 데이터 구성
         String[] customers = {"삼성전자", "LG전자", "현대자동차", "카카오", "네이버", "SK하이닉스", "포스코", "두산중공업", "한화시스템", "CJ대한통운"};
-        String[] owners = {"김철수", "이영희", "박민수", "최지훈", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유"};
+        String[] ceoNames = {"김철수", "이영희", "박민수", "최지훈", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유"};
         String[] codes = {"PENDING", "REVIEW", "APPROVED", "REJECTED"};
 
         int idx = (int) ((quotationId - 12001) % 10);
         String quotationCode = String.format("Q2024%03d", (quotationId - 12000));
         String statusCode = codes[idx % codes.length];
 
-        Map<String, Object> item1 = new LinkedHashMap<>();
-        item1.put("itemId", 900001 + idx);
-        item1.put("productName", "제품 A");
-        item1.put("quantity", 10);
-        item1.put("unitPrice", 500_000L);
-        item1.put("amount", 5_000_000L);
+        QuotationItemDto item1 = QuotationItemDto.builder()
+                .itemId(900001L + idx)
+                .itemName("제품 A")
+                .quantity(10)
+                .uomName("EA")
+                .unitPrice(1_000_000L)
+                .amount(10_000_000L)
+                .build();
 
-        Map<String, Object> item2 = new LinkedHashMap<>();
-        item2.put("itemId", 900011 + idx);
-        item2.put("productName", "제품 B");
-        item2.put("quantity", 5);
-        item2.put("unitPrice", 200_000L);
-        item2.put("amount", 1_000_000L);
+        QuotationItemDto item2 = QuotationItemDto.builder()
+                .itemId(900011L + idx)
+                .itemName("제품 B")
+                .quantity(5)
+                .uomName("EA")
+                .unitPrice(1_000_000L)
+                .amount(5_000_000L)
+                .build();
 
-        long totalAmount = (Long) item1.get("amount") + (Long) item2.get("amount");
+        long totalAmount = item1.getAmount() + item2.getAmount();
 
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("quotationId", quotationId);
-        data.put("quotationCode", quotationCode);
-        data.put("quotationDate", "2024-01-15");
-        data.put("dueDate", "2024-02-15");
-        data.put("statusCode", statusCode);
-        data.put("customerName", customers[idx]);
-        data.put("ownerName", owners[idx]);
-        data.put("items", List.of(item1, item2));
-        data.put("totalAmount", totalAmount);
+        QuotationDetailDto detail = QuotationDetailDto.builder()
+                .quotationId(quotationId)
+                .quotationCode(quotationCode)
+                .quotationDate(LocalDate.parse("2024-01-15"))
+                .dueDate(LocalDate.parse("2024-02-15"))
+                .statusCode(statusCode)
+                .customerName(customers[idx])
+                .ceoName(ceoNames[idx])
+                .items(List.of(item1, item2))
+                .totalAmount(totalAmount)
+                .build();
 
-        return ResponseEntity.ok(ApiResponse.success(data, "견적 상세 조회에 성공했습니다.", HttpStatus.OK));
+        return ResponseEntity.ok(ApiResponse.success(detail, "견적 상세 조회에 성공했습니다.", HttpStatus.OK));
     }
 
     @PostMapping("/quotations")

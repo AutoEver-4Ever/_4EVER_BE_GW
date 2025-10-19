@@ -6,33 +6,28 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import org.ever._4ever_be_gw.business.dto.InvoiceUpdateRequestDto;
+import org.ever._4ever_be_gw.business.dto.invoice.SalesInvoiceDetailDto;
+import org.ever._4ever_be_gw.business.dto.invoice.SalesInvoiceItemDto;
 import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
-import org.ever._4ever_be_gw.business.dto.StatementUpdateRequestDto;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
+import org.ever._4ever_be_gw.scmpp.dto.po.PoDetailDto;
+import org.ever._4ever_be_gw.scmpp.dto.po.PoItemDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/business/fcm")
@@ -112,7 +107,7 @@ public class FcmController {
 
 	// ==================== 전표 목록 조회 (AP: 매입, AS: 매출) ====================
 
-	@GetMapping("/statement/ap")
+	@GetMapping("/invoice/ap")
 	@Operation(
 		summary = "매입 전표 목록 조회",
 		description = "매입(AP) 전표 목록을 조회합니다.",
@@ -121,11 +116,11 @@ public class FcmController {
 					responseCode = "200",
 					description = "성공",
 						content = @Content(mediaType = "application/json",
-							examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매입 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"statementId\": 1,\n        \"statementCode\": \"AP-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14\",\n        \"dueDate\": \"2025-11-14\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"PO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
+							examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매입 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"invoiceId\": 1,\n        \"invoiceCode\": \"AP-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14\",\n        \"dueDate\": \"2025-11-14\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"PO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
 			)
 		}
 	)
-	public ResponseEntity<ApiResponse<Object>> getApStatements(
+	public ResponseEntity<ApiResponse<Object>> getApinvoices(
 		@Parameter(description = "거래처 명") @RequestParam(name = "company", required = false) String company,
 		@Parameter(description = "시작일(yyyy-MM-dd)") @RequestParam(name = "startDate", required = false) String startDate,
 		@Parameter(description = "종료일(yyyy-MM-dd)") @RequestParam(name = "endDate", required = false) String endDate,
@@ -135,11 +130,11 @@ public class FcmController {
 		validateDateRange(startDate, endDate);
 		int p = (page == null || page < 0) ? 0 : page;
 		int s = (size == null || size < 1) ? 10 : size;
-		Map<String, Object> data = generateStatementListMock(p, s, "AP");
+		Map<String, Object> data = generateinvoiceListMock(p, s, "AP");
 		return ResponseEntity.ok(ApiResponse.success(data, "매출 전표 목록 조회에 성공했습니다.", HttpStatus.OK));
 	}
 
-	@GetMapping("/statement/as")
+	@GetMapping("/invoice/as")
 	@Operation(
 		summary = "매출 전표 목록 조회",
 		description = "매출(AS) 전표 목록을 조회합니다.",
@@ -148,11 +143,11 @@ public class FcmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"statementId\": 1,\n        \"statementCode\": \"AR-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14\",\n        \"dueDate\": \"2025-11-14\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"SO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"invoiceId\": 1,\n        \"invoiceCode\": \"AR-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14\",\n        \"dueDate\": \"2025-11-14\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"SO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
 			)
 		}
 	)
-	public ResponseEntity<ApiResponse<Object>> getAsStatements(
+	public ResponseEntity<ApiResponse<Object>> getAsinvoices(
 		@Parameter(description = "거래처 명") @RequestParam(name = "company", required = false) String company,
 		@Parameter(description = "시작일(yyyy-MM-dd)") @RequestParam(name = "startDate", required = false) String startDate,
 		@Parameter(description = "종료일(yyyy-MM-dd)") @RequestParam(name = "endDate", required = false) String endDate,
@@ -162,13 +157,12 @@ public class FcmController {
 		validateDateRange(startDate, endDate);
 		int p = (page == null || page < 0) ? 0 : page;
 		int s = (size == null || size < 1) ? 10 : size;
-		Map<String, Object> data = generateStatementListMock(p, s, "AS");
+		Map<String, Object> data = generateinvoiceListMock(p, s, "AS");
 		return ResponseEntity.ok(ApiResponse.success(data, "매출 전표 목록 조회에 성공했습니다.", HttpStatus.OK));
 	}
 
 	// ==================== 전표 상세 조회 ====================
-
-	@GetMapping("/statement/ap/{statementId}")
+	@GetMapping("/invoice/ap/{invoiceId}")
 	@Operation(
 		summary = "매입 전표 상세 조회",
 		description = "매입(AP) 전표 상세 정보를 조회합니다.",
@@ -177,18 +171,18 @@ public class FcmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"statementId\": 1,\n    \"statementCode\": \"AR-2024-001\",\n    \"connection\": {\n      \"connectionId\": 1,\n      \"connectionCode\": \"C-001\",\n      \"connectionName\": \"현대자동차\"\n    },\n    \"totalAmount\": 10000000,\n    \"issueDate\": \"2025-10-14\",\n    \"dueDate\": \"2025-11-14\",\n    \"status\": \"UNPAID\",\n    \"reference\": {\n      \"referenceId\": 1,\n      \"referenceCode\": \"SO-2024-001\"\n    },\n    \"note\": \"도어 패널 100개 납품\",\n    \"items\": [{\n      \"itemName\": \"강판 A급\",\n      \"quantity\": 50,\n      \"unit\": \"매\",\n      \"unitPrice\": 80000,\n      \"totalPrice\": 4000000\n    }]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매입 전표 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"invoiceId\": 2001,\n    \"invoiceCode\": null,\n    \"statusCode\": \"UNPAID\",\n    \"issueDate\": \"2025-01-20\",\n    \"dueDate\": \"2025-02-19\",\n    \"supplierId\": 501,\n    \"supplierCode\": \"SUP001\",\n    \"supplierName\": \"대한철강\",\n    \"managerPhone\": \"02-1234-5678\",\n    \"managerEmail\": \"order@steel.co.kr\",\n    \"deliveryAddress\": \"경기도 안산시 단원구 공장로 456\",\n    \"reference\": {\n      \"type\": \"PURCHASE_ORDER\",\n      \"purchaseOrderId\": 1001,\n      \"purchaseOrderCode\": \"PO-2024-001\",\n      \"orderDate\": \"2024-01-18\",\n      \"requestedDeliveryDate\": \"2024-01-25\"\n    },\n    \"items\": [{\n      \"itemId\": 101,\n      \"itemName\": \"강판\",\n      \"quantity\": 500,\n      \"uomName\": \"kg\",\n      \"unitPrice\": 8000,\n      \"totalPrice\": 4000000\n    },{\n      \"itemId\": 201,\n      \"itemName\": \"알루미늄\",\n      \"quantity\": 300,\n      \"uomName\": \"kg\",\n      \"unitPrice\": 3333,\n      \"totalPrice\": 1000000\n    }],\n    \"totalAmount\": 5000000,\n    \"note\": \"1월 생산용 원자재 매입 분\",\n    \"createdAt\": \"2025-01-20T09:00:00Z\",\n    \"updatedAt\": \"2025-01-20T09:05:00Z\"\n  }\n}"))
 			)
 		}
 	)
-	public ResponseEntity<ApiResponse<Object>> getApStatementDetail(
-		@Parameter(description = "전표 ID", example = "1") @PathVariable("statementId") Long statementId
+	public ResponseEntity<ApiResponse<Object>> getApinvoiceDetail(
+		@Parameter(description = "전표 ID", example = "1") @PathVariable("invoiceId") Long invoiceId
 	) {
-		Map<String, Object> data = generateStatementDetailMock(statementId, "AP");
-		return ResponseEntity.ok(ApiResponse.success(data, "매출 전표 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
+		PoDetailDto detail = generatePurchaseInvoiceDetailMock(invoiceId);
+		return ResponseEntity.ok(ApiResponse.success(detail, "매입 전표 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
 	}
 
-	@GetMapping("/statement/as/{statementId}")
+	@GetMapping("/invoice/as/{invoiceId}")
 	@Operation(
 		summary = "매출 전표 상세 조회",
 		description = "매출(AS) 전표 상세 정보를 조회합니다.",
@@ -197,36 +191,36 @@ public class FcmController {
 					responseCode = "200",
 					description = "성공",
 					content = @Content(mediaType = "application/json",
-						examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"statementId\": 1,\n    \"statementCode\": \"AR-2024-001\",\n    \"connection\": {\n      \"connectionId\": 1,\n      \"connectionCode\": \"C-001\",\n      \"connectionName\": \"현대자동차\"\n    },\n    \"totalAmount\": 10000000,\n    \"issueDate\": \"2025-10-14\",\n    \"dueDate\": \"2025-11-14\",\n    \"status\": \"UNPAID\",\n    \"reference\": {\n      \"referenceId\": 1,\n      \"referenceCode\": \"PO-2024-001\"\n    },\n    \"note\": \"도어 패널 100개 납품\",\n    \"items\": [{\n      \"itemName\": \"강판 A급\",\n      \"quantity\": 50,\n      \"unit\": \"매\",\n      \"unitPrice\": 80000,\n      \"totalPrice\": 4000000\n    }]\n  }\n}"))
+						examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"invoiceId\": 1,\n    \"invoiceCode\": \"AR-2024-001\",\n    \"connection\": {\n      \"connectionId\": 1,\n      \"connectionCode\": \"C-001\",\n      \"connectionName\": \"현대자동차\"\n    },\n    \"totalAmount\": 10000000,\n    \"issueDate\": \"2025-10-14\",\n    \"dueDate\": \"2025-11-14\",\n    \"status\": \"UNPAID\",\n    \"reference\": {\n      \"referenceId\": 1,\n      \"referenceCode\": \"PO-2024-001\"\n    },\n    \"note\": \"도어 패널 100개 납품\",\n    \"items\": [{\n      \"itemName\": \"강판 A급\",\n      \"quantity\": 50,\n      \"unit\": \"매\",\n      \"unitPrice\": 80000,\n      \"totalPrice\": 4000000\n    }]\n  }\n}"))
 			)
 		}
 	)
-	public ResponseEntity<ApiResponse<Object>> getAsStatementDetail(
-		@Parameter(description = "전표 ID", example = "1") @PathVariable("statementId") Long statementId
+	public ResponseEntity<ApiResponse<Object>> getAsinvoiceDetail(
+		@Parameter(description = "전표 ID", example = "1") @PathVariable("invoiceId") Long invoiceId
 	) {
-		Map<String, Object> data = generateStatementDetailMock(statementId, "AS");
-		return ResponseEntity.ok(ApiResponse.success(data, "매출 전표 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
+		SalesInvoiceDetailDto detail = generateSalesInvoiceDetailMock(invoiceId);
+		return ResponseEntity.ok(ApiResponse.success(detail, "매출 전표 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
 	}
 
 	// ==================== 전표 수정 (데이터만 받고 200) ====================
 
-    @PatchMapping("/statement/ap/{statementId}")
+    @PatchMapping("/invoice/ap/{invoiceId}")
     @Operation(summary = "매입 전표 수정", description = "매입(AP) 전표를 수정합니다. 데이터만 받고 200 반환")
-    public ResponseEntity<ApiResponse<Object>> patchApStatement(
-        @Parameter(description = "전표 ID") @PathVariable("statementId") Long statementId,
-        @Valid @RequestBody StatementUpdateRequestDto request
+    public ResponseEntity<ApiResponse<Object>> patchApinvoice(
+        @Parameter(description = "전표 ID") @PathVariable("invoiceId") Long invoiceId,
+        @Valid @RequestBody InvoiceUpdateRequestDto request
     ) {
-        System.out.println("매입 전표 수정 요청 - ID: " + statementId + ", 데이터: " + request);
+        System.out.println("매입 전표 수정 요청 - ID: " + invoiceId + ", 데이터: " + request);
         return ResponseEntity.ok(ApiResponse.success(null, "매입 전표 수정이 완료되었습니다.", HttpStatus.OK));
     }
 
-	@PatchMapping("/statement/as/{statementId}")
+	@PatchMapping("/invoice/as/{invoiceId}")
 	@Operation(summary = "매출 전표 수정", description = "매출(AS) 전표를 수정합니다. 데이터만 받고 200 반환")
-    public ResponseEntity<ApiResponse<Object>> patchAsStatement(
-        @Parameter(description = "전표 ID") @PathVariable("statementId") Long statementId,
-        @Valid @RequestBody StatementUpdateRequestDto request
+    public ResponseEntity<ApiResponse<Object>> patchAsinvoice(
+        @Parameter(description = "전표 ID") @PathVariable("invoiceId") Long invoiceId,
+        @Valid @RequestBody InvoiceUpdateRequestDto request
     ) {
-        System.out.println("매출 전표 수정 요청 - ID: " + statementId + ", 데이터: " + request);
+        System.out.println("매출 전표 수정 요청 - ID: " + invoiceId + ", 데이터: " + request);
         return ResponseEntity.ok(ApiResponse.success(null, "매출 전표 수정이 완료되었습니다.", HttpStatus.OK));
     }
 
@@ -249,46 +243,66 @@ public class FcmController {
 		}
 	}
 
-	private Map<String, Object> generateStatementListMock(int page, int size, String type) {
-		List<Map<String, Object>> content = new ArrayList<>();
-			content.add(buildStatementRow(1L, type.equals("AP") ? "AP-2024-001" : "AR-2024-001",
-					1L, "C-001", "현대자동차", 10_000_000,
-					LocalDate.parse("2025-10-14"),
-					LocalDate.parse("2025-11-14"),
-					"UNPAID",
-					type.equals("AP") ? "PO-2024-001" : "SO-2024-001"));
-			content.add(buildStatementRow(2L, type.equals("AP") ? "AP-2024-002" : "AR-2024-002",
-					2L, "C-002", "삼성전자", 25_000_000,
-					LocalDate.parse("2025-10-10"),
-					LocalDate.parse("2025-11-10"),
-					"PENDING",
-					type.equals("AP") ? "PO-2024-005" : "SO-2024-025"));
+	private Map<String, Object> generateinvoiceListMock(int page, int size, String type) {
+		List<Map<String, Object>> all = new ArrayList<>();
 
-		int totalElements = 15;
-		int totalPages = size <= 0 ? 0 : (int) Math.ceil((double) totalElements / size);
+		String[] partners = {"현대자동차", "삼성전자", "LG전자", "네이버", "카카오", "SK하이닉스", "한화시스템", "포스코", "CJ대한통운", "두산중공업"};
+		String[] statuses = {"UNPAID", "PENDING", "PAID"};
+
+		LocalDate baseIssueDate = LocalDate.parse("2025-01-01");
+		for (int i = 0; i < 100; i++) {
+			boolean isAp = "AP".equalsIgnoreCase(type);
+			long baseId = isAp ? 2000L : 1000L;
+			long invoiceId = baseId + i;
+			String invoiceCode = String.format("%s-2024-%03d", isAp ? "AP" : "AR", i + 1);
+			int partnerIdx = i % partners.length;
+			long connectionId = partnerIdx + 1L;
+			String connectionCode = String.format("C-%03d", partnerIdx + 1);
+			String connectionName = partners[partnerIdx];
+			int totalAmount = 5_000_000 + (i % 10) * 500_000;
+			LocalDate issueDate = baseIssueDate.plusDays(i);
+			LocalDate dueDate = issueDate.plusDays(30);
+			String status = statuses[i % statuses.length];
+			long referenceBase = isAp ? 1001L : 5001L;
+			long referenceId = referenceBase + (i % 50);
+			String referenceCode = String.format("%s-2024-%03d", isAp ? "PO" : "SO", (i % 50) + 1);
+
+			all.add(buildinvoiceRow(invoiceId, invoiceCode, connectionId, connectionCode, connectionName, totalAmount, issueDate, dueDate, status, referenceId, referenceCode));
+		}
+
+		int totalElements = all.size();
+		int pageSize = size <= 0 ? totalElements : size;
+		int pageIndex = page < 0 ? 0 : page;
+		int from = Math.min(pageIndex * pageSize, totalElements);
+		int to = Math.min(from + pageSize, totalElements);
+		List<Map<String, Object>> pageContent = all.subList(from, to);
+
+		int totalPages = pageSize == 0 ? 1 : (int) Math.ceil((double) totalElements / pageSize);
+		boolean hasNext = pageIndex + 1 < totalPages;
+
 		PageDto pageInfo = PageDto.builder()
-			.number(page)
-			.size(size)
+			.number(pageIndex)
+			.size(pageSize)
 			.totalElements(totalElements)
 			.totalPages(totalPages)
-			.hasNext(page + 1 < totalPages)
+			.hasNext(hasNext)
 			.build();
 
 		Map<String, Object> response = new LinkedHashMap<>();
-		response.put("content", content);
+		response.put("content", pageContent);
 		response.put("page", pageInfo);
 		response.put("totalElements", totalElements);
 		response.put("totalPages", totalPages);
-		response.put("first", page == 0);
-		response.put("last", page + 1 >= totalPages);
-		response.put("numberOfElements", content.size());
-		response.put("empty", content.isEmpty());
+		response.put("first", pageIndex == 0);
+		response.put("last", pageIndex + 1 >= totalPages);
+		response.put("numberOfElements", pageContent.size());
+		response.put("empty", pageContent.isEmpty());
 		return response;
 	}
 
-		private Map<String, Object> buildStatementRow(
-			Long statementId,
-			String statementCode,
+	private Map<String, Object> buildinvoiceRow(
+			Long invoiceId,
+			String invoiceCode,
 			Long connectionId,
 			String connectionCode,
 			String connectionName,
@@ -296,11 +310,12 @@ public class FcmController {
 			LocalDate issueDate,
 			LocalDate dueDate,
 			String status,
+			Long referenceId,
 			String referenceCode
 		) {
 		Map<String, Object> row = new LinkedHashMap<>();
-		row.put("statementId", statementId);
-		row.put("statementCode", statementCode);
+		row.put("invoiceId", invoiceId);
+		row.put("invoiceCode", invoiceCode);
 		Map<String, Object> connection = new LinkedHashMap<>();
 		connection.put("connectionId", connectionId);
 		connection.put("connectionCode", connectionCode);
@@ -312,44 +327,112 @@ public class FcmController {
 		row.put("status", status);
 		row.put("referenceCode", referenceCode);
 		Map<String, Object> reference = new LinkedHashMap<>();
-		reference.put("referenceId", statementId);
+		reference.put("referenceId", referenceId);
 		reference.put("referenceCode", referenceCode);
 		row.put("reference", reference);
 		return row;
 	}
 
-	private Map<String, Object> generateStatementDetailMock(Long statementId, String type) {
-		Map<String, Object> data = new LinkedHashMap<>();
-		data.put("statementId", statementId);
-		data.put("statementCode", type.equals("AP") ? "AP-2024-001" : "AR-2024-001");
-		Map<String, Object> connection = new LinkedHashMap<>();
-		connection.put("connectionId", 1L);
-		connection.put("connectionCode", "C-001");
-		connection.put("connectionName", "현대자동차");
-		data.put("connection", connection);
-		data.put("totalAmount", 10_000_000);
-		data.put("issueDate", LocalDate.parse("2025-10-14"));
-		data.put("dueDate", LocalDate.parse("2025-11-14"));
-		data.put("status", "UNPAID");
-		Map<String, Object> reference = new LinkedHashMap<>();
-		reference.put("referenceId", 1L);
-		reference.put("referenceCode", type.equals("AP") ? "PO-2024-001" : "SO-2024-001");
-		data.put("reference", reference);
-		data.put("note", "도어 패널 100개 납품");
-		List<Map<String, Object>> items = new ArrayList<>();
-		items.add(buildItem("강판 A급", 50, "매", 80_000));
-		items.add(buildItem("사이드 미러 부품", 100, "개", 60_000));
-		data.put("items", items);
-		return data;
+	private PoDetailDto generatePurchaseInvoiceDetailMock(Long invoiceId) {
+		long resolvedId = invoiceId == null ? 2001L : invoiceId;
+
+		PoItemDto item1 = PoItemDto.builder()
+				.itemId(101L)
+				.itemName("강판")
+				.quantity(500)
+				.uomName("kg")
+				.unitPrice(8_000L)
+				.totalPrice(4_000_000L)
+				.build();
+
+		PoItemDto item2 = PoItemDto.builder()
+				.itemId(201L)
+				.itemName("알루미늄")
+				.quantity(300)
+				.uomName("kg")
+				.unitPrice(3_333L)
+				.totalPrice(1_000_000L)
+				.build();
+
+		PoDetailDto.ReferenceInfo reference = PoDetailDto.ReferenceInfo.builder()
+				.type("PURCHASE_ORDER")
+				.purchaseOrderId(1001L)
+				.purchaseOrderCode("PO-2024-001")
+				.orderDate(LocalDate.parse("2024-01-18"))
+				.requestedDeliveryDate(LocalDate.parse("2024-01-25"))
+				.build();
+
+		Instant createdAt = LocalDate.parse("2025-01-20").atTime(9, 0)
+				.atZone(java.time.ZoneOffset.UTC).toInstant();
+		Instant updatedAt = createdAt.plusSeconds(300);
+
+		return PoDetailDto.builder()
+				.invoiceId(resolvedId)
+				.invoiceCode(null)
+				.statusCode("UNPAID")
+				.issueDate(LocalDate.parse("2025-01-20"))
+				.dueDate(LocalDate.parse("2025-02-19"))
+				.purchaseOrderId(1001L)
+				.purchaseOrderCode("PO-2024-001")
+				.orderDate(LocalDate.parse("2024-01-18"))
+				.requestedDeliveryDate(LocalDate.parse("2024-01-25"))
+				.supplierId(501L)
+				.supplierCode("SUP001")
+				.supplierName("대한철강")
+				.managerPhone("02-1234-5678")
+				.managerEmail("order@steel.co.kr")
+				.deliveryAddress("경기도 안산시 단원구 공장로 456")
+				.reference(reference)
+				.items(List.of(item1, item2))
+				.totalAmount(item1.getTotalPrice() + item2.getTotalPrice())
+				.note("1월 생산용 원자재 매입 분")
+				.createdAt(createdAt)
+				.updatedAt(updatedAt)
+				.build();
 	}
 
-	private Map<String, Object> buildItem(String itemName, int quantity, String unit, int unitPrice) {
-		Map<String, Object> item = new LinkedHashMap<>();
-		item.put("itemName", itemName);
-		item.put("quantity", quantity);
-		item.put("unit", unit);
-		item.put("unitPrice", unitPrice);
-		item.put("totalPrice", quantity * unitPrice);
-		return item;
+	private SalesInvoiceDetailDto generateSalesInvoiceDetailMock(Long invoiceId) {
+		SalesInvoiceItemDto item1 = SalesInvoiceItemDto.builder()
+				.itemId(900001L)
+				.itemName("제품 A")
+				.quantity(10)
+				.uomName("EA")
+				.unitPrice(1_000_000L)
+				.amount(10_000_000L)
+				.build();
+
+		SalesInvoiceItemDto item2 = SalesInvoiceItemDto.builder()
+				.itemId(900011L)
+				.itemName("제품 B")
+				.quantity(5)
+				.uomName("EA")
+				.unitPrice(1_000_000L)
+				.amount(5_000_000L)
+				.build();
+
+		SalesInvoiceDetailDto.ReferenceInfo reference = SalesInvoiceDetailDto.ReferenceInfo.builder()
+				.type("QUOTATION")
+				.quotationId(12001L)
+				.quotationCode("Q2024001")
+				.quotationDate(LocalDate.parse("2024-01-15"))
+				.dueDate(LocalDate.parse("2024-02-15"))
+				.build();
+
+		return SalesInvoiceDetailDto.builder()
+				.invoiceId(invoiceId)
+				.invoiceCode(null)
+				.statusCode("UNPAID")
+				.issueDate(LocalDate.parse("2025-10-14"))
+				.dueDate(LocalDate.parse("2025-11-14"))
+				.customerName("삼성전자")
+				.ceoName("이재용")
+				.ownerName("김철수")
+				.reference(reference)
+				.items(List.of(item1, item2))
+				.totalAmount(item1.getAmount() + item2.getAmount())
+				.note("도어 패널 100개 납품")
+				.build();
 	}
+
+	
 }
