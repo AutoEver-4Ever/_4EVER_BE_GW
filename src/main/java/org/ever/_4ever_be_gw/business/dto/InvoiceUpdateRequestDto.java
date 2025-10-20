@@ -14,11 +14,12 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class StatementUpdateRequestDto {
+public class InvoiceUpdateRequestDto {
 
     @Pattern(regexp = "^(UNPAID|PENDING|PAID)$", message = "status는 UNPAID, PENDING, PAID 중 하나여야 합니다")
     private String status;
 
+    // yyyy-MM-dd 형식 날짜. 컨트롤러에서 LocalDate로 deserialize 됨
     private LocalDate dueDate;
 
     @Size(max = 200, message = "메모는 최대 200자까지 입력 가능합니다")

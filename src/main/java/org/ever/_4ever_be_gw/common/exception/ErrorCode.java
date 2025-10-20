@@ -63,6 +63,7 @@ public enum ErrorCode {
     PURCHASE_REQUEST_REJECTION_FORBIDDEN(1039, HttpStatus.FORBIDDEN, "해당 문서를 반려할 권한이 없습니다. (required role: PR_APPROVER|PURCHASING_MANAGER|ADMIN)"),
     PURCHASE_REQUEST_REJECTION_INVALID_TRANSITION(1040, HttpStatus.UNPROCESSABLE_ENTITY, "해당 상태에서는 반려할 수 없습니다."),
     PURCHASE_REQUEST_REJECTION_PROCESSING_ERROR(1041, HttpStatus.INTERNAL_SERVER_ERROR, "요청 처리 중 오류가 발생했습니다."),
+    PURCHASE_REQUEST_DELETE_CONFLICT(1050, HttpStatus.CONFLICT, "대기 상태인 구매요청서만 삭제할 수 있습니다."),
 
     // Purchase Order Approval (PO)
     PURCHASE_ORDER_APPROVAL_FORBIDDEN(1042, HttpStatus.FORBIDDEN, "발주서 승인 권한이 없습니다."),
