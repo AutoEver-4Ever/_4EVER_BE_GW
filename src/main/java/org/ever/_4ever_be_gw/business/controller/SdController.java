@@ -18,6 +18,10 @@ import org.ever._4ever_be_gw.common.util.PageResponseUtils;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
+import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckItemDto;
+import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckItemRequestDto;
+import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckRequestDto;
+import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -115,6 +119,90 @@ import java.util.stream.Collectors;
 
         StatsResponseDto<StatsMetricsDto> data = builder.build();
         return ResponseEntity.ok(ApiResponse.success(data, "OK", HttpStatus.OK));
+    }
+
+    // -------- Inventory Check (C) --------
+    @PostMapping("/quotations/inventory/check")
+    @Operation(
+            summary = "견적 품목 재고 확인",
+            description = "요청한 품목들의 현재 재고를 확인하고 부족 여부를 반환합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 확인을 완료했습니다.\",\n  \"data\": {\n    \"items\": [\n      { \"itemId\": 900001, \"itemName\": \"제품 A\", \"requiredQty\": 10, \"inventoryQty\": 12, \"shortageQty\": 0, \"statusCode\": \"FULFILLED\", \"productionRequired\": false },\n      { \"itemId\": 900011, \"itemName\": \"제품 B\", \"requiredQty\": 5,  \"inventoryQty\": 2,  \"shortageQty\": 3, \"statusCode\": \"SHORTAGE\",  \"productionRequired\": true }\n    ]\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<InventoryCheckResponseDto>> checkInventory(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "request", value = "{\n  \"items\": [\n    { \"itemId\": 900001, \"itemName\": \"제품 A\", \"requiredQty\": 10 },\n    { \"itemId\": 900011, \"itemName\": \"제품 B\", \"requiredQty\": 5 }\n  ]\n}"))
+            )
+            @RequestBody InventoryCheckRequestDto request
+    ) {
+        List<Map<String, String>> errors = new ArrayList<>();
+        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            errors.add(Map.of("field", "items", "reason", "REQUIRED_MIN_1"));
+        } else if (request.getItems().size() > 200) {
+            errors.add(Map.of("field", "items", "reason", "MAX_200"));
+        } else {
+            int idx = 0;
+            for (InventoryCheckItemRequestDto it : request.getItems()) {
+                idx++;
+                if (it == null) {
+                    errors.add(Map.of("field", "items[" + (idx - 1) + "]", "reason", "REQUIRED"));
+                    continue;
+                }
+                if (it.getItemId() == null) {
+                    errors.add(Map.of("field", "items[" + (idx - 1) + "].itemId", "reason", "REQUIRED"));
+                }
+                if (it.getItemName() == null || it.getItemName().isBlank()) {
+                    errors.add(Map.of("field", "items[" + (idx - 1) + "].itemName", "reason", "REQUIRED"));
+                }
+                if (it.getRequiredQty() == null || it.getRequiredQty() <= 0) {
+                    errors.add(Map.of("field", "items[" + (idx - 1) + "].requiredQty", "reason", ">0"));
+                }
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
+        }
+
+        List<InventoryCheckItemDto> results = new ArrayList<>();
+        for (InventoryCheckItemRequestDto it : request.getItems()) {
+            int required = it.getRequiredQty();
+            int baseInv = it.getItemId() != null
+                    ? (int) (Math.abs(it.getItemId()) % 12)
+                    : Math.abs((it.getItemName() == null ? 0 : it.getItemName().hashCode()) % 10) + 1;
+            int inventory = baseInv;
+            int shortage = Math.max(0, required - inventory);
+            boolean needProd = shortage > 0;
+            String status = needProd ? "SHORTAGE" : "FULFILLED";
+
+            results.add(InventoryCheckItemDto.builder()
+                    .itemId(it.getItemId())
+                    .itemName(it.getItemName())
+                    .requiredQty(required)
+                    .inventoryQty(inventory)
+                    .shortageQty(shortage)
+                    .statusCode(status)
+                    .productionRequired(needProd)
+                    .build());
+        }
+
+        InventoryCheckResponseDto data = InventoryCheckResponseDto.builder()
+                .items(results)
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(data, "재고 확인을 완료했습니다.", HttpStatus.OK));
     }
 
     // (moved to end)
