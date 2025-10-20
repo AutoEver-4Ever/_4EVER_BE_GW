@@ -132,10 +132,10 @@ public class FcmController {
 		return ResponseEntity.ok(ApiResponse.success(data, "매출 전표 목록 조회에 성공했습니다.", HttpStatus.OK));
 	}
 
-	@GetMapping("/invoice/as")
+    @GetMapping("/invoice/ar")
 	@Operation(
 		summary = "매출 전표 목록 조회",
-		description = "매출(AS) 전표 목록을 조회합니다.",
+		description = "매출(AR) 전표 목록을 조회합니다.",
 		responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
@@ -155,7 +155,7 @@ public class FcmController {
 		validateDateRange(startDate, endDate);
 		int p = (page == null || page < 0) ? 0 : page;
 		int s = (size == null || size < 1) ? 10 : size;
-		Map<String, Object> data = generateinvoiceListMock(p, s, "AS");
+		Map<String, Object> data = generateinvoiceListMock(p, s, "AR");
 		return ResponseEntity.ok(ApiResponse.success(data, "매출 전표 목록 조회에 성공했습니다.", HttpStatus.OK));
 	}
 
@@ -180,16 +180,16 @@ public class FcmController {
 		return ResponseEntity.ok(ApiResponse.success(detail, "매입 전표 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
 	}
 
-	@GetMapping("/invoice/as/{invoiceId}")
+    @GetMapping("/invoice/ar/{invoiceId}")
 	@Operation(
 		summary = "매출 전표 상세 조회",
-		description = "매출(AS) 전표 상세 정보를 조회합니다.",
+		description = "매출(AR) 전표 상세 정보를 조회합니다.",
 		responses = {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(
 					responseCode = "200",
 					description = "성공",
 					content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"invoiceId\": 1001,\n    \"invoiceCode\": \"AR2025-001\",\n    \"invoiceType\": \"AS\",\n    \"statusCode\": \"UNPAID\",\n    \"issueDate\": \"2025-10-14\",\n    \"dueDate\": \"2025-11-14\",\n    \"name\": \"삼성전자\",\n    \"referenceCode\": \"SO2025-001\",\n    \"items\": [{\n      \"itemId\": 900001,\n      \"itemName\": \"제품 A\",\n      \"quantity\": 10,\n      \"uomName\": \"EA\",\n      \"unitPrice\": 1000000,\n      \"totalPrice\": 10000000\n    },{\n      \"itemId\": 900011,\n      \"itemName\": \"제품 B\",\n      \"quantity\": 5,\n      \"uomName\": \"EA\",\n      \"unitPrice\": 1000000,\n      \"totalPrice\": 5000000\n    }],\n    \"totalAmount\": 15000000,\n    \"note\": \"도어 패널 100개 납품\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"invoiceId\": 1001,\n    \"invoiceCode\": \"AR2025-001\",\n    \"invoiceType\": \"AR\",\n    \"statusCode\": \"UNPAID\",\n    \"issueDate\": \"2025-10-14\",\n    \"dueDate\": \"2025-11-14\",\n    \"name\": \"삼성전자\",\n    \"referenceCode\": \"SO2025-001\",\n    \"items\": [{\n      \"itemId\": 900001,\n      \"itemName\": \"제품 A\",\n      \"quantity\": 10,\n      \"uomName\": \"EA\",\n      \"unitPrice\": 1000000,\n      \"totalPrice\": 10000000\n    },{\n      \"itemId\": 900011,\n      \"itemName\": \"제품 B\",\n      \"quantity\": 5,\n      \"uomName\": \"EA\",\n      \"unitPrice\": 1000000,\n      \"totalPrice\": 5000000\n    }],\n    \"totalAmount\": 15000000,\n    \"note\": \"도어 패널 100개 납품\"\n  }\n}"))
 			)
 		}
 	)
@@ -212,14 +212,58 @@ public class FcmController {
         return ResponseEntity.ok(ApiResponse.success(null, "매입 전표 수정이 완료되었습니다.", HttpStatus.OK));
     }
 
-	@PatchMapping("/invoice/as/{invoiceId}")
-	@Operation(summary = "매출 전표 수정", description = "매출(AS) 전표를 수정합니다. 데이터만 받고 200 반환")
+    @PatchMapping("/invoice/ar/{invoiceId}")
+    @Operation(summary = "매출 전표 수정", description = "매출(AR) 전표를 수정합니다. 데이터만 받고 200 반환")
     public ResponseEntity<ApiResponse<Object>> patchAsinvoice(
         @Parameter(description = "전표 ID") @PathVariable("invoiceId") Long invoiceId,
         @Valid @RequestBody InvoiceUpdateRequestDto request
     ) {
         System.out.println("매출 전표 수정 요청 - ID: " + invoiceId + ", 데이터: " + request);
         return ResponseEntity.ok(ApiResponse.success(null, "매출 전표 수정이 완료되었습니다.", HttpStatus.OK));
+    }
+
+    // ==================== 미수 처리 (모의) ====================
+
+    @PostMapping("/invoice/ar/{invoiceId}/receivable/complete")
+    @Operation(
+        summary = "매출 전표 미수 처리 완료",
+        description = "미납/확인요청 상태의 매출(AR) 전표에 대해 미수 처리를 완료합니다. (모의 처리: 항상 성공 반환)",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"미수 처리 완료되었습니다.\",\n  \"data\": null\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> completeReceivable(
+        @Parameter(description = "매출 전표 ID") @PathVariable("invoiceId") Long invoiceId
+    ) {
+        System.out.println("미수 처리 완료 요청(모의) - ID: " + invoiceId);
+        return ResponseEntity.ok(ApiResponse.success(null, "미수 처리 완료되었습니다.", HttpStatus.OK));
+    }
+
+    // ==================== 매입 전표 미수 처리 요청 (모의) ====================
+
+    @PostMapping("/invoice/ap/receivable/request")
+    @Operation(
+        summary = "매입 전표 미수 처리 요청",
+        description = "매입(AP) 전표에 대해 공급사에 미수 처리 요청을 발송합니다. (모의 처리: 항상 성공 반환)",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"미수 처리 요청을 공급사에 발송했습니다.\",\n  \"data\": null\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> requestApReceivable(
+        @Parameter(description = "매입 전표 ID", required = true) @RequestParam("invoiceId") Long invoiceId
+    ) {
+        System.out.println("매입 전표 미수 처리 요청(모의) - ID: " + invoiceId);
+        return ResponseEntity.ok(ApiResponse.success(null, "미수 처리 요청을 공급사에 발송했습니다.", HttpStatus.OK));
     }
 
 	// ==================== 내부 유틸/목 데이터 생성 ====================
@@ -391,7 +435,7 @@ public class FcmController {
         return InvoiceDetailDto.builder()
                 .invoiceId(resolvedId)
                 .invoiceCode(invoiceCode)
-                .invoiceType("AS")
+                .invoiceType("AR")
                 .statusCode("UNPAID")
                 .issueDate(LocalDate.parse("2025-10-14"))
                 .dueDate(LocalDate.parse("2025-11-14"))
