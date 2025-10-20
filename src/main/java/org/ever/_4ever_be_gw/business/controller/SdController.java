@@ -5,27 +5,30 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.ever._4ever_be_gw.business.dto.QuotationRequestDto;
-import org.ever._4ever_be_gw.business.dto.QuotationConfirmRequestDto;
-import org.ever._4ever_be_gw.business.dto.CustomerCreateRequestDto;
-import org.ever._4ever_be_gw.business.dto.CustomerUpdateRequestDto;
+import org.ever._4ever_be_gw.business.dto.quotation.QuotationDetailDto;
+import org.ever._4ever_be_gw.business.dto.quotation.QuotationItemDto;
+import org.ever._4ever_be_gw.business.dto.quotation.QuotationRequestDto;
+import org.ever._4ever_be_gw.business.dto.quotation.QuotationConfirmRequestDto;
+import org.ever._4ever_be_gw.business.dto.customer.CustomerCreateRequestDto;
+import org.ever._4ever_be_gw.business.dto.customer.CustomerUpdateRequestDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.common.util.PageResponseUtils;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
-import org.ever._4ever_be_gw.business.dto.SdPeriodMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,9 +39,9 @@ import java.util.stream.Collectors;
 
     private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
 
-    
 
-    
+
+
 
     // -------- Statistics (R) --------
     @GetMapping("/statistics")
@@ -66,7 +69,7 @@ import java.util.stream.Collectors;
                     )
             }
     )
-    public ResponseEntity<ApiResponse<Map<String, SdPeriodMetricsDto>>> getStatistics(
+    public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getStatistics(
             @Parameter(name = "periods", description = "조회 기간 목록(콤마 구분)")
             @RequestParam(name = "periods", required = false) String periods
     ) {
@@ -84,32 +87,33 @@ import java.util.stream.Collectors;
 
         List<String> finalPeriods = requested.stream().filter(ALLOWED_PERIODS::contains).toList();
 
-        Map<String, SdPeriodMetricsDto> data = new LinkedHashMap<>();
+        StatsResponseDto.StatsResponseDtoBuilder<StatsMetricsDto> builder = StatsResponseDto.<StatsMetricsDto>builder();
         if (finalPeriods.contains("week")) {
-            data.put("week", SdPeriodMetricsDto.builder()
-                    .salesAmount(new PeriodStatDto(152_300_000L, new BigDecimal("0.105")))
-                    .newOrdersCount(new PeriodStatDto(42L, new BigDecimal("0.067")))
+            builder.week(StatsMetricsDto.builder()
+                    .put("sales_amount", new PeriodStatDto(152_300_000L, new BigDecimal("0.105")))
+                    .put("new_orders_count", new PeriodStatDto(42L, new BigDecimal("0.067")))
                     .build());
         }
         if (finalPeriods.contains("month")) {
-            data.put("month", SdPeriodMetricsDto.builder()
-                    .salesAmount(new PeriodStatDto(485_200_000L, new BigDecimal("0.125")))
-                    .newOrdersCount(new PeriodStatDto(127L, new BigDecimal("0.082")))
+            builder.month(StatsMetricsDto.builder()
+                    .put("sales_amount", new PeriodStatDto(485_200_000L, new BigDecimal("0.125")))
+                    .put("new_orders_count", new PeriodStatDto(127L, new BigDecimal("0.082")))
                     .build());
         }
         if (finalPeriods.contains("quarter")) {
-            data.put("quarter", SdPeriodMetricsDto.builder()
-                    .salesAmount(new PeriodStatDto(1_385_200_000L, new BigDecimal("0.047")))
-                    .newOrdersCount(new PeriodStatDto(392L, new BigDecimal("0.031")))
+            builder.quarter(StatsMetricsDto.builder()
+                    .put("sales_amount", new PeriodStatDto(1_385_200_000L, new BigDecimal("0.047")))
+                    .put("new_orders_count", new PeriodStatDto(392L, new BigDecimal("0.031")))
                     .build());
         }
         if (finalPeriods.contains("year")) {
-            data.put("year", SdPeriodMetricsDto.builder()
-                    .salesAmount(new PeriodStatDto(5_485_200_000L, new BigDecimal("0.036")))
-                    .newOrdersCount(new PeriodStatDto(4_217L, new BigDecimal("0.028")))
+            builder.year(StatsMetricsDto.builder()
+                    .put("sales_amount", new PeriodStatDto(5_485_200_000L, new BigDecimal("0.036")))
+                    .put("new_orders_count", new PeriodStatDto(4_217L, new BigDecimal("0.028")))
                     .build());
         }
 
+        StatsResponseDto<StatsMetricsDto> data = builder.build();
         return ResponseEntity.ok(ApiResponse.success(data, "OK", HttpStatus.OK));
     }
 
@@ -197,6 +201,7 @@ import java.util.stream.Collectors;
         List<Map<String, Object>> items = new ArrayList<>();
         String[] customers = {"삼성전자", "LG전자", "현대자동차", "카카오", "네이버", "SK하이닉스", "포스코", "두산중공업", "한화시스템", "CJ대한통운"};
         String[] owners = {"김철수", "이영희", "박민수", "최지훈", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유"};
+        String[] ceos = {"이재용", "구광모", "장재경", "김범수", "최수연", "곽노정", "김학동", "박정원", "김동관", "손경식"};
         String[] codes = {"PENDING", "REVIEW", "APPROVED", "REJECTED"};
         for (int i = 0; i < 50; i++) {
             Map<String, Object> row = new LinkedHashMap<>();
@@ -283,7 +288,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationCode\": \"Q2024001\",\n    \"quotationDate\": \"2024-01-15\",\n    \"dueDate\": \"2024-02-15\",\n    \"statusCode\": \"PENDING\",\n    \"customerName\": \"삼성전자\",\n    \"ownerName\": \"김철수\",\n    \"items\": [\n      { \"itemId\": 900001, \"productName\": \"제품 A\", \"quantity\": 10, \"unitPrice\": 500000, \"amount\": 5000000 },\n      { \"itemId\": 900002, \"productName\": \"제품 B\", \"quantity\": 5,  \"unitPrice\": 200000, \"amount\": 1000000 }\n    ],\n    \"totalAmount\": 15000000\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationCode\": \"Q2024001\",\n    \"quotationDate\": \"2024-01-15\",\n    \"dueDate\": \"2024-02-15\",\n    \"statusCode\": \"PENDING\",\n    \"customerName\": \"삼성전자\",\n    \"ceoName\": \"이재용\",\n    \"ownerName\": \"김철수\",\n    \"items\": [\n      { \"itemId\": 900001, \"itemName\": \"제품 A\", \"quantity\": 10, \"uomName\": \"EA\", \"unitPrice\": 1000000, \"amount\": 10000000 },\n      { \"itemId\": 900011, \"itemName\": \"제품 B\", \"quantity\": 5,  \"uomName\": \"EA\", \"unitPrice\": 1000000, \"amount\": 5000000 }\n    ],\n    \"totalAmount\": 15000000\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "403",
@@ -324,41 +329,46 @@ import java.util.stream.Collectors;
 
         // 목업 데이터 구성
         String[] customers = {"삼성전자", "LG전자", "현대자동차", "카카오", "네이버", "SK하이닉스", "포스코", "두산중공업", "한화시스템", "CJ대한통운"};
-        String[] owners = {"김철수", "이영희", "박민수", "최지훈", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유"};
+        String[] ceoNames = {"김철수", "이영희", "박민수", "최지훈", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유"};
         String[] codes = {"PENDING", "REVIEW", "APPROVED", "REJECTED"};
 
         int idx = (int) ((quotationId - 12001) % 10);
         String quotationCode = String.format("Q2024%03d", (quotationId - 12000));
         String statusCode = codes[idx % codes.length];
 
-        Map<String, Object> item1 = new LinkedHashMap<>();
-        item1.put("itemId", 900001 + idx);
-        item1.put("productName", "제품 A");
-        item1.put("quantity", 10);
-        item1.put("unitPrice", 500_000L);
-        item1.put("amount", 5_000_000L);
+        QuotationItemDto item1 = QuotationItemDto.builder()
+                .itemId(900001L + idx)
+                .itemName("제품 A")
+                .quantity(10)
+                .uomName("EA")
+                .unitPrice(1_000_000L)
+                .amount(10_000_000L)
+                .build();
 
-        Map<String, Object> item2 = new LinkedHashMap<>();
-        item2.put("itemId", 900011 + idx);
-        item2.put("productName", "제품 B");
-        item2.put("quantity", 5);
-        item2.put("unitPrice", 200_000L);
-        item2.put("amount", 1_000_000L);
+        QuotationItemDto item2 = QuotationItemDto.builder()
+                .itemId(900011L + idx)
+                .itemName("제품 B")
+                .quantity(5)
+                .uomName("EA")
+                .unitPrice(1_000_000L)
+                .amount(5_000_000L)
+                .build();
 
-        long totalAmount = (Long) item1.get("amount") + (Long) item2.get("amount");
+        long totalAmount = item1.getAmount() + item2.getAmount();
 
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("quotationId", quotationId);
-        data.put("quotationCode", quotationCode);
-        data.put("quotationDate", "2024-01-15");
-        data.put("dueDate", "2024-02-15");
-        data.put("statusCode", statusCode);
-        data.put("customerName", customers[idx]);
-        data.put("ownerName", owners[idx]);
-        data.put("items", List.of(item1, item2));
-        data.put("totalAmount", totalAmount);
+        QuotationDetailDto detail = QuotationDetailDto.builder()
+                .quotationId(quotationId)
+                .quotationCode(quotationCode)
+                .quotationDate(LocalDate.parse("2024-01-15"))
+                .dueDate(LocalDate.parse("2024-02-15"))
+                .statusCode(statusCode)
+                .customerName(customers[idx])
+                .ceoName(ceoNames[idx])
+                .items(List.of(item1, item2))
+                .totalAmount(totalAmount)
+                .build();
 
-        return ResponseEntity.ok(ApiResponse.success(data, "견적 상세 조회에 성공했습니다.", HttpStatus.OK));
+        return ResponseEntity.ok(ApiResponse.success(detail, "견적 상세 조회에 성공했습니다.", HttpStatus.OK));
     }
 
     @PostMapping("/quotations")
@@ -494,7 +504,7 @@ import java.util.stream.Collectors;
                             responseCode = "201",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"고객사가 등록되었습니다.\",\n  \"data\": {\n    \"customerId\": 501,\n    \"customerCode\": \"C-0001\",\n    \"companyName\": \"삼성전자\",\n    \"ceoName\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"contact@samsung.com\",\n    \"zipCode\": \"06236\",\n    \"address\": \"서울시 강남구 테헤란로 123\",\n    \"detailAddress\": \"4층\",\n    \"manager\": { \"name\": \"김철수\", \"mobile\": \"010-1234-5678\", \"email\": \"kim@samsung.com\" },\n    \"totalOrders\": 0,\n    \"totalTransactionAmount\": 0,\n    \"currency\": \"KRW\",\n    \"note\": \"주요 고객사, 정기 거래처\",\n    \"createdAt\": \"2025-10-12T12:34:56Z\",\n    \"updatedAt\": \"2025-10-12T12:34:56Z\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"고객사가 등록되었습니다.\",\n  \"data\": {\n    \"customerId\": 501,\n    \"customerCode\": \"C-0001\",\n    \"companyName\": \"삼성전자\",\n    \"ceoName\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"contact@samsung.com\",\n    \"zipCode\": \"06236\",\n    \"address\": \"서울시 강남구 테헤란로 123\",\n    \"detailAddress\": \"4층\",\n    \"manager\": { \"name\": \"김철수\", \"mobile\": \"010-1234-5678\", \"email\": \"kim@samsung.com\" },\n    \"totalOrders\": 0,\n    \"totalTransactionAmount\": 0,\n    \"currency\": \"KRW\",\n    \"note\": \"주요 고객사, 정기 거래처\",\n    \"createdAt\": \"2025-10-12\",\n    \"updatedAt\": \"2025-10-12\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "400",
@@ -595,9 +605,9 @@ import java.util.stream.Collectors;
         data.put("totalTransactionAmount", 0);
         data.put("currency", "KRW");
         data.put("note", request.getNote());
-        java.time.Instant now = java.time.Instant.now();
-        data.put("createdAt", now);
-        data.put("updatedAt", now);
+        java.time.LocalDate today = java.time.LocalDate.now();
+        data.put("createdAt", today);
+        data.put("updatedAt", today);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(data, "고객사가 등록되었습니다.", HttpStatus.CREATED));

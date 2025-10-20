@@ -6,13 +6,18 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
-import org.ever._4ever_be_gw.scmpp.dto.PeriodMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
+import org.ever._4ever_be_gw.scmpp.dto.po.MmPurchaseOrderRejectRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.po.PoDetailDto;
+import org.ever._4ever_be_gw.scmpp.dto.po.PoItemDto;
 import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,9 +36,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionCreateRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionUpdateRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.MmPurchaseRequisitionRejectRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionCreateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionUpdateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionRejectRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierCreateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierUpdateRequestDto;
 
@@ -83,7 +88,7 @@ public class MmController {
                     )
             }
     )
-    public ResponseEntity<ApiResponse<Map<String, PeriodMetricsDto>>> getStatistics(
+    public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getStatistics(
             @Parameter(name = "periods", description = "조회 기간 목록(콤마 구분)")
             @RequestParam(name = "periods", required = false) String periods
     ) {
@@ -107,7 +112,7 @@ public class MmController {
                 .filter(ALLOWED_PERIODS::contains)
                 .toList();
 
-        Map<String, PeriodMetricsDto> data = mmStatisticsService.getStatistics(finalPeriods);
+        StatsResponseDto<StatsMetricsDto> data = mmStatisticsService.getStatistics(finalPeriods);
         return ResponseEntity.ok(ApiResponse.success(data, "OK", HttpStatus.OK));
     }
 
@@ -677,6 +682,63 @@ public class MmController {
         return ResponseEntity.ok(ApiResponse.success(data, "구매요청서가 수정되었습니다.", HttpStatus.OK));
     }
 
+    @DeleteMapping("/purchase-requisitions/{prId}")
+    @Operation(
+            summary = "구매요청서 삭제",
+            description = "대기(PENDING) 상태인 구매요청서를 삭제합니다. 삭제된 문서는 복구할 수 없습니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "삭제 성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"구매요청서가 삭제되었습니다.\",\n  \"data\": {\n    \"id\": 102345,\n    \"prNumber\": \"PR-NS-2025-00001\",\n    \"status\": \"DELETED\",\n    \"deletedAt\": \"2025-10-07T11:15:00Z\"\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "구매요청서 없음",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"해당 구매요청서를 찾을 수 없습니다: prId=999999\",\n  \"errors\": { \"code\": 1012 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "409",
+                            description = "삭제 불가 상태",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "conflict", value = "{\n  \"status\": 409,\n  \"success\": false,\n  \"message\": \"대기 상태인 구매요청서만 삭제할 수 있습니다.\",\n  \"errors\": { \"code\": 1050 }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "처리 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\",\n  \"errors\": { \"code\": 1014 }\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> deletePurchaseRequisition(
+            @Parameter(description = "구매요청 ID", example = "102345")
+            @PathVariable("prId") Long prId
+    ) {
+        if (prId == null || prId < 100000L) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
+        }
+        if (Long.valueOf(102346L).equals(prId) || Long.valueOf(102348L).equals(prId)) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_DELETE_CONFLICT);
+        }
+        if (Long.valueOf(102399L).equals(prId)) {
+            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
+        }
+        if (!Long.valueOf(102345L).equals(prId)) {
+            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", prId);
+        data.put("prNumber", "PR-NS-2025-00001");
+        data.put("status", "DELETED");
+        data.put("deletedAt", java.time.Instant.parse("2025-10-07T11:15:00Z"));
+
+        return ResponseEntity.ok(ApiResponse.success(data, "구매요청서가 삭제되었습니다.", HttpStatus.OK));
+    }
+
     @PostMapping("/purchase-requisitions/{prId}/release")
     @Operation(
             summary = "구매요청서 승인",
@@ -1090,7 +1152,7 @@ public class MmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"id\": 1,\n    \"poNumber\": \"PO-2024-001\",\n    \"vendorName\": \"대한철강\",\n    \"managerPhone\": \"02-1234-5678\",\n    \"managerEmail\": \"order@steel.co.kr\",\n    \"orderDate\": \"2024-01-18\",\n    \"deliveryDate\": \"2024-01-25\",\n    \"status\": \"승인됨\",\n    \"totalAmount\": 5000000,\n    \"items\": [\n      { \"itemName\": \"강판\", \"spec\": \"SS400 10mm\", \"quantity\": 500, \"unit\": \"kg\", \"unitPrice\": 8000, \"amount\": 4000000 },\n      { \"itemName\": \"알루미늄\", \"spec\": \"A6061 5mm\", \"quantity\": 300, \"unit\": \"kg\", \"unitPrice\": 3333, \"amount\": 1000000 }\n    ],\n    \"deliveryAddress\": \"경기도 안산시 단원구 공장로 456\",\n    \"requestedDeliveryDate\": \"2024-01-25\",\n    \"specialInstructions\": \"오전 배송 요청\",\n    \"paymentTerms\": \"월말 결제\",\n    \"note\": \"1월 생산용 원자재 주문\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"발주서 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"purchaseOrderId\": 1001,\n    \"purchaseOrderCode\": \"PO-2024-001\",\n    \"supplierId\": 501,\n    \"supplierCode\": \"SUP001\",\n    \"supplierName\": \"대한철강\",\n    \"managerPhone\": \"02-1234-5678\",\n    \"managerEmail\": \"order@steel.co.kr\",\n    \"orderDate\": \"2024-01-18\",\n    \"requestedDeliveryDate\": \"2024-01-25\",\n    \"statusCode\": \"APPROVED\",\n    \"items\": [\n      { \"itemId\": 101, \"itemName\": \"강판\", \"quantity\": 500, \"uomName\": \"kg\", \"unitPrice\": 8000, \"totalPrice\": 4000000 },\n      { \"itemId\": 201, \"itemName\": \"알루미늄\", \"quantity\": 300, \"uomName\": \"kg\", \"unitPrice\": 3333, \"totalPrice\": 1000000 }\n    ],\n    \"totalAmount\": 5000000,\n    \"deliveryAddress\": \"경기도 안산시 단원구 공장로 456\",\n    \"note\": \"1월 생산용 원자재 주문\",\n    \"createdAt\": \"2024-01-18T09:00:00Z\",\n    \"updatedAt\": \"2024-01-18T09:05:00Z\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -1140,50 +1202,49 @@ public class MmController {
         String[] deliveryDates = {"2024-01-25","2024-01-24","2024-01-23","2024-01-22","2024-01-21","2024-01-20","2024-01-19","2024-01-18","2024-01-17","2024-01-16"};
         String[] statusCodes = {"APPROVED","PENDING","REJECTED","APPROVED","PENDING","APPROVED","REJECTED","PENDING","APPROVED","PENDING"};
 
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("id", purchaseId);
-        data.put("poNumber", String.format("PO-2024-%03d", 1 + idxFull));
-        data.put("supplierId", supplierIds[idx]);
-        data.put("vendorCode", supplierCodes[idx]);
-        data.put("vendorName", suppliers[idx]);
-        data.put("managerPhone", "02-1234-5678");
-        data.put("managerEmail", "order@steel.co.kr");
-        data.put("orderDate", orderDates[idx]);
-        data.put("requestedDeliveryDate", deliveryDates[idx]);
-        data.put("statusCode", statusCodes[idx]);
+        PoItemDto item1 = PoItemDto.builder()
+                .itemId(101L + idx)
+                .itemName("강판")
+                .quantity(500)
+                .uomName("kg")
+                .unitPrice(8_000L)
+                .totalPrice(4_000_000L)
+                .build();
 
-        // 품목
-        java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
-        Map<String, Object> item1 = new LinkedHashMap<>();
-        item1.put("itemName", "강판");
-        item1.put("quantity", 500);
-        item1.put("unit", "kg");
-        item1.put("unitPrice", 8000);
-        item1.put("amount", 4_000_000);
-        items.add(item1);
+        PoItemDto item2 = PoItemDto.builder()
+                .itemId(201L + idx)
+                .itemName("알루미늄")
+                .quantity(300)
+                .uomName("kg")
+                .unitPrice(3_333L)
+                .totalPrice(1_000_000L)
+                .build();
 
-        Map<String, Object> item2 = new LinkedHashMap<>();
-        item2.put("itemName", "알루미늄");
-        item2.put("quantity", 300);
-        item2.put("unit", "kg");
-        item2.put("unitPrice", 3333);
-        item2.put("amount", 1_000_000);
-        items.add(item2);
-
-        data.put("items", items);
-        data.put("totalAmount", 5_000_000);
-        data.put("note", "1월 생산용 원자재 주문");
-
-        // 생성/수정 일시 (orderDate 기준 09:00Z와 +5분)
-        java.time.LocalDate od = java.time.LocalDate.parse(orderDates[idx]);
-        java.time.Instant createdAt = od.atTime(9,0).atZone(java.time.ZoneOffset.UTC).toInstant();
+        java.time.LocalDate orderDate = java.time.LocalDate.parse(orderDates[idx]);
+        java.time.LocalDate deliveryDate = java.time.LocalDate.parse(deliveryDates[idx]);
+        java.time.Instant createdAt = orderDate.atTime(9, 0).atZone(java.time.ZoneOffset.UTC).toInstant();
         java.time.Instant updatedAt = createdAt.plusSeconds(300);
-        data.put("createdAt", createdAt);
-        data.put("updatedAt", updatedAt);
 
-        return ResponseEntity.ok(ApiResponse.<Object>success(
-                data, "발주서 상세 정보 조회에 성공했습니다.", HttpStatus.OK
-        ));
+        PoDetailDto detail = PoDetailDto.builder()
+                .purchaseOrderId(purchaseId)
+                .purchaseOrderCode(String.format("PO-2024-%03d", 1 + idxFull))
+                .supplierId(supplierIds[idx])
+                .supplierCode(supplierCodes[idx])
+                .supplierName(suppliers[idx])
+                .managerPhone("02-1234-5678")
+                .managerEmail("order@steel.co.kr")
+                .orderDate(orderDate)
+                .requestedDeliveryDate(deliveryDate)
+                .statusCode(statusCodes[idx])
+                .items(java.util.List.of(item1, item2))
+                .totalAmount(item1.getTotalPrice() + item2.getTotalPrice())
+                .deliveryAddress("경기도 안산시 단원구 공장로 456")
+                .note("1월 생산용 원자재 주문")
+                .createdAt(createdAt)
+                .updatedAt(updatedAt)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(detail, "발주서 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
     }
 
 
@@ -1755,7 +1816,7 @@ public class MmController {
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(value = "{ \"reason\": \"납기일 미확정\" }"))
             )
-            @RequestBody org.ever._4ever_be_gw.scmpp.dto.MmPurchaseOrderRejectRequestDto request
+            @RequestBody MmPurchaseOrderRejectRequestDto request
     ) {
         if (authorization == null || authorization.isBlank()) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
