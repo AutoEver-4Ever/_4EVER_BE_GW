@@ -7,8 +7,8 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.ever._4ever_be_gw.business.dto.InvoiceUpdateRequestDto;
-import org.ever._4ever_be_gw.business.dto.invoice.SalesInvoiceDetailDto;
-import org.ever._4ever_be_gw.business.dto.invoice.SalesInvoiceItemDto;
+import org.ever._4ever_be_gw.business.dto.invoice.InvoiceDetailDto;
+import org.ever._4ever_be_gw.business.dto.invoice.PurchaseInvoiceItemDto;
 import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
@@ -16,14 +16,12 @@ import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
-import org.ever._4ever_be_gw.scmpp.dto.po.PoDetailDto;
-import org.ever._4ever_be_gw.scmpp.dto.po.PoItemDto;
+// Use business-layer AP invoice DTOs for detail view
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -134,10 +132,10 @@ public class FcmController {
 		return ResponseEntity.ok(ApiResponse.success(data, "매출 전표 목록 조회에 성공했습니다.", HttpStatus.OK));
 	}
 
-	@GetMapping("/invoice/as")
+    @GetMapping("/invoice/ar")
 	@Operation(
 		summary = "매출 전표 목록 조회",
-		description = "매출(AS) 전표 목록을 조회합니다.",
+		description = "매출(AR) 전표 목록을 조회합니다.",
 		responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
@@ -157,12 +155,12 @@ public class FcmController {
 		validateDateRange(startDate, endDate);
 		int p = (page == null || page < 0) ? 0 : page;
 		int s = (size == null || size < 1) ? 10 : size;
-		Map<String, Object> data = generateinvoiceListMock(p, s, "AS");
+		Map<String, Object> data = generateinvoiceListMock(p, s, "AR");
 		return ResponseEntity.ok(ApiResponse.success(data, "매출 전표 목록 조회에 성공했습니다.", HttpStatus.OK));
 	}
 
 	// ==================== 전표 상세 조회 ====================
-	@GetMapping("/invoice/ap/{invoiceId}")
+    @GetMapping("/invoice/ap/{invoiceId}")
 	@Operation(
 		summary = "매입 전표 상세 조회",
 		description = "매입(AP) 전표 상세 정보를 조회합니다.",
@@ -171,34 +169,34 @@ public class FcmController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매입 전표 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"invoiceId\": 2001,\n    \"invoiceCode\": null,\n    \"statusCode\": \"UNPAID\",\n    \"issueDate\": \"2025-01-20\",\n    \"dueDate\": \"2025-02-19\",\n    \"supplierId\": 501,\n    \"supplierCode\": \"SUP001\",\n    \"supplierName\": \"대한철강\",\n    \"managerPhone\": \"02-1234-5678\",\n    \"managerEmail\": \"order@steel.co.kr\",\n    \"deliveryAddress\": \"경기도 안산시 단원구 공장로 456\",\n    \"reference\": {\n      \"type\": \"PURCHASE_ORDER\",\n      \"purchaseOrderId\": 1001,\n      \"purchaseOrderCode\": \"PO-2024-001\",\n      \"orderDate\": \"2024-01-18\",\n      \"requestedDeliveryDate\": \"2024-01-25\"\n    },\n    \"items\": [{\n      \"itemId\": 101,\n      \"itemName\": \"강판\",\n      \"quantity\": 500,\n      \"uomName\": \"kg\",\n      \"unitPrice\": 8000,\n      \"totalPrice\": 4000000\n    },{\n      \"itemId\": 201,\n      \"itemName\": \"알루미늄\",\n      \"quantity\": 300,\n      \"uomName\": \"kg\",\n      \"unitPrice\": 3333,\n      \"totalPrice\": 1000000\n    }],\n    \"totalAmount\": 5000000,\n    \"note\": \"1월 생산용 원자재 매입 분\",\n    \"createdAt\": \"2025-01-20T09:00:00Z\",\n    \"updatedAt\": \"2025-01-20T09:05:00Z\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매입 전표 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"invoiceId\": 2001,\n    \"invoiceCode\": \"AP2025-001\",\n    \"invoiceType\": \"AP\",\n    \"statusCode\": \"UNPAID\",\n    \"issueDate\": \"2025-01-20\",\n    \"dueDate\": \"2025-02-19\",\n    \"name\": \"대한철강\",\n    \"referenceCode\": \"PO2025-001\",\n    \"items\": [{\n      \"itemId\": 101,\n      \"itemName\": \"강판\",\n      \"quantity\": 500,\n      \"uomName\": \"kg\",\n      \"unitPrice\": 8000,\n      \"totalPrice\": 4000000\n    },{\n      \"itemId\": 201,\n      \"itemName\": \"알루미늄\",\n      \"quantity\": 300,\n      \"uomName\": \"kg\",\n      \"unitPrice\": 3333,\n      \"totalPrice\": 1000000\n    }],\n    \"totalAmount\": 5000000,\n    \"note\": \"1월 생산용 원자재 매입 분\"\n  }\n}"))
 			)
 		}
 	)
-	public ResponseEntity<ApiResponse<Object>> getApinvoiceDetail(
+	public ResponseEntity<ApiResponse<InvoiceDetailDto>> getApinvoiceDetail(
 		@Parameter(description = "전표 ID", example = "1") @PathVariable("invoiceId") Long invoiceId
 	) {
-		PoDetailDto detail = generatePurchaseInvoiceDetailMock(invoiceId);
+		InvoiceDetailDto detail = generatePurchaseInvoiceDetailMock(invoiceId);
 		return ResponseEntity.ok(ApiResponse.success(detail, "매입 전표 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
 	}
 
-	@GetMapping("/invoice/as/{invoiceId}")
+    @GetMapping("/invoice/ar/{invoiceId}")
 	@Operation(
 		summary = "매출 전표 상세 조회",
-		description = "매출(AS) 전표 상세 정보를 조회합니다.",
+		description = "매출(AR) 전표 상세 정보를 조회합니다.",
 		responses = {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(
 					responseCode = "200",
 					description = "성공",
 					content = @Content(mediaType = "application/json",
-						examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"invoiceId\": 1,\n    \"invoiceCode\": \"AR-2024-001\",\n    \"connection\": {\n      \"connectionId\": 1,\n      \"connectionCode\": \"C-001\",\n      \"connectionName\": \"현대자동차\"\n    },\n    \"totalAmount\": 10000000,\n    \"issueDate\": \"2025-10-14\",\n    \"dueDate\": \"2025-11-14\",\n    \"status\": \"UNPAID\",\n    \"reference\": {\n      \"referenceId\": 1,\n      \"referenceCode\": \"PO-2024-001\"\n    },\n    \"note\": \"도어 패널 100개 납품\",\n    \"items\": [{\n      \"itemName\": \"강판 A급\",\n      \"quantity\": 50,\n      \"unit\": \"매\",\n      \"unitPrice\": 80000,\n      \"totalPrice\": 4000000\n    }]\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"invoiceId\": 1001,\n    \"invoiceCode\": \"AR2025-001\",\n    \"invoiceType\": \"AR\",\n    \"statusCode\": \"UNPAID\",\n    \"issueDate\": \"2025-10-14\",\n    \"dueDate\": \"2025-11-14\",\n    \"name\": \"삼성전자\",\n    \"referenceCode\": \"SO2025-001\",\n    \"items\": [{\n      \"itemId\": 900001,\n      \"itemName\": \"제품 A\",\n      \"quantity\": 10,\n      \"uomName\": \"EA\",\n      \"unitPrice\": 1000000,\n      \"totalPrice\": 10000000\n    },{\n      \"itemId\": 900011,\n      \"itemName\": \"제품 B\",\n      \"quantity\": 5,\n      \"uomName\": \"EA\",\n      \"unitPrice\": 1000000,\n      \"totalPrice\": 5000000\n    }],\n    \"totalAmount\": 15000000,\n    \"note\": \"도어 패널 100개 납품\"\n  }\n}"))
 			)
 		}
 	)
-	public ResponseEntity<ApiResponse<Object>> getAsinvoiceDetail(
+	public ResponseEntity<ApiResponse<InvoiceDetailDto>> getAsinvoiceDetail(
 		@Parameter(description = "전표 ID", example = "1") @PathVariable("invoiceId") Long invoiceId
 	) {
-		SalesInvoiceDetailDto detail = generateSalesInvoiceDetailMock(invoiceId);
+		InvoiceDetailDto detail = generateSalesInvoiceDetailMock(invoiceId);
 		return ResponseEntity.ok(ApiResponse.success(detail, "매출 전표 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
 	}
 
@@ -214,14 +212,58 @@ public class FcmController {
         return ResponseEntity.ok(ApiResponse.success(null, "매입 전표 수정이 완료되었습니다.", HttpStatus.OK));
     }
 
-	@PatchMapping("/invoice/as/{invoiceId}")
-	@Operation(summary = "매출 전표 수정", description = "매출(AS) 전표를 수정합니다. 데이터만 받고 200 반환")
+    @PatchMapping("/invoice/ar/{invoiceId}")
+    @Operation(summary = "매출 전표 수정", description = "매출(AR) 전표를 수정합니다. 데이터만 받고 200 반환")
     public ResponseEntity<ApiResponse<Object>> patchAsinvoice(
         @Parameter(description = "전표 ID") @PathVariable("invoiceId") Long invoiceId,
         @Valid @RequestBody InvoiceUpdateRequestDto request
     ) {
         System.out.println("매출 전표 수정 요청 - ID: " + invoiceId + ", 데이터: " + request);
         return ResponseEntity.ok(ApiResponse.success(null, "매출 전표 수정이 완료되었습니다.", HttpStatus.OK));
+    }
+
+    // ==================== 미수 처리 (모의) ====================
+
+    @PostMapping("/invoice/ar/{invoiceId}/receivable/complete")
+    @Operation(
+        summary = "매출 전표 미수 처리 완료",
+        description = "미납/확인요청 상태의 매출(AR) 전표에 대해 미수 처리를 완료합니다. (모의 처리: 항상 성공 반환)",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"미수 처리 완료되었습니다.\",\n  \"data\": null\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> completeReceivable(
+        @Parameter(description = "매출 전표 ID") @PathVariable("invoiceId") Long invoiceId
+    ) {
+        System.out.println("미수 처리 완료 요청(모의) - ID: " + invoiceId);
+        return ResponseEntity.ok(ApiResponse.success(null, "미수 처리 완료되었습니다.", HttpStatus.OK));
+    }
+
+    // ==================== 매입 전표 미수 처리 요청 (모의) ====================
+
+    @PostMapping("/invoice/ap/receivable/request")
+    @Operation(
+        summary = "매입 전표 미수 처리 요청",
+        description = "매입(AP) 전표에 대해 공급사에 미수 처리 요청을 발송합니다. (모의 처리: 항상 성공 반환)",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "성공",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"미수 처리 요청을 공급사에 발송했습니다.\",\n  \"data\": null\n}"))
+            )
+        }
+    )
+    public ResponseEntity<ApiResponse<Object>> requestApReceivable(
+        @Parameter(description = "매입 전표 ID", required = true) @RequestParam("invoiceId") Long invoiceId
+    ) {
+        System.out.println("매입 전표 미수 처리 요청(모의) - ID: " + invoiceId);
+        return ResponseEntity.ok(ApiResponse.success(null, "미수 처리 요청을 공급사에 발송했습니다.", HttpStatus.OK));
     }
 
 	// ==================== 내부 유틸/목 데이터 생성 ====================
@@ -333,106 +375,75 @@ public class FcmController {
 		return row;
 	}
 
-	private PoDetailDto generatePurchaseInvoiceDetailMock(Long invoiceId) {
-		long resolvedId = invoiceId == null ? 2001L : invoiceId;
+    private InvoiceDetailDto generatePurchaseInvoiceDetailMock(Long invoiceId) {
+        long resolvedId = invoiceId == null ? 2001L : invoiceId;
 
-		PoItemDto item1 = PoItemDto.builder()
-				.itemId(101L)
-				.itemName("강판")
-				.quantity(500)
-				.uomName("kg")
-				.unitPrice(8_000L)
-				.totalPrice(4_000_000L)
-				.build();
+        PurchaseInvoiceItemDto item1 = PurchaseInvoiceItemDto.builder()
+                .itemName("강판")
+                .quantity(500)
+                .uomName("kg")
+                .unitPrice(8_000L)
+                .totalPrice(4_000_000L)
+                .build();
 
-		PoItemDto item2 = PoItemDto.builder()
-				.itemId(201L)
-				.itemName("알루미늄")
-				.quantity(300)
-				.uomName("kg")
-				.unitPrice(3_333L)
-				.totalPrice(1_000_000L)
-				.build();
+        PurchaseInvoiceItemDto item2 = PurchaseInvoiceItemDto.builder()
+                .itemName("알루미늄")
+                .quantity(300)
+                .uomName("kg")
+                .unitPrice(3_333L)
+                .totalPrice(1_000_000L)
+                .build();
 
-		PoDetailDto.ReferenceInfo reference = PoDetailDto.ReferenceInfo.builder()
-				.type("PURCHASE_ORDER")
-				.purchaseOrderId(1001L)
-				.purchaseOrderCode("PO-2024-001")
-				.orderDate(LocalDate.parse("2024-01-18"))
-				.requestedDeliveryDate(LocalDate.parse("2024-01-25"))
-				.build();
+        String invoiceCode = String.format("AP2025-%03d", Math.toIntExact(resolvedId % 1000));
 
-		Instant createdAt = LocalDate.parse("2025-01-20").atTime(9, 0)
-				.atZone(java.time.ZoneOffset.UTC).toInstant();
-		Instant updatedAt = createdAt.plusSeconds(300);
+        return InvoiceDetailDto.builder()
+                .invoiceId(resolvedId)
+                .invoiceCode(invoiceCode)
+                .invoiceType("AP")
+                .statusCode("UNPAID")
+                .issueDate(LocalDate.parse("2025-01-20"))
+                .dueDate(LocalDate.parse("2025-02-19"))
+                .name("대한철강")
+                .referenceCode("PO2025-001")
+                .totalAmount(item1.getTotalPrice() + item2.getTotalPrice())
+                .items(List.of(item1, item2))
+                .note("1월 생산용 원자재 매입 분")
+                .build();
+    }
 
-		return PoDetailDto.builder()
-				.invoiceId(resolvedId)
-				.invoiceCode(null)
-				.statusCode("UNPAID")
-				.issueDate(LocalDate.parse("2025-01-20"))
-				.dueDate(LocalDate.parse("2025-02-19"))
-				.purchaseOrderId(1001L)
-				.purchaseOrderCode("PO-2024-001")
-				.orderDate(LocalDate.parse("2024-01-18"))
-				.requestedDeliveryDate(LocalDate.parse("2024-01-25"))
-				.supplierId(501L)
-				.supplierCode("SUP001")
-				.supplierName("대한철강")
-				.managerPhone("02-1234-5678")
-				.managerEmail("order@steel.co.kr")
-				.deliveryAddress("경기도 안산시 단원구 공장로 456")
-				.reference(reference)
-				.items(List.of(item1, item2))
-				.totalAmount(item1.getTotalPrice() + item2.getTotalPrice())
-				.note("1월 생산용 원자재 매입 분")
-				.createdAt(createdAt)
-				.updatedAt(updatedAt)
-				.build();
-	}
+    private InvoiceDetailDto generateSalesInvoiceDetailMock(Long invoiceId) {
+        long resolvedId = invoiceId == null ? 1001L : invoiceId;
 
-	private SalesInvoiceDetailDto generateSalesInvoiceDetailMock(Long invoiceId) {
-		SalesInvoiceItemDto item1 = SalesInvoiceItemDto.builder()
-				.itemId(900001L)
-				.itemName("제품 A")
-				.quantity(10)
-				.uomName("EA")
-				.unitPrice(1_000_000L)
-				.amount(10_000_000L)
-				.build();
+        PurchaseInvoiceItemDto item1 = PurchaseInvoiceItemDto.builder()
+                .itemName("제품 A")
+                .quantity(10)
+                .uomName("EA")
+                .unitPrice(1_000_000L)
+                .totalPrice(10_000_000L)
+                .build();
 
-		SalesInvoiceItemDto item2 = SalesInvoiceItemDto.builder()
-				.itemId(900011L)
-				.itemName("제품 B")
-				.quantity(5)
-				.uomName("EA")
-				.unitPrice(1_000_000L)
-				.amount(5_000_000L)
-				.build();
+        PurchaseInvoiceItemDto item2 = PurchaseInvoiceItemDto.builder()
+                .itemName("제품 B")
+                .quantity(5)
+                .uomName("EA")
+                .unitPrice(1_000_000L)
+                .totalPrice(5_000_000L)
+                .build();
 
-		SalesInvoiceDetailDto.ReferenceInfo reference = SalesInvoiceDetailDto.ReferenceInfo.builder()
-				.type("QUOTATION")
-				.quotationId(12001L)
-				.quotationCode("Q2024001")
-				.quotationDate(LocalDate.parse("2024-01-15"))
-				.dueDate(LocalDate.parse("2024-02-15"))
-				.build();
+        String invoiceCode = String.format("AR2025-%03d", Math.toIntExact(resolvedId % 1000));
 
-		return SalesInvoiceDetailDto.builder()
-				.invoiceId(invoiceId)
-				.invoiceCode(null)
-				.statusCode("UNPAID")
-				.issueDate(LocalDate.parse("2025-10-14"))
-				.dueDate(LocalDate.parse("2025-11-14"))
-				.customerName("삼성전자")
-				.ceoName("이재용")
-				.ownerName("김철수")
-				.reference(reference)
-				.items(List.of(item1, item2))
-				.totalAmount(item1.getAmount() + item2.getAmount())
-				.note("도어 패널 100개 납품")
-				.build();
-	}
-
-	
+        return InvoiceDetailDto.builder()
+                .invoiceId(resolvedId)
+                .invoiceCode(invoiceCode)
+                .invoiceType("AR")
+                .statusCode("UNPAID")
+                .issueDate(LocalDate.parse("2025-10-14"))
+                .dueDate(LocalDate.parse("2025-11-14"))
+                .name("삼성전자")
+                .referenceCode("SO2025-001")
+                .totalAmount(item1.getTotalPrice() + item2.getTotalPrice())
+                .items(List.of(item1, item2))
+                .note("도어 패널 100개 납품")
+                .build();
+    }
 }
