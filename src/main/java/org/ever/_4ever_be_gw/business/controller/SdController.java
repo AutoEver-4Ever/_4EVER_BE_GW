@@ -494,7 +494,7 @@ import java.util.stream.Collectors;
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(name = "request", value = "{\n  \"dueDate\": \"2025-11-01\",\n  \"items\": [\n    {\n      \"id\": 10001,\n      \"quantity\": 10,\n      \"unitPrice\": 500000\n    },\n    {\n      \"id\": 10002,\n      \"quantity\": 5,\n      \"unitPrice\": 200000\n    }\n  ],\n  \"note\": \"긴급 납품 요청\"\n}"))
+                            examples = @ExampleObject(name = "request", value = "{\n  \"dueDate\": \"2025-11-01\",\n  \"items\": [\n    {\n      \"itemId\": 10001,\n      \"quantity\": 10,\n      \"unitPrice\": 500000\n    },\n    {\n      \"itemId\": 10002,\n      \"quantity\": 5,\n      \"unitPrice\": 200000\n    }\n  ],\n  \"note\": \"긴급 납품 요청\"\n}"))
             )
             @RequestBody QuotationRequestDto request
     ) {
