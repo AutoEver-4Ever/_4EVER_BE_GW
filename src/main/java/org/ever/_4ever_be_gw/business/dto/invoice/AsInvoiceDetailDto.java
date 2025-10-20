@@ -11,19 +11,25 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SalesInvoiceDetailDto {
+public class AsInvoiceDetailDto {
     private Long invoiceId;           // 매출 전표 ID (미발생 시 null)
     private String invoiceCode;       // 매출 전표 코드 (미발생 시 null)
     private String statusCode;        // 매출 전표 상태 코드
     private LocalDate issueDate;      // 매출 전표 발행일
     private LocalDate dueDate;        // 매출 전표 납기일
-    private String customerName;      // 고객사 이름
+
+    // 고객사 정보
+    private String customerName;      // 고객사 이름 
     private String ceoName;           // 고객사 대표 이름
-    private String ownerName;         // 영업 담당자 이름
-    private ReferenceInfo reference;  // 참조 정보 (견적)
-    private List<SalesInvoiceItemDto> items; // 품목 리스트
+    private String managerName;       // 고객사 담당자 이름
     private long totalAmount;         // 합계 금액
     private String note;              // 비고/메모
+
+    // 참조 정보
+    private ReferenceInfo reference;  // 참조 정보 (견적)
+
+    // 제품 리스트
+    private List<SalesInvoiceItemDto> items; // 품목 리스트
 
     @Getter
     @Builder
