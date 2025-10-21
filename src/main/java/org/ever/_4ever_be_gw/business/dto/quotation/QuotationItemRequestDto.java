@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class QuotationItemRequestDto {
-    private Long itemId;
+    private String itemId; // UUID
     private Integer quantity;
     private Long unitPrice;
 }

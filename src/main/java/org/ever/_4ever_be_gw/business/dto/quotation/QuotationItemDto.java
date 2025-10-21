@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuotationItemDto {
-    private Long itemId;            // 제품 id
+    private String itemId;          // 제품 id
     private String itemName;        // 제품 이름
     private int quantity;           // 수량
     private String uomName;         // 단위(unit of material name)
