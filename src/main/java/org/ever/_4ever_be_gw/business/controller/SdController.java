@@ -22,6 +22,7 @@ import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckItemDto;
 import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckItemRequestDto;
 import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckRequestDto;
 import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckResponseDto;
+import org.ever._4ever_be_gw.business.dto.sd.ItemPriceDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -463,13 +464,13 @@ import java.util.stream.Collectors;
     @PostMapping("/quotations")
     @Operation(
             summary = "신규 견적서 생성",
-            description = "요청 양식만 유효하면 200 OK를 반환합니다.",
+            description = "아이템별 납기일(dueDate)을 포함하여 신규 견적서를 생성합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "201",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"신규 견적서 등록이 완료되었습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationDate\": \"2025-10-12\",\n    \"dueDate\": \"2025-11-01\",\n    \"totalAmount\": 7000000,\n    \"statusCode\": \"PENDING\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"신규 견적서 등록이 완료되었습니다.\",\n  \"data\": {\n    \"quotationId\": 12001,\n    \"quotationDate\": \"2025-10-12\",\n    \"totalAmount\": 7000000,\n    \"statusCode\": \"PENDING\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "400",
@@ -495,17 +496,20 @@ import java.util.stream.Collectors;
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(name = "request", value = "{\n  \"dueDate\": \"2025-11-01\",\n  \"items\": [\n    {\n      \"itemId\": 10001,\n      \"quantity\": 10,\n      \"unitPrice\": 500000\n    },\n    {\n      \"itemId\": 10002,\n      \"quantity\": 5,\n      \"unitPrice\": 200000\n    }\n  ],\n  \"note\": \"긴급 납품 요청\"\n}"))
+                            examples = @ExampleObject(name = "request", value = "{\n  \"items\": [\n    {\n      \"itemId\": \"018f17e1-5c08-7a4b-8abc-1234567890ab\",\n      \"quantity\": 10,\n      \"unitPrice\": 500000,\n      \"dueDate\": \"2025-11-01\"\n    },\n    {\n      \"itemId\": \"018f17e1-5c09-7a4b-8abc-1234567890ab\",\n      \"quantity\": 5,\n      \"unitPrice\": 200000,\n      \"dueDate\": \"2025-11-03\"\n    }\n  ],\n  \"note\": \"긴급 납품 요청\"\n}"))
             )
             @RequestBody QuotationRequestDto request
     ) {
         java.time.LocalDate today = java.time.LocalDate.now();
-        if (request.getDueDate() == null || !request.getDueDate().isAfter(today)) {
-            throw new BusinessException(ErrorCode.QUOTATION_DUE_DATE_INVALID);
-        }
-
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new BusinessException(ErrorCode.QUOTATION_ITEMS_EMPTY);
+        }
+
+        // 각 아이템의 납기일 검증
+        boolean invalidDue = request.getItems().stream()
+                .anyMatch(i -> i.getDueDate() == null || !i.getDueDate().isAfter(today));
+        if (invalidDue) {
+            throw new BusinessException(ErrorCode.QUOTATION_DUE_DATE_INVALID);
         }
 
         long totalAmount = request.getItems().stream()
@@ -519,7 +523,6 @@ import java.util.stream.Collectors;
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("quotationId", 12001);
         data.put("quotationDate", today.toString());
-        data.put("dueDate", request.getDueDate().toString());
         data.put("totalAmount", totalAmount);
         data.put("statusCode", "PENDING");
 
@@ -1657,6 +1660,42 @@ import java.util.stream.Collectors;
     ) {
         // 모킹: 항시 성공 처리 (세부 로직/검증은 추후 구현)
         return ResponseEntity.ok(ApiResponse.success(null, "견적을 승인하고 주문서로 전환했습니다.", HttpStatus.OK));
+    }
+
+    @GetMapping("/items")
+    @Operation(
+            summary = "제품 & 단가 목록 조회",
+            description = "판매 가능한 제품과 해당 제품의 단가 목록을 조회합니다",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"제품 단가 목록을 조회했습니다.\",\n  \"data\": [\n    { \"itemId\": \"PRD-001\", \"itemNumber\": \"PRD-001\", \"itemName\": \"산업용 모터 5HP\", \"uomName\": \"EA\", \"unitPrice\": 850000 },\n    { \"itemId\": \"PRD-002\", \"itemNumber\": \"PRD-002\", \"itemName\": \"제어판넬\",        \"uomName\": \"EA\", \"unitPrice\": 1200000 }\n  ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<List<ItemPriceDto>>> getItemPrices(
+    ) {
+        List<ItemPriceDto> master = List.of(
+                ItemPriceDto.builder().itemId("PRD-001").itemNumber("PRD-001").itemName("산업용 모터 5HP").uomName("EA").unitPrice(850_000L).build(),
+                ItemPriceDto.builder().itemId("PRD-002").itemNumber("PRD-002").itemName("제어판넬").uomName("EA").unitPrice(1_200_000L).build(),
+                ItemPriceDto.builder().itemId("PRD-003").itemNumber("PRD-003").itemName("컨베이어 벨트").uomName("M").unitPrice(95_000L).build(),
+                ItemPriceDto.builder().itemId("PRD-004").itemNumber("PRD-004").itemName("산업용 팬").uomName("EA").unitPrice(320_000L).build(),
+                ItemPriceDto.builder().itemId("PRD-005").itemNumber("PRD-005").itemName("온도 센서").uomName("EA").unitPrice(45_000L).build(),
+                ItemPriceDto.builder().itemId("PRD-006").itemNumber("PRD-006").itemName("압력 게이지").uomName("EA").unitPrice(67_000L).build(),
+                ItemPriceDto.builder().itemId("PRD-007").itemNumber("PRD-007").itemName("PLC 모듈").uomName("EA").unitPrice(540_000L).build(),
+                ItemPriceDto.builder().itemId("PRD-008").itemNumber("PRD-008").itemName("알루미늄 프로파일").uomName("M").unitPrice(15_000L).build(),
+                ItemPriceDto.builder().itemId("PRD-009").itemNumber("PRD-009").itemName("볼트 M8x20").uomName("EA").unitPrice(120L).build(),
+                ItemPriceDto.builder().itemId("PRD-010").itemNumber("PRD-010").itemName("베어링 6205").uomName("EA").unitPrice(4_800L).build()
+        );
+        return ResponseEntity.ok(ApiResponse.success(master, "제품 단가 목록을 조회했습니다.", HttpStatus.OK));
     }
     
 }
