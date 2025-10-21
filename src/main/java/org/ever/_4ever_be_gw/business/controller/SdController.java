@@ -1193,8 +1193,10 @@ import java.util.stream.Collectors;
             @RequestParam(name = "startDate", required = false) String startDate,
             @Parameter(description = "검색 종료일(YYYY-MM-DD)")
             @RequestParam(name = "endDate", required = false) String endDate,
-            @Parameter(description = "주문번호/고객사명/고객명 검색 키워드")
-            @RequestParam(name = "keyword", required = false) String keyword,
+            @Parameter(description = "검색어")
+            @RequestParam(name = "search", required = false) String search,
+            @Parameter(description = "검색 타입: soNumber, customerName, managerName", example = "soNumber")
+            @RequestParam(name = "type", required = false) String type,
             @Parameter(description = "상태: ALL, MATERIAL_PREPARATION, IN_PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED")
             @RequestParam(name = "status", required = false) String status,
             @Parameter(description = "페이지 번호(0-base)")
@@ -1230,6 +1232,12 @@ import java.util.stream.Collectors;
         }
         if (size != null && size > 200) {
             errors.add(Map.of("field", "size", "reason", "MAX_200"));
+        }
+        if (search != null && !search.isBlank()) {
+            var allowedTypes = java.util.Set.of("soNumber", "customerName", "managerName");
+            if (type == null || type.isBlank() || !allowedTypes.contains(type)) {
+                errors.add(Map.of("field", "type", "reason", "ALLOWED_VALUES: soNumber, customerName, managerName"));
+            }
         }
         if (!errors.isEmpty()) {
             throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
@@ -1279,13 +1287,21 @@ import java.util.stream.Collectors;
                     .filter(m -> st.equals(String.valueOf(m.getStatusCode())))
                     .toList();
         }
-        if (keyword != null && !keyword.isBlank()) {
-            final String kw = keyword.toLowerCase(Locale.ROOT);
-            filtered = filtered.stream()
-                    .filter(m -> m.getSoNumber().toLowerCase(Locale.ROOT).contains(kw)
-                            || m.getCustomerName().toLowerCase(Locale.ROOT).contains(kw)
-                            || (m.getManager() != null && m.getManager().getManagerName() != null && m.getManager().getManagerName().toLowerCase(Locale.ROOT).contains(kw)))
-                    .toList();
+        if (search != null && !search.isBlank()) {
+            final String kw = search.toLowerCase(Locale.ROOT);
+            switch (type) {
+                case "soNumber" -> filtered = filtered.stream()
+                        .filter(m -> m.getSoNumber() != null && m.getSoNumber().toLowerCase(Locale.ROOT).contains(kw))
+                        .toList();
+                case "customerName" -> filtered = filtered.stream()
+                        .filter(m -> m.getCustomerName() != null && m.getCustomerName().toLowerCase(Locale.ROOT).contains(kw))
+                        .toList();
+                case "managerName" -> filtered = filtered.stream()
+                        .filter(m -> m.getManager() != null && m.getManager().getManagerName() != null && m.getManager().getManagerName().toLowerCase(Locale.ROOT).contains(kw))
+                        .toList();
+                default -> {
+                }
+            }
         }
         if (from != null) {
             final java.time.LocalDate min = from;
