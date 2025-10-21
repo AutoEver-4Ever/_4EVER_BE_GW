@@ -26,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -1635,6 +1636,27 @@ import java.util.stream.Collectors;
 
         // 날짜 파라미터 누락 시 400
         throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE);
+    }
+
+    @PostMapping("/quotations/{quotationId}/approve-order")
+    @Operation(
+            summary = "견적 승인 및 주문 전환",
+            description = "재고가 충분한 경우 견적서를 승인(APPROVED)하고 주문서를 출고 준비 완료(READY_FOR_SHIPMENT) 상태로 생성합니다. 모킹: 항상 200 성공을 반환합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"견적을 승인하고 주문서로 전환했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> approveQuotationAndCreateOrder(
+            @Parameter(description = "전환 대상 견적 ID")
+            @PathVariable("quotationId") Long quotationId
+    ) {
+        // 모킹: 항시 성공 처리 (세부 로직/검증은 추후 구현)
+        return ResponseEntity.ok(ApiResponse.success(null, "견적을 승인하고 주문서로 전환했습니다.", HttpStatus.OK));
     }
     
 }
