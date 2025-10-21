@@ -1684,16 +1684,16 @@ import java.util.stream.Collectors;
     public ResponseEntity<ApiResponse<List<ItemPriceDto>>> getItemPrices(
     ) {
         List<ItemPriceDto> master = List.of(
-                ItemPriceDto.builder().itemId("PRD-001").itemNumber("PRD-001").itemName("산업용 모터 5HP").uomName("EA").unitPrice(850_000L).build(),
-                ItemPriceDto.builder().itemId("PRD-002").itemNumber("PRD-002").itemName("제어판넬").uomName("EA").unitPrice(1_200_000L).build(),
-                ItemPriceDto.builder().itemId("PRD-003").itemNumber("PRD-003").itemName("컨베이어 벨트").uomName("M").unitPrice(95_000L).build(),
-                ItemPriceDto.builder().itemId("PRD-004").itemNumber("PRD-004").itemName("산업용 팬").uomName("EA").unitPrice(320_000L).build(),
-                ItemPriceDto.builder().itemId("PRD-005").itemNumber("PRD-005").itemName("온도 센서").uomName("EA").unitPrice(45_000L).build(),
-                ItemPriceDto.builder().itemId("PRD-006").itemNumber("PRD-006").itemName("압력 게이지").uomName("EA").unitPrice(67_000L).build(),
-                ItemPriceDto.builder().itemId("PRD-007").itemNumber("PRD-007").itemName("PLC 모듈").uomName("EA").unitPrice(540_000L).build(),
-                ItemPriceDto.builder().itemId("PRD-008").itemNumber("PRD-008").itemName("알루미늄 프로파일").uomName("M").unitPrice(15_000L).build(),
-                ItemPriceDto.builder().itemId("PRD-009").itemNumber("PRD-009").itemName("볼트 M8x20").uomName("EA").unitPrice(120L).build(),
-                ItemPriceDto.builder().itemId("PRD-010").itemNumber("PRD-010").itemName("베어링 6205").uomName("EA").unitPrice(4_800L).build()
+                ItemPriceDto.builder().itemId("018f17e1-5c08-7a4b-8abc-1234567890ab").itemNumber("IT-2025-001").itemName("산업용 모터 5HP").uomName("EA").unitPrice(850_000L).build(),
+                ItemPriceDto.builder().itemId("018f17e1-5c09-7b2c-9def-2345678901bc").itemNumber("IT-2025-002").itemName("제어판넬").uomName("EA").unitPrice(1_200_000L).build(),
+                ItemPriceDto.builder().itemId("018f17e1-5c0a-7c3d-aef0-3456789012cd").itemNumber("IT-2025-003").itemName("컨베이어 벨트").uomName("M").unitPrice(95_000L).build(),
+                ItemPriceDto.builder().itemId("018f17e1-5c0b-7d4e-bf01-456789abcdef").itemNumber("IT-2025-004").itemName("산업용 팬").uomName("EA").unitPrice(320_000L).build(),
+                ItemPriceDto.builder().itemId("018f17e1-5c0c-7e5f-c012-56789bcdef01").itemNumber("IT-2025-005").itemName("온도 센서").uomName("EA").unitPrice(45_000L).build(),
+                ItemPriceDto.builder().itemId("018f17e1-5c0d-7f60-d123-6789cdef0123").itemNumber("IT-2025-006").itemName("압력 게이지").uomName("EA").unitPrice(67_000L).build(),
+                ItemPriceDto.builder().itemId("018f17e1-5c0e-7071-e234-789def012345").itemNumber("IT-2025-007").itemName("PLC 모듈").uomName("EA").unitPrice(540_000L).build(),
+                ItemPriceDto.builder().itemId("018f17e1-5c0f-7182-f345-89def0123456").itemNumber("IT-2025-008").itemName("알루미늄 프로파일").uomName("M").unitPrice(15_000L).build(),
+                ItemPriceDto.builder().itemId("018f17e1-5c10-7293-0456-9def01234567").itemNumber("IT-2025-009").itemName("볼트 M8x20").uomName("EA").unitPrice(120L).build(),
+                ItemPriceDto.builder().itemId("018f17e1-5c11-73a4-1567-adef01234568").itemNumber("IT-2025-010").itemName("베어링 6205").uomName("EA").unitPrice(4_800L).build()
         );
         return ResponseEntity.ok(ApiResponse.success(master, "제품 단가 목록을 조회했습니다.", HttpStatus.OK));
     }
