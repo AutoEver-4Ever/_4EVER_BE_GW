@@ -13,7 +13,6 @@ public class CustomerListItemDto {
     private String customerId;                 // UUID
     private String customerNumber;             // 고객 번호
     private String customerName;               // 고객사명
-    private String ceoName;                    // 대표자명
     private String businessNumber;             // 사업자 등록번호
     private String statusCode;                 // ACTIVE / DEACTIVE
 

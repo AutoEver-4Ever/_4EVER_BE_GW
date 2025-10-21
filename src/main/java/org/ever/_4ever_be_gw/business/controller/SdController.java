@@ -785,19 +785,21 @@ import java.util.stream.Collectors;
     public ResponseEntity<ApiResponse<CustomerListResponseDto>> getCustomers(
             @Parameter(description = "상태: ALL, ACTIVE, DEACTIVE")
             @RequestParam(name = "status", required = false) String status,
-            @Parameter(description = "검색 키워드")
-            @RequestParam(name = "keyword", required = false) String keyword,
+            @Parameter(description = "검색어")
+            @RequestParam(name = "search", required = false) String search,
+            @Parameter(description = "검색 타입: customerNumber, customerName, managerName", example = "customerName")
+            @RequestParam(name = "type", required = false) String type,
             @Parameter(description = "페이지 번호(0-base)")
             @RequestParam(name = "page", required = false) Integer page,
             @Parameter(description = "페이지 크기(최대 200)")
             @RequestParam(name = "size", required = false) Integer size
     ) {
         // 500 모킹 트리거
-        if (keyword != null && ("error".equalsIgnoreCase(keyword) || "500".equalsIgnoreCase(keyword))) {
+        if (search != null && ("error".equalsIgnoreCase(search) || "500".equalsIgnoreCase(search))) {
             throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
         }
         // 403 모킹 트리거
-        if (keyword != null && (keyword.equalsIgnoreCase("금지") || keyword.equalsIgnoreCase("forbidden"))) {
+        if (search != null && (search.equalsIgnoreCase("금지") || search.equalsIgnoreCase("forbidden"))) {
             throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
         }
 
@@ -815,6 +817,16 @@ import java.util.stream.Collectors;
         if (size != null && size > 200) {
             errors.add(Map.of("field", "size", "reason", "MAX_200"));
         }
+        // 검색 타입 검증
+        if (search != null && !search.isBlank()) {
+            java.util.Set<String> allowedTypes = java.util.Set.of("customerNumber", "customerName", "ceoName", "managerName");
+            if (type == null || type.isBlank()) {
+                errors.add(Map.of("field", "type", "reason", "REQUIRED_WHEN_SEARCH"));
+            } else if (!allowedTypes.contains(type)) {
+                errors.add(Map.of("field", "type", "reason", "ALLOWED_VALUES: customerNumber, customerName, ceoName, managerName"));
+            }
+        }
+
         if (!errors.isEmpty()) {
             throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
@@ -840,7 +852,6 @@ import java.util.stream.Collectors;
                     .customerId(String.valueOf(i + 1))
                     .customerNumber(String.format("C-%03d", i + 1))
                     .customerName(companies[i % companies.length])
-                    .ceoName(i % 2 == 0 ? "이재용" : "홍길동")
                     .businessNumber("123-45-67890")
                     .statusCode(statusCode2)
                     .contactPhone(phones[i % phones.length])
@@ -859,13 +870,22 @@ import java.util.stream.Collectors;
             boolean active = status.equals("ACTIVE");
             filtered = filtered.stream().filter(m -> (active ? "ACTIVE" : "DEACTIVE").equals(m.getStatusCode())).toList();
         }
-        if (keyword != null && !keyword.isBlank()) {
-            String kw = keyword.toLowerCase();
-            filtered = filtered.stream().filter(m -> {
-                String cname = (m.getCustomerName() == null ? "" : m.getCustomerName()).toLowerCase();
-                String mname = (m.getManager() == null || m.getManager().getManagerName() == null) ? "" : m.getManager().getManagerName().toLowerCase();
-                return cname.contains(kw) || mname.contains(kw);
-            }).toList();
+        if (search != null && !search.isBlank()) {
+            String kw = search.toLowerCase();
+            switch (type) {
+                case "customerNumber" -> filtered = filtered.stream()
+                        .filter(m -> (m.getCustomerNumber() != null && m.getCustomerNumber().toLowerCase().contains(kw)))
+                        .toList();
+                case "customerName" -> filtered = filtered.stream()
+                        .filter(m -> (m.getCustomerName() != null && m.getCustomerName().toLowerCase().contains(kw)))
+                        .toList();
+                case "managerName" -> filtered = filtered.stream()
+                        .filter(m -> (m.getManager() != null && m.getManager().getManagerName() != null && m.getManager().getManagerName().toLowerCase().contains(kw)))
+                        .toList();
+                default -> {
+                    // 방어적: 미지정/허용 외 타입은 필터 미적용
+                }
+            }
         }
 
         int total = filtered.size();
