@@ -11,6 +11,9 @@ import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowResponseDto;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowTabDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
+import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,18 +25,20 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/business/dashboard")
-@Tag(name = "대시보드(워크플로우)", description = "대시보드 워크플로우 API")
+@RequestMapping("/dashboard")
+@Tag(name = "대시보드", description = "대시보드 워크플로우 API")
 public class BusinessScmFacadeController {
 
     private static final Set<String> MODULES = Set.of("SD", "MM", "IM", "PP", "HRM", "FIN");
+    private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
 
     @GetMapping("/workflows")
     @Operation(
             summary = "대시보드 워크플로우 조회",
-            description = "role별로 탭 2개를 함께 반환합니다. 각 탭은 최대 5개 항목을 제공합니다.",
+            description = "role별로 탭 2개를 함께 반환합니다. 각 탭은 5개 항목을 제공합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
@@ -181,5 +186,83 @@ public class BusinessScmFacadeController {
         String node = String.format("%012x", nodeRand);
 
         return timeLow + "-" + timeMid + "-" + timeHiAndVersion + "-" + clockSeqHiAndReserved + clockSeqLow + "-" + node;
+    }
+
+    @GetMapping("/statistics")
+    @Operation(
+            summary = "대시보드 통계 조회",
+            description = "대시보드 요약 지표(총 매출, 총 매입, 순이익, 총 직원수)를 기간별로 조회합니다. 'periods' 파라미터로 week,month,quarter,year를 선택할 수 있습니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"대시보드 통계를 조회했습니다.\",\n  \"data\": {\n    \"week\": {\n      \"total_sales\":      { \"value\": 68500000,  \"delta_rate\": 0.082 },\n      \"total_purchases\":  { \"value\": 43200000,  \"delta_rate\": 0.054 },\n      \"net_profit\":       { \"value\": 25300000,  \"delta_rate\": 0.097 },\n      \"employee_count\":   { \"value\": 123,       \"delta_rate\": 0.000 }\n    },\n    \"month\": {\n      \"total_sales\":      { \"value\": 275000000, \"delta_rate\": 0.125 },\n      \"total_purchases\":  { \"value\": 189000000, \"delta_rate\": 0.083 },\n      \"net_profit\":       { \"value\": 86000000,  \"delta_rate\": 0.153 },\n      \"employee_count\":   { \"value\": 123,       \"delta_rate\": 0.000 }\n    },\n    \"quarter\": {\n      \"total_sales\":      { \"value\": 812000000, \"delta_rate\": 0.094 },\n      \"total_purchases\":  { \"value\": 596000000, \"delta_rate\": 0.071 },\n      \"net_profit\":       { \"value\": 216000000, \"delta_rate\": 0.118 },\n      \"employee_count\":   { \"value\": 123,       \"delta_rate\": 0.000 }\n    },\n    \"year\": {\n      \"total_sales\":      { \"value\": 3215000000, \"delta_rate\": 0.068 },\n      \"total_purchases\":  { \"value\": 2425000000, \"delta_rate\": 0.057 },\n      \"net_profit\":       { \"value\": 790000000,  \"delta_rate\": 0.103 },\n      \"employee_count\":   { \"value\": 123,        \"delta_rate\": 0.000 }\n    }\n  }\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "422",
+                            description = "검증 실패",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [ { \"field\": \"periods\", \"reason\": \"ALLOWED_VALUES: WEEK, MONTH, QUARTER, YEAR\" } ]\n}"))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류",
+                            content = @Content(mediaType = "application/json",
+                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\"\n}"))
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getDashboardStatistics(
+            @Parameter(description = "조회 기간 목록(콤마 구분)")
+            @RequestParam(name = "periods", required = false) String periods
+    ) {
+        List<String> requested = periods == null || periods.isBlank()
+                ? List.of("week", "month", "quarter", "year")
+                : Arrays.stream(periods.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .collect(Collectors.toList());
+
+        List<String> invalid = requested.stream().filter(p -> !ALLOWED_PERIODS.contains(p)).toList();
+        if (periods != null && !periods.isBlank() && (!invalid.isEmpty() || requested.stream().noneMatch(ALLOWED_PERIODS::contains))) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED);
+        }
+
+        List<String> finalPeriods = requested.stream().filter(ALLOWED_PERIODS::contains).toList();
+        StatsResponseDto.StatsResponseDtoBuilder<StatsMetricsDto> builder = StatsResponseDto.<StatsMetricsDto>builder();
+
+        if (finalPeriods.contains("week")) {
+            builder.week(buildDashboardMetrics(68_500_000L, new java.math.BigDecimal("0.082"), 43_200_000L, new java.math.BigDecimal("0.054"), 123, java.math.BigDecimal.ZERO));
+        }
+        if (finalPeriods.contains("month")) {
+            builder.month(buildDashboardMetrics(275_000_000L, new java.math.BigDecimal("0.125"), 189_000_000L, new java.math.BigDecimal("0.083"), 123, java.math.BigDecimal.ZERO));
+        }
+        if (finalPeriods.contains("quarter")) {
+            builder.quarter(buildDashboardMetrics(812_000_000L, new java.math.BigDecimal("0.094"), 596_000_000L, new java.math.BigDecimal("0.071"), 123, java.math.BigDecimal.ZERO));
+        }
+        if (finalPeriods.contains("year")) {
+            builder.year(buildDashboardMetrics(3_215_000_000L, new java.math.BigDecimal("0.068"), 2_425_000_000L, new java.math.BigDecimal("0.057"), 123, java.math.BigDecimal.ZERO));
+        }
+
+        StatsResponseDto<StatsMetricsDto> data = builder.build();
+        return ResponseEntity.ok(ApiResponse.success(data, "대시보드 통계를 조회했습니다.", HttpStatus.OK));
+    }
+
+    private StatsMetricsDto buildDashboardMetrics(
+            long totalSales,
+            java.math.BigDecimal totalSalesChange,
+            long totalPurchases,
+            java.math.BigDecimal totalPurchasesChange,
+            int employeeCount,
+            java.math.BigDecimal employeeCountChange
+    ) {
+        long netProfit = Math.max(0, totalSales - totalPurchases);
+        return StatsMetricsDto.builder()
+                .put("total_sales", PeriodStatDto.builder().value(totalSales).deltaRate(totalSalesChange).build())
+                .put("total_purchases", PeriodStatDto.builder().value(totalPurchases).deltaRate(totalPurchasesChange).build())
+                .put("net_profit", PeriodStatDto.builder().value(netProfit).deltaRate(new java.math.BigDecimal("0.097")).build())
+                .put("total_employee", PeriodStatDto.builder().value(employeeCount).deltaRate(employeeCountChange).build())
+                .build();
     }
 }
