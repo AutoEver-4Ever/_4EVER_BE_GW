@@ -1746,24 +1746,19 @@ public class MmController {
         return ResponseEntity.ok(ApiResponse.success(data, "발주서를 반려했습니다.", HttpStatus.OK));
     }
 
-    @RestController
-    @RequestMapping("/purchase-requisition")
-    public class PurchaseRequisitionController {
+    @GetMapping("/status-codes")
+    @Operation(
+            summary = "구매 상태 드롭다운 ",
+            description = "구매 상태 드롭다운 목록(APPROVAL, PENDING, REJECTED)을 반환합니다."
+    )
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getStatusCodes() {
+        List<Map<String, Object>> statusCodes = new ArrayList<>();
 
-        @GetMapping("/status-codes")
-        @Operation(
-                summary = "구매요청 상태 코드 조회",
-                description = "구매요청서 상태 코드 목록(APPROVAL, PENDING, REJECTED)을 반환합니다."
-        )
-        public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getStatusCodes() {
-            List<Map<String, Object>> statusCodes = new ArrayList<>();
+        statusCodes.add(Map.of("id", 1, "code", "APPROVAL", "name", "승인됨"));
+        statusCodes.add(Map.of("id", 2, "code", "PENDING", "name", "대기 중"));
+        statusCodes.add(Map.of("id", 3, "code", "REJECTED", "name", "반려됨"));
 
-            statusCodes.add(Map.of("id", 1, "code", "APPROVAL", "name", "승인됨"));
-            statusCodes.add(Map.of("id", 2, "code", "PENDING", "name", "대기 중"));
-            statusCodes.add(Map.of("id", 3, "code", "REJECTED", "name", "반려됨"));
-
-            return ResponseEntity.ok(ApiResponse.success(null, "구매요청 상태 코드 조회 성공",HttpStatus.OK));
-        }
+        return ResponseEntity.ok(ApiResponse.success(null, "구매요청 상태 코드 조회 성공",HttpStatus.OK));
     }
 
 
