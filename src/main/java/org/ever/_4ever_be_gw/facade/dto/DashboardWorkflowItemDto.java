@@ -14,9 +14,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DashboardWorkflowItemDto {
-    private String id;          // 식별자: qoId, poId 등
-    private String title;       // 내용 (ex, 고객사, 공급사, 한 줄 요약 제목)
-    private String number;        // PO-2025-001, SO-2025-003
+    private String itemId;          // 식별자: qoId, poId 등
+    private String itemTitle;       // 내용 (ex, 고객사, 공급사, 한 줄 요약 제목)
+    private String itemNumber;        // PO-2025-001, SO-2025-003
     private String name;        // 담당자 이름
     private String statusCode;  // 상태 코드 (모듈 표준 코드)
     private String date;       // ISO-8601 마감 시각
