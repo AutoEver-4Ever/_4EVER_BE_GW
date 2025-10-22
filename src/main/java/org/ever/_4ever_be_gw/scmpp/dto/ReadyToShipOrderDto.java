@@ -5,16 +5,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReadyToShipOrderDto {
-    private Long salesOrderId;
-    private String salesOrderCode;
-    private String customer;
-    private String orderDate;
-    private String dueDate;
+    private String salesOrderId;
+    private String salesOrderNumber;
+    private String customerCompanyName;
+    private LocalDateTime orderDate;
+    private LocalDateTime dueDate;
     private int totalAmount;
-    private String status;
+    private String statusCode;
 }

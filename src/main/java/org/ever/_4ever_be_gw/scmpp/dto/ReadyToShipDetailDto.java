@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -12,11 +13,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReadyToShipDetailDto {
-    private Long salesOrderId;
-    private String salesOrderCode;
-    private String customer;
-    private String dueDate;
-    private String status;
+    private String salesOrderId;
+    private String salesOrderNumber;
+    private String customerComapnyName;
+    private LocalDateTime dueDate;
+    private String statusCode;
     private List<OrderItemDto> orderItems;
     
     @Data
@@ -26,6 +27,6 @@ public class ReadyToShipDetailDto {
     public static class OrderItemDto {
         private String itemName;
         private int quantity;
-        private String unit;
+        private String uomName;
     }
 }
