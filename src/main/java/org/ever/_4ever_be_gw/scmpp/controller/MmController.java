@@ -737,18 +737,7 @@ public class MmController {
             @Parameter(description = "구매요청 ID", example = "102345")
             @PathVariable("prId") Long prId
     ) {
-        if (prId == null || prId < 100000L) {
-            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
-        }
-        if (Long.valueOf(102346L).equals(prId) || Long.valueOf(102348L).equals(prId)) {
-            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_DELETE_CONFLICT);
-        }
-        if (Long.valueOf(102399L).equals(prId)) {
-            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
-        }
-        if (!Long.valueOf(102345L).equals(prId)) {
-            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
-        }
+        // 목업에서는 항상 성공 응답 반환
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", prId);
@@ -998,30 +987,24 @@ public class MmController {
             @RequestParam(name = "size", required = false) Integer size
     ) {
         List<Map<String, String>> errors = new java.util.ArrayList<>();
-        java.time.LocalDate from = null;
-        java.time.LocalDate to = null;
+        final java.time.LocalDate[] fromDateArr = {null};
+        final java.time.LocalDate[] toDateArr = {null};
+        final String finalStatus = status != null ? status.toUpperCase(Locale.ROOT) : null;
 
-        if (status != null) {
-            String st = status.toUpperCase(Locale.ROOT);
-            if (!"ALL".equals(st)) {
-                var allowed = java.util.Set.of("APPROVED", "PENDING", "REJECTED", "DELIVERED");
-                if (!allowed.contains(st)) {
-                    errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: APPROVED, PENDING, REJECTED, DELIVERED, ALL"));
-                }
-            }
-        }
+        // 간단한 검증만 수행
         if (orderDateFrom != null) {
-            try { from = java.time.LocalDate.parse(orderDateFrom); } catch (Exception e) {
+            try { 
+                fromDateArr[0] = java.time.LocalDate.parse(orderDateFrom); 
+            } catch (Exception e) {
                 errors.add(Map.of("field", "orderDateFrom", "reason", "INVALID_DATE"));
             }
         }
         if (orderDateTo != null) {
-            try { to = java.time.LocalDate.parse(orderDateTo); } catch (Exception e) {
+            try { 
+                toDateArr[0] = java.time.LocalDate.parse(orderDateTo); 
+            } catch (Exception e) {
                 errors.add(Map.of("field", "orderDateTo", "reason", "INVALID_DATE"));
             }
-        }
-        if (from != null && to != null && from.isAfter(to)) {
-            errors.add(Map.of("field", "orderDate", "reason", "FROM_AFTER_TO"));
         }
         if (size != null && size > 200) {
             errors.add(Map.of("field", "size", "reason", "MAX_200"));
@@ -1029,6 +1012,9 @@ public class MmController {
         if (!errors.isEmpty()) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
+        
+        final java.time.LocalDate fromDate = fromDateArr[0];
+        final java.time.LocalDate toDate = toDateArr[0];
 
         String effectiveSort = (sort == null || sort.isBlank()) ? "orderDate,desc" : sort;
         String[] sortParts = effectiveSort.split(",");
@@ -1044,12 +1030,7 @@ public class MmController {
         int pageIndex = (page == null || page < 0) ? 0 : page;
         int pageSize = (size == null || size < 1) ? 10 : size;
 
-        if (from != null && from.isBefore(java.time.LocalDate.of(2024, 1, 1))) {
-            throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
-        }
-        if (effectiveSort.toLowerCase(Locale.ROOT).contains("error") || effectiveSort.contains("500")) {
-            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
-        }
+        // 목업에서는 항상 성공 응답 반환
 
         java.util.List<Map<String, Object>> all = new java.util.ArrayList<>();
         String[] suppliers = {"대한철강","한국알루미늄","포스코","효성중공업","현대제철","두산중공업","세아베스틸","KG동부제철","동국제강","티엠씨메탈"};
@@ -1072,11 +1053,8 @@ public class MmController {
         }
 
         java.util.List<Map<String, Object>> filtered = all;
-        if (status != null) {
-            String st = status.toUpperCase(Locale.ROOT);
-            if (!"ALL".equals(st)) {
-                filtered = filtered.stream().filter(m -> st.equals(m.get("status"))).toList();
-            }
+        if (finalStatus != null && !"ALL".equals(finalStatus)) {
+            filtered = filtered.stream().filter(m -> finalStatus.equals(m.get("status"))).toList();
         }
         if (vendorName != null && !vendorName.isBlank()) {
             String keyword = vendorName.toLowerCase(Locale.ROOT);
@@ -1090,14 +1068,12 @@ public class MmController {
                     .filter(m -> String.valueOf(m.get("poNumber")).toLowerCase(Locale.ROOT).contains(keyword))
                     .toList();
         }
-        if (from != null) {
-            java.time.LocalDate fromDate = from;
+        if (fromDate != null) {
             filtered = filtered.stream()
                     .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))).isBefore(fromDate))
                     .toList();
         }
-        if (to != null) {
-            java.time.LocalDate toDate = to;
+        if (toDate != null) {
             filtered = filtered.stream()
                     .filter(m -> !java.time.LocalDate.parse(String.valueOf(m.get("orderDate"))).isAfter(toDate))
                     .toList();
@@ -1299,18 +1275,9 @@ public class MmController {
 //            throw new BusinessException(ErrorCode.VENDOR_CREATE_FORBIDDEN);
 //        }
 
-        List<Map<String, String>> errors = new java.util.ArrayList<>();
+        // 목업에서는 항상 성공 응답 반환
         var sInfo = (request == null) ? null : request.getSupplierInfo();
         var mInfo = (request == null) ? null : request.getManagerInfo();
-        if (sInfo == null || sInfo.getSupplierName() == null || sInfo.getSupplierName().isBlank()) {
-            errors.add(Map.of("field", "supplierName", "reason", "필수 입력값입니다."));
-        }
-        if (sInfo == null || sInfo.getSupplierEmail() == null || sInfo.getSupplierEmail().isBlank() || !sInfo.getSupplierEmail().contains("@")) {
-            errors.add(Map.of("field", "supplierEmail", "reason", "올바른 이메일 형식이 아닙니다."));
-        }
-        if (!errors.isEmpty()) {
-            throw new ValidationException(ErrorCode.VENDOR_CREATE_VALIDATION_FAILED, errors);
-        }
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("supplierId", 101L);
