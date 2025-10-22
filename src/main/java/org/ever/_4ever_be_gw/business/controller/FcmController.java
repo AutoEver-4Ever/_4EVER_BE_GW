@@ -306,12 +306,8 @@ public class FcmController {
 		row.put("invoiceNumber", invoiceCode);
 		Map<String, Object> supply = new LinkedHashMap<>();
 		supply.put("supplierId", uuidV7());
-		// AP uses supplierCode, AR uses supplierNumber
-		if ("AP".equalsIgnoreCase(type)) {
-			supply.put("supplierCode", connectionCode);
-		} else {
-			supply.put("supplierNumber", connectionCode);
-		}
+		// Both AP and AR use supplierNumber
+		supply.put("supplierNumber", connectionCode);
 		supply.put("supplierName", connectionName);
 		row.put("supply", supply);
 		row.put("totalAmount", totalAmount);
@@ -321,7 +317,7 @@ public class FcmController {
 		row.put("referenceNumber", referenceCode);
 		Map<String, Object> reference = new LinkedHashMap<>();
 		reference.put("referenceId", uuidV7());  // Generate UUID instead of using Long referenceId
-		reference.put("referenceCode", referenceCode);
+		reference.put("referenceNumber", referenceCode);  // Changed from referenceCode to referenceNumber
 		row.put("reference", reference);
 		return row;
 	}
