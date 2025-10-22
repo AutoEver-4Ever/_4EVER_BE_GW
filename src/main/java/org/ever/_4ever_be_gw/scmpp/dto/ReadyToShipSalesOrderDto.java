@@ -1,5 +1,6 @@
 package org.ever._4ever_be_gw.scmpp.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,12 +12,16 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReadyToShipOrderDto {
+public class ReadyToShipSalesOrderDto {
     private String salesOrderId;
     private String salesOrderNumber;
-    private String customerCompanyName;
+    private String customerName;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime orderDate;
-    private LocalDateTime dueDate;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+    private LocalDateTime productionCompletionDate;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+    private LocalDateTime readyToShipDate;
     private int totalAmount;
     private String statusCode;
 }

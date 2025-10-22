@@ -10,16 +10,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InventoryItemDto {
-    private Long itemId;
-    private String itemCode;
+    private String itemId;
+    private String itemNumber;
     private String itemName;
     private String category;
     private int currentStock;
     private int safetyStock;
-    private String unit;
-    private int price;
-    private int totalValue;
+    private String uomName;
+    private int unitPrice;
+    private int totalAmount;
     private String warehouseName;
     private String warehouseType;
-    private String status;
+    private String statusCode;
 }

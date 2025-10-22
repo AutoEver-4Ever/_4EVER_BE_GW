@@ -6,9 +6,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
+import org.ever._4ever_be_gw.scmpp.dto.ProductionSalesOrderDto;
+import org.ever._4ever_be_gw.scmpp.dto.ReadyToShipSalesOrderDto;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.scmpp.dto.*;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
@@ -22,8 +25,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/scm-pp")
@@ -31,195 +37,120 @@ import java.util.*;
 public class ImController {
 
     private static final Set<String> INVENTORY_STAT_PERIODS = Set.of("week", "month", "quarter", "year");
+    private static final String[] ITEM_CATEGORIES = {"원자재", "부품", "반제품", "완제품", "소모품"};
+    private static final String[] WAREHOUSE_NAMES = {"본사창고", "부산창고", "인천창고", "광주창고", "대구창고"};
+    private static final String[] WAREHOUSE_TYPES = {"원자재창고", "부품창고", "완제품창고"};
+    private static final String[] UOM_NAMES = {"EA", "KG", "M", "L", "SET"};
+    private static final String[] ITEM_NAMES = {"강판", "알루미늄", "볼트", "너트", "패널", "모터", "엔진", "전자회로", "배터리", "철판"};
+    private static final String[] SUPPLIER_NAMES = {"대한철강", "한국알루미늄", "포스코", "효성중공업", "현대제철", "두산중공업", "세아베스틸", "KG동부제철", "동국제강", "티엠씨메탈"};
+    private static final String[] CUSTOMER_NAMES = {"삼성전자", "LG전자", "현대자동차", "기아자동차", "SK하이닉스", "포스코", "한화", "롯데케미칼", "대우조선해양", "두산인프라코어"};
+    private static final Random random = new Random(1);  // Fixed seed for reproducible results
 
-    @GetMapping("/inventory/shortage/count/critical/statistic")
+
+    @GetMapping("/iv/shortage/count/critical/statistic")
     @Operation(
             summary = "재고 부족 관리 통계",
-            description = "긴급 및 주의 재고 부족 품목 수를 조회합니다.",
+            description = "긴급 및 주의 재고 부족 품목 수를 주간, 월간, 분기, 연간 단위로 조회합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"부족 재고 통계 정보를 조회했습니다.\",\n  \"data\": {\n    \"totalEmergency\": {\n      \"value\": \"8\",\n      \"comparedPrev\": 2\n    },\n    \"totalWarning\": {\n      \"value\": 15,\n      \"comparedPrev\": 3\n    }\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
     public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getShortageStatistics() {
-        StatsMetricsDto todayMetrics = StatsMetricsDto.builder()
-                .put("total_emergency", PeriodStatDto.builder().value(8L).deltaRate(BigDecimal.valueOf(2L)).build())
-                .put("total_warning", PeriodStatDto.builder().value(15L).deltaRate(BigDecimal.valueOf(3L)).build())
-                .build();
+        StatsResponseDto.StatsResponseDtoBuilder<StatsMetricsDto> builder = StatsResponseDto.<StatsMetricsDto>builder();
 
-        StatsResponseDto<StatsMetricsDto> response = StatsResponseDto.<StatsMetricsDto>builder()
-                .today(todayMetrics)
-                .build();
+        // 주간 통계
+        builder.week(StatsMetricsDto.builder()
+                .put("total_emergency", PeriodStatDto.builder().value(8L).deltaRate(new BigDecimal("0.12")).build())
+                .put("total_warning", PeriodStatDto.builder().value(15L).deltaRate(new BigDecimal("0.08")).build())
+                .build());
 
-        return ResponseEntity.ok(ApiResponse.success(response, "부족 재고 통계 정보를 조회했습니다.", HttpStatus.OK));
+        // 월간 통계
+        builder.month(StatsMetricsDto.builder()
+                .put("total_emergency", PeriodStatDto.builder().value(32L).deltaRate(new BigDecimal("0.09")).build())
+                .put("total_warning", PeriodStatDto.builder().value(60L).deltaRate(new BigDecimal("0.07")).build())
+                .build());
+
+        // 분기별 통계
+        builder.quarter(StatsMetricsDto.builder()
+                .put("total_emergency", PeriodStatDto.builder().value(90L).deltaRate(new BigDecimal("0.06")).build())
+                .put("total_warning", PeriodStatDto.builder().value(180L).deltaRate(new BigDecimal("0.05")).build())
+                .build());
+
+        // 연간 통계
+        builder.year(StatsMetricsDto.builder()
+                .put("total_emergency", PeriodStatDto.builder().value(360L).deltaRate(new BigDecimal("0.04")).build())
+                .put("total_warning", PeriodStatDto.builder().value(720L).deltaRate(new BigDecimal("0.03")).build())
+                .build());
+
+        StatsResponseDto<StatsMetricsDto> response = builder.build();
+
+        return ResponseEntity.ok(ApiResponse.success(response, "재고 부족 통계 정보를 조회했습니다.", HttpStatus.OK));
     }
-    
-    @GetMapping("/inventory/shortage/preview")
+
+
+    @GetMapping("/iv/shortage/preview")
     @Operation(
             summary = "부족 재고 간단 조회",
             description = "재고 부족 목록을 간략하게 조회합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 부족 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"itemName\": \"강판 (두께 5mm)\",\n        \"currentStock\": 50,\n        \"currentUnit\": \"EA\",\n        \"safetyStock\": 100,\n        \"safetyUnit\": \"EA\",\n        \"status\": \"긴급\"\n      },\n      {\n        \"itemName\": \"알루미늄 프로파일\",\n        \"currentStock\": 25,\n        \"currentUnit\": \"M\",\n        \"safetyStock\": 50,\n        \"safetyUnit\": \"M\",\n        \"status\": \"주의\"\n      },\n      {\n        \"itemName\": \"스테인리스 파이프\",\n        \"currentStock\": 8,\n        \"currentUnit\": \"EA\",\n        \"safetyStock\": 20,\n        \"safetyUnit\": \"EA\",\n        \"status\": \"긴급\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 3,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
     public ResponseEntity<ApiResponse<Map<String, Object>>> getShortageItemsPreview() {
         List<ShortageItemPreviewDto> items = Arrays.asList(
                 ShortageItemPreviewDto.builder()
-                        .itemName("강판 (두께 5mm)")
+                        .itemId("1")
+                        .itemName("강판")
                         .currentStock(50)
-                        .currentUnit("EA")
+                        .uomName("EA")
                         .safetyStock(100)
-                        .safetyUnit("EA")
-                        .status("긴급")
+                        .statusCode("URGENT")
                         .build(),
                 ShortageItemPreviewDto.builder()
+                        .itemId("2")
                         .itemName("알루미늄 프로파일")
                         .currentStock(25)
-                        .currentUnit("M")
+                        .uomName("M")
                         .safetyStock(50)
-                        .safetyUnit("M")
-                        .status("주의")
+                        .statusCode("CAUTION")
                         .build(),
                 ShortageItemPreviewDto.builder()
+                        .itemId("3")
                         .itemName("스테인리스 파이프")
                         .currentStock(8)
-                        .currentUnit("EA")
+                        .uomName("EA")
                         .safetyStock(20)
-                        .safetyUnit("EA")
-                        .status("긴급")
+                        .statusCode("URGENT")
                         .build()
         );
-        
-        PageDto pageInfo = PageDto.builder()
-                .number(0)
-                .size(10)
-                .totalElements(3)
-                .totalPages(1)
-                .hasNext(false)
-                .build();
+
         
         Map<String, Object> response = new HashMap<>();
         response.put("content", items);
-        response.put("page", pageInfo);
-        
+
         return ResponseEntity.ok(ApiResponse.success(response, "재고 부족 목록을 조회했습니다.", HttpStatus.OK));
     }
     
-    @GetMapping("/inventory/shortage")
+    @GetMapping("/iv/stock-transfers/statistics")
     @Operation(
-            summary = "부족재고 목록 조회",
-            description = "부족 재고 목록을 조회합니다.",
+            summary = "오늘 총 이동량 통계",
+            description = "오늘 재고이동 통계를 조회합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"부족 재고 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"itemName\": \"스테인리스 스틸 파이프\",\n        \"itemCode\": \"SS-PIPE-001\",\n        \"category\": \"원자재\",\n        \"currentStock\": 45,\n        \"currentUnit\": \"EA\",\n        \"safetyStock\": 50,\n        \"safetyUnit\": \"EA\",\n        \"unitPrice\": 25000,\n        \"totalValue\": 1125000,\n        \"warehouseName\": \"제1창고\",\n        \"warehouseCode\": \"A-01-01\",\n        \"status\": \"긴급\"\n      },\n      {\n        \"itemName\": \"산업용 모터 5HP\",\n        \"itemCode\": \"MOTOR-5HP-001\",\n        \"category\": \"부품\",\n        \"currentStock\": 5,\n        \"currentUnit\": \"EA\",\n        \"safetyStock\": 10,\n        \"safetyUnit\": \"EA\",\n        \"unitPrice\": 850000,\n        \"totalValue\": 4250000,\n        \"warehouseName\": \"제2창고\",\n        \"warehouseCode\": \"C-01-05\",\n        \"status\": \"긴급\"\n      },\n      {\n        \"itemName\": \"용접봉 3.2mm\",\n        \"itemCode\": \"WELD-ROD-32\",\n        \"category\": \"원자재\",\n        \"currentStock\": 5,\n        \"currentUnit\": \"KG\",\n        \"safetyStock\": 20,\n        \"safetyUnit\": \"KG\",\n        \"unitPrice\": 8000,\n        \"totalValue\": 40000,\n        \"warehouseName\": \"제1창고\",\n        \"warehouseCode\": \"D-03-08\",\n        \"status\": \"긴급\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 3,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
-                            )
-                    )
-            }
-    )
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getShortageItems(
-            @Parameter(name = "status", description = "재고 상태(긴급, 주의)")
-            @RequestParam(required = false) String status,
-            @Parameter(name = "page", description = "페이지 번호")
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @Parameter(name = "size", description = "페이지 크기")
-            @RequestParam(required = false, defaultValue = "10") int size
-    ) {
-        List<ShortageItemDetailDto> items = Arrays.asList(
-                ShortageItemDetailDto.builder()
-                        .itemName("스테인리스 스틸 파이프")
-                        .itemCode("SS-PIPE-001")
-                        .category("원자재")
-                        .currentStock(45)
-                        .currentUnit("EA")
-                        .safetyStock(50)
-                        .safetyUnit("EA")
-                        .unitPrice(25000)
-                        .totalValue(1125000)
-                        .warehouseName("제1창고")
-                        .warehouseCode("A-01-01")
-                        .status("긴급")
-                        .build(),
-                ShortageItemDetailDto.builder()
-                        .itemName("산업용 모터 5HP")
-                        .itemCode("MOTOR-5HP-001")
-                        .category("부품")
-                        .currentStock(5)
-                        .currentUnit("EA")
-                        .safetyStock(10)
-                        .safetyUnit("EA")
-                        .unitPrice(850000)
-                        .totalValue(4250000)
-                        .warehouseName("제2창고")
-                        .warehouseCode("C-01-05")
-                        .status("긴급")
-                        .build(),
-                ShortageItemDetailDto.builder()
-                        .itemName("용접봉 3.2mm")
-                        .itemCode("WELD-ROD-32")
-                        .category("원자재")
-                        .currentStock(5)
-                        .currentUnit("KG")
-                        .safetyStock(20)
-                        .safetyUnit("KG")
-                        .unitPrice(8000)
-                        .totalValue(40000)
-                        .warehouseName("제1창고")
-                        .warehouseCode("D-03-08")
-                        .status("긴급")
-                        .build()
-        );
-        
-        PageDto pageInfo = PageDto.builder()
-                .number(page)
-                .size(size)
-                .totalElements(3)
-                .totalPages(1)
-                .hasNext(false)
-                .build();
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", items);
-        response.put("page", pageInfo);
-        
-        return ResponseEntity.ok(ApiResponse.success(response, "부족 재고 목록을 조회했습니다.", HttpStatus.OK));
-    }
-    
-    @GetMapping("/iv/stock-transfers/statistics/{period}")
-    @Operation(
-            summary = "기간별 재고이동 통계",
-            description = "기간별(today, week, month) 재고이동 통계를 조회합니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 이력 통계를 조회했습니다.\",\n  \"data\": {\n    \"period\": \"WEEK\",\n    \"inbound\": {\n      \"total\": 695,\n      \"periodCount\": 120\n    },\n    \"outbound\": {\n      \"total\": 610,\n      \"periodCount\": 105\n    }\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
     public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getStockTransferStatistics(
-            @Parameter(name = "period", description = "기간(today, week, month)")
-            @PathVariable String period
     ) {
+        String period = "today";
         String normalized = period == null ? "" : period.trim().toLowerCase(Locale.ROOT);
         Set<String> allowedPeriods = Set.of("today", "week", "month");
         if (!allowedPeriods.contains(normalized)) {
@@ -244,95 +175,7 @@ public class ImController {
         StatsResponseDto<StatsMetricsDto> response = builder.build();
         return ResponseEntity.ok(ApiResponse.success(response, "재고 이력 통계를 조회했습니다.", HttpStatus.OK));
     }
-    
-    @GetMapping("/iv/stock-transfers/detail")
-    @Operation(
-            summary = "재고이동 상세 목록 조회",
-            description = "재고이동 상세 목록을 조회합니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 이력 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"type\": \"입고\",\n        \"quantity\": 50,\n        \"unit\": \"EA\",\n        \"itemName\": \"스테인리스 스틸 파이프\",\n        \"workDate\": \"2024-01-15\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"PO-2024-001\",\n        \"warehouseCode\": \"A-01-01\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 200,\n        \"unit\": \"EA\",\n        \"itemName\": \"볼트 M8x20\",\n        \"workDate\": \"2024-01-15\",\n        \"manager\": \"이생산\",\n        \"locationCode\": \"WO-2024-005\",\n        \"warehouseCode\": \"B-02-03\"\n      },\n      {\n        \"type\": \"입고\",\n        \"quantity\": 100,\n        \"unit\": \"M\",\n        \"itemName\": \"알루미늄 프로파일\",\n        \"workDate\": \"2024-01-14\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"PO-2024-002\",\n        \"warehouseCode\": \"A-02-01\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 10,\n        \"unit\": \"EA\",\n        \"itemName\": \"베어링 6205\",\n        \"workDate\": \"2024-01-13\",\n        \"manager\": \"이생산\",\n        \"locationCode\": \"WO-2024-004\",\n        \"warehouseCode\": \"B-01-05\"\n      },\n      {\n        \"type\": \"입고\",\n        \"quantity\": 500,\n        \"unit\": \"EA\",\n        \"itemName\": \"고무 패킹\",\n        \"workDate\": \"2024-01-13\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"PO-2024-003\",\n        \"warehouseCode\": \"D-01-01\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 6,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
-                            )
-                    )
-            }
-    )
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getStockTransferDetailList(
-            @Parameter(name = "page", description = "페이지 번호")
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @Parameter(name = "size", description = "페이지 크기")
-            @RequestParam(required = false, defaultValue = "10") int size
-    ) {
-        List<StockTransferDetailDto> items = Arrays.asList(
-                StockTransferDetailDto.builder()
-                        .type("입고")
-                        .quantity(50)
-                        .unit("EA")
-                        .itemName("스테인리스 스틸 파이프")
-                        .workDate(LocalDate.parse("2024-01-15"))
-                        .manager("김구매")
-                        .locationCode("PO-2024-001")
-                        .warehouseCode("A-01-01")
-                        .build(),
-                StockTransferDetailDto.builder()
-                        .type("출고")
-                        .quantity(200)
-                        .unit("EA")
-                        .itemName("볼트 M8x20")
-                        .workDate(LocalDate.parse("2024-01-15"))
-                        .manager("이생산")
-                        .locationCode("WO-2024-005")
-                        .warehouseCode("B-02-03")
-                        .build(),
-                StockTransferDetailDto.builder()
-                        .type("입고")
-                        .quantity(100)
-                        .unit("M")
-                        .itemName("알루미늄 프로파일")
-                        .workDate(LocalDate.parse("2024-01-14"))
-                        .manager("김구매")
-                        .locationCode("PO-2024-002")
-                        .warehouseCode("A-02-01")
-                        .build(),
-                StockTransferDetailDto.builder()
-                        .type("출고")
-                        .quantity(10)
-                        .unit("EA")
-                        .itemName("베어링 6205")
-                        .workDate(LocalDate.parse("2024-01-13"))
-                        .manager("이생산")
-                        .locationCode("WO-2024-004")
-                        .warehouseCode("B-01-05")
-                        .build(),
-                StockTransferDetailDto.builder()
-                        .type("입고")
-                        .quantity(500)
-                        .unit("EA")
-                        .itemName("고무 패킹")
-                        .workDate(LocalDate.parse("2024-01-13"))
-                        .manager("김구매")
-                        .locationCode("PO-2024-003")
-                        .warehouseCode("D-01-01")
-                        .build()
-        );
-        
-        PageDto pageInfo = PageDto.builder()
-                .number(page)
-                .size(size)
-                .totalElements(6)
-                .totalPages(1)
-                .hasNext(false)
-                .build();
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", items);
-        response.put("page", pageInfo);
-        
-        return ResponseEntity.ok(ApiResponse.success(response, "재고 이력 목록을 조회했습니다.", HttpStatus.OK));
-    }
+
     
     @GetMapping("/iv/stock-transfers")
     @Operation(
@@ -341,11 +184,7 @@ public class ImController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 이력 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"type\": \"입고\",\n        \"quantity\": 50,\n        \"unit\": \"EA\",\n        \"itemName\": \"스테인리스 스틸 파이프\",\n        \"workDate\": \"2024-01-15\",\n        \"manager\": \"김구매\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 200,\n        \"unit\": \"EA\",\n        \"itemName\": \"볼트 M8x20\",\n        \"workDate\": \"2024-01-15\",\n        \"manager\": \"이생산\"\n      },\n      {\n        \"type\": \"입고\",\n        \"quantity\": 100,\n        \"unit\": \"M\",\n        \"itemName\": \"알루미늄 프로파일\",\n        \"workDate\": \"2024-01-14\",\n        \"manager\": \"김구매\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 10,\n        \"unit\": \"EA\",\n        \"itemName\": \"베어링 6205\",\n        \"workDate\": \"2024-01-13\",\n        \"manager\": \"이생산\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 5,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
@@ -359,34 +198,34 @@ public class ImController {
                 StockTransferDto.builder()
                         .type("입고")
                         .quantity(50)
-                        .unit("EA")
+                        .uomName("EA")
                         .itemName("스테인리스 스틸 파이프")
-                        .workDate(LocalDate.parse("2024-01-15"))
-                        .manager("김구매")
+                        .workDate(LocalDateTime.parse("2024-01-15T09:15"))
+                        .managerName("김구매")
                         .build(),
                 StockTransferDto.builder()
                         .type("출고")
                         .quantity(200)
-                        .unit("EA")
+                        .uomName("EA")
                         .itemName("볼트 M8x20")
-                        .workDate(LocalDate.parse("2024-01-15"))
-                        .manager("이생산")
+                        .workDate(LocalDateTime.parse("2024-01-15T09:15"))
+                        .managerName("이생산")
                         .build(),
                 StockTransferDto.builder()
                         .type("입고")
                         .quantity(100)
-                        .unit("M")
+                        .uomName("M")
                         .itemName("알루미늄 프로파일")
-                        .workDate(LocalDate.parse("2024-01-14"))
-                        .manager("김구매")
+                        .workDate(LocalDateTime.parse("2024-01-15T09:15"))
+                        .managerName("김구매")
                         .build(),
                 StockTransferDto.builder()
                         .type("출고")
                         .quantity(10)
-                        .unit("EA")
+                        .uomName("EA")
                         .itemName("베어링 6205")
-                        .workDate(LocalDate.parse("2024-01-13"))
-                        .manager("이생산")
+                        .workDate(LocalDateTime.parse("2024-01-15T09:15"))
+                        .managerName("이생산")
                         .build()
         );
         
@@ -412,11 +251,7 @@ public class ImController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"창고간 재고 이동이 완료되었습니다.\",\n  \"data\": null\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
@@ -425,27 +260,24 @@ public class ImController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(null, "창고간 재고 이동이 완료되었습니다.", HttpStatus.OK));
     }
-    
+
     @GetMapping("/iv/warehouses/statistic")
     @Operation(
             summary = "창고 관리 통계",
-            description = "창고 관리 통계를 조회합니다.",
+            description = "창고 관리 통계를 주간, 월간, 분기, 연간 단위로 조회합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"창고 현황을 조회했습니다.\",\n  \"data\": {\n    \"totalWarehouse\": {\n      \"value\": \"15\",\n      \"comparedPrev\": 1\n    },\n    \"inOperationWarehouse\": {\n      \"value\": 13,\n      \"comparedPrev\": 1\n    }\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
-    public ResponseEntity<ApiResponse<WarehouseStatisticDto>> getWarehouseStatistics(
-            @Parameter(name = "period", description = "기간")
-            @RequestParam(required = false) String period
-    ) {
-        WarehouseStatisticDto response = WarehouseStatisticDto.builder()
+    public ResponseEntity<ApiResponse<StatsResponseDto<WarehouseStatisticDto>>> getWarehouseStatistics() {
+
+        StatsResponseDto.StatsResponseDtoBuilder<WarehouseStatisticDto> builder = StatsResponseDto.<WarehouseStatisticDto>builder();
+
+        // 주간
+        builder.week(WarehouseStatisticDto.builder()
                 .totalWarehouse(WarehouseStatisticDto.TotalWarehouseDto.builder()
                         .value("15")
                         .comparedPrev(1)
@@ -454,10 +286,49 @@ public class ImController {
                         .value(13)
                         .comparedPrev(1)
                         .build())
-                .build();
-                
+                .build());
+
+        // 월간
+        builder.month(WarehouseStatisticDto.builder()
+                .totalWarehouse(WarehouseStatisticDto.TotalWarehouseDto.builder()
+                        .value("16")
+                        .comparedPrev(1)
+                        .build())
+                .inOperationWarehouse(WarehouseStatisticDto.InOperationWarehouseDto.builder()
+                        .value(14)
+                        .comparedPrev(1)
+                        .build())
+                .build());
+
+        // 분기
+        builder.quarter(WarehouseStatisticDto.builder()
+                .totalWarehouse(WarehouseStatisticDto.TotalWarehouseDto.builder()
+                        .value("17")
+                        .comparedPrev(1)
+                        .build())
+                .inOperationWarehouse(WarehouseStatisticDto.InOperationWarehouseDto.builder()
+                        .value(15)
+                        .comparedPrev(1)
+                        .build())
+                .build());
+
+        // 연간
+        builder.year(WarehouseStatisticDto.builder()
+                .totalWarehouse(WarehouseStatisticDto.TotalWarehouseDto.builder()
+                        .value("18")
+                        .comparedPrev(1)
+                        .build())
+                .inOperationWarehouse(WarehouseStatisticDto.InOperationWarehouseDto.builder()
+                        .value(16)
+                        .comparedPrev(1)
+                        .build())
+                .build());
+
+        StatsResponseDto<WarehouseStatisticDto> response = builder.build();
+
         return ResponseEntity.ok(ApiResponse.success(response, "창고 현황을 조회했습니다.", HttpStatus.OK));
     }
+
     
     @GetMapping("/iv/warehouses/{warehouseId}")
     @Operation(
@@ -466,31 +337,27 @@ public class ImController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"창고 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"warehouseInfo\": {\n      \"warehouseName\": \"제1창고\",\n      \"warehouseCode\": \"WH-A\",\n      \"warehouseType\": \"원자재\",\n      \"warehouseStatus\": \"운영중\",\n      \"location\": \"경기도 안산시 단원구 중앙대로 123\",\n      \"description\": \"원자재 전용 창고입니다.\"\n    },\n    \"manager\": {\n      \"name\": \"김창고\",\n      \"phoneNumber\": \"031-123-4567\",\n      \"email\": \"kim@example.com\"\n    }\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
     public ResponseEntity<ApiResponse<WarehouseDetailDto>> getWarehouseDetail(
             @Parameter(name = "warehouseId", description = "창고 ID")
-            @PathVariable Long warehouseId
+            @PathVariable String warehouseId
     ) {
         WarehouseDetailDto response = WarehouseDetailDto.builder()
                 .warehouseInfo(WarehouseDetailDto.WarehouseInfoDto.builder()
                         .warehouseName("제1창고")
-                        .warehouseCode("WH-A")
+                        .warehouseNumber("WH-A")
                         .warehouseType("원자재")
-                        .warehouseStatus("운영중")
+                        .statusCode("ACTIVE")
                         .location("경기도 안산시 단원구 중앙대로 123")
                         .description("원자재 전용 창고입니다.")
                         .build())
                 .manager(WarehouseDetailDto.WarehouseManagerDto.builder()
-                        .name("김창고")
-                        .phoneNumber("031-123-4567")
-                        .email("kim@example.com")
+                        .managerName("김창고")
+                        .managerPhoneNumber("031-123-4567")
+                        .managerEmail("kim@example.com")
                         .build())
                 .build();
                 
@@ -504,11 +371,7 @@ public class ImController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"창고 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"warehouseId\": 1,\n        \"warehouseCode\": \"WH-A\",\n        \"warehouseName\": \"제1창고\",\n        \"status\": \"운영중\",\n        \"warehouseType\": \"원자재\",\n        \"location\": \"경기도 안산시 단원구 중앙대로 123\",\n        \"manager\": \"김창고\",\n        \"phone\": \"031-123-4567\"\n      },\n      {\n        \"warehouseId\": 2,\n        \"warehouseCode\": \"WH-B\",\n        \"warehouseName\": \"제2창고\",\n        \"status\": \"운영중\",\n        \"warehouseType\": \"완제품\",\n        \"location\": \"경기도 안산시 상록구 산업로 456\",\n        \"manager\": \"이관리\",\n        \"phone\": \"031-234-5678\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 257,\n      \"totalPages\": 13,\n      \"hasNext\": true\n    }\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
@@ -520,24 +383,24 @@ public class ImController {
     ) {
         List<WarehouseDto> items = Arrays.asList(
                 WarehouseDto.builder()
-                        .warehouseId(1L)
-                        .warehouseCode("WH-A")
+                        .warehouseId("1")
+                        .warehouseNumber("WH-A")
                         .warehouseName("제1창고")
-                        .status("운영중")
+                        .statusCode("ACTIVE")
                         .warehouseType("원자재")
                         .location("경기도 안산시 단원구 중앙대로 123")
                         .manager("김창고")
-                        .phone("031-123-4567")
+                        .managerPhone("031-123-4567")
                         .build(),
                 WarehouseDto.builder()
-                        .warehouseId(2L)
-                        .warehouseCode("WH-B")
+                        .warehouseId("2")
+                        .warehouseNumber("WH-B")
                         .warehouseName("제2창고")
-                        .status("운영중")
+                        .statusCode("ACTIVE")
                         .warehouseType("완제품")
                         .location("경기도 안산시 상록구 산업로 456")
                         .manager("이관리")
-                        .phone("031-234-5678")
+                        .managerPhone("031-234-5678")
                         .build()
         );
         
@@ -563,11 +426,7 @@ public class ImController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"창고가 추가되었습니다.\",\n  \"data\": null\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
@@ -584,70 +443,65 @@ public class ImController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"itemId\": 1,\n    \"itemCode\": \"SS-PIPE-001\",\n    \"itemName\": \"스테인리스 스틸 파이프\",\n    \"category\": \"원자재\",\n    \"supplier\": \"스테인리스코리아\",\n    \"status\": \"정상\",\n    \"currentStock\": 150,\n    \"unit\": \"EA\",\n    \"price\": 25000,\n    \"totalValue\": 3750000,\n    \"warehouseName\": \"제1창고\",\n    \"warehouseCode\": \"A-01-01\",\n    \"lastModified\": \"2024-01-15\",\n    \"description\": \"고품질 스테인리스 스틸 파이프, 내식성 우수\",\n    \"specification\": \"직경 50mm, 두께 3mm, 길이 6m\",\n    \"stockMovements\": [\n      {\n        \"type\": \"입고\",\n        \"quantity\": 50,\n        \"unit\": \"EA\",\n        \"from\": null,\n        \"to\": \"제1창고 (A-01-01)\",\n        \"date\": \"2024-01-15\",\n        \"manager\": \"김구매\",\n        \"locationCode\": \"TR-2024-001\",\n        \"note\": \"정기 구매입고\"\n      },\n      {\n        \"type\": \"이동\",\n        \"quantity\": 20,\n        \"unit\": \"EA\",\n        \"from\": \"제1창고 (A-01-01)\",\n        \"to\": \"제2창고 (C-02-05)\",\n        \"date\": \"2024-01-12\",\n        \"manager\": \"이관리\",\n        \"locationCode\": \"TR-2024-002\",\n        \"note\": \"생산 라인 공급을 위한 이동\"\n      },\n      {\n        \"type\": \"출고\",\n        \"quantity\": 30,\n        \"unit\": \"EA\",\n        \"from\": \"제1창고 (A-01-01)\",\n        \"to\": null,\n        \"date\": \"2024-01-10\",\n        \"manager\": \"박생산\",\n        \"locationCode\": \"WO-2024-001\",\n        \"note\": \"제품 생산을 위한 출고\"\n      }\n    ]\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
     public ResponseEntity<ApiResponse<ItemDetailDto>> getItemDetail(
             @Parameter(name = "itemId", description = "품목 ID")
-            @PathVariable Long itemId
+            @PathVariable String itemId
     ) {
         List<ItemDetailDto.StockMovementDto> stockMovements = Arrays.asList(
                 ItemDetailDto.StockMovementDto.builder()
                         .type("입고")
                         .quantity(50)
-                        .unit("EA")
+                        .uomName("EA")
                         .from(null)
                         .to("제1창고 (A-01-01)")
-                        .date(LocalDate.parse("2024-01-15"))
-                        .manager("김구매")
-                        .locationCode("TR-2024-001")
+                        .movementDate(LocalDateTime.parse("2024-01-15T09:15"))
+                        .managerName("김구매")
+                        .referenceNumber("TR-2024-001")
                         .note("정기 구매입고")
                         .build(),
                 ItemDetailDto.StockMovementDto.builder()
                         .type("이동")
                         .quantity(20)
-                        .unit("EA")
+                        .uomName("EA")
                         .from("제1창고 (A-01-01)")
                         .to("제2창고 (C-02-05)")
-                        .date(LocalDate.parse("2024-01-12"))
-                        .manager("이관리")
-                        .locationCode("TR-2024-002")
+                        .movementDate(LocalDateTime.parse("2024-01-15T09:15"))
+                        .managerName("이관리")
+                        .referenceNumber("TR-2024-002")
                         .note("생산 라인 공급을 위한 이동")
                         .build(),
                 ItemDetailDto.StockMovementDto.builder()
                         .type("출고")
                         .quantity(30)
-                        .unit("EA")
+                        .uomName("EA")
                         .from("제1창고 (A-01-01)")
                         .to(null)
-                        .date(LocalDate.parse("2024-01-10"))
-                        .manager("박생산")
-                        .locationCode("WO-2024-001")
+                        .movementDate(LocalDateTime.parse("2024-01-15T09:15"))
+                        .managerName("박생산")
+                        .referenceNumber("WO-2024-001")
                         .note("제품 생산을 위한 출고")
                         .build()
         );
         
         ItemDetailDto response = ItemDetailDto.builder()
                 .itemId(itemId)
-                .itemCode("SS-PIPE-001")
+                .itemNumber("SS-PIPE-001")
                 .itemName("스테인리스 스틸 파이프")
                 .category("원자재")
-                .supplier("스테인리스코리아")
-                .status("정상")
+                .supplierCompanyName("스테인리스코리아")
+                .statusCode("NORMAL")
                 .currentStock(150)
-                .unit("EA")
-                .price(25000)
-                .totalValue(3750000)
+                .uomName("EA")
+                .unitPrice(25000)
+                .totalAmount(3750000)
                 .warehouseName("제1창고")
-                .warehouseCode("A-01-01")
-                .lastModified(LocalDate.parse("2024-01-15"))
+                .warehouseNumber("A-01-01")
+                .lastModified(LocalDateTime.parse("2024-01-15T09:15"))
                 .description("고품질 스테인리스 스틸 파이프, 내식성 우수")
-                .specification("직경 50mm, 두께 3mm, 길이 6m")
                 .stockMovements(stockMovements)
                 .build();
         
@@ -729,95 +583,6 @@ public class ImController {
         StatsResponseDto<StatsMetricsDto> response = builder.build();
         return ResponseEntity.ok(ApiResponse.success(response, "재고 및 입출고 현황을 조회했습니다.", HttpStatus.OK));
     }
-    
-    @GetMapping("/iv/items")
-    @Operation(
-            summary = "재고 목록 조회",
-            description = "재고 목록을 조회합니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"itemId\": 1,\n        \"itemCode\": \"SS-PIPE-001\",\n        \"itemName\": \"스테인리스 스틸 파이프\",\n        \"category\": \"원자재\",\n        \"currentStock\": 150,\n        \"safetyStock\": 50,\n        \"unit\": \"EA\",\n        \"price\": 25000,\n        \"totalValue\": 3750000,\n        \"warehouseName\": \"제1창고\",\n        \"warehouseType\": \"A-01-01\",\n        \"status\": \"정상\"\n      },\n      {\n        \"itemId\": 1,\n        \"itemCode\": \"BOLT-M8-20\",\n        \"itemName\": \"볼트 M8x20\",\n        \"category\": \"부품\",\n        \"currentStock\": 25,\n        \"safetyStock\": 100,\n        \"unit\": \"EA\",\n        \"price\": 500,\n        \"totalValue\": 12500,\n        \"warehouseName\": \"제3창고\",\n        \"warehouseType\": \"B-02-15\",\n        \"status\": \"부족\"\n      },\n      {\n        \"itemId\": \"MOTOR-5HP-001\",\n        \"itemName\": \"산업용 모터 5HP\",\n        \"category\": \"완제품\",\n        \"currentStock\": 8,\n        \"safetyStock\": 5,\n        \"unit\": \"EA\",\n        \"price\": 850000,\n        \"totalValue\": 6800000,\n        \"warehouseName\": \"제2창고\",\n        \"warehouseType\": \"C-01-05\",\n        \"status\": \"정상\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 6,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
-                            )
-                    )
-            }
-    )
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getInventoryItems(
-            @Parameter(name = "page", description = "페이지 번호")
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @Parameter(name = "size", description = "페이지 크기")
-            @RequestParam(required = false, defaultValue = "10") int size,
-            @Parameter(name = "category", description = "카테고리")
-            @RequestParam(required = false) String category,
-            @Parameter(name = "status", description = "상태")
-            @RequestParam(required = false) String status,
-            @Parameter(name = "warehouse", description = "창고")
-            @RequestParam(required = false) String warehouse,
-            @Parameter(name = "itemName", description = "품목명")
-            @RequestParam(required = false) String itemName
-    ) {
-        List<InventoryItemDto> items = Arrays.asList(
-                InventoryItemDto.builder()
-                        .itemId(1L)
-                        .itemCode("SS-PIPE-001")
-                        .itemName("스테인리스 스틸 파이프")
-                        .category("원자재")
-                        .currentStock(150)
-                        .safetyStock(50)
-                        .unit("EA")
-                        .price(25000)
-                        .totalValue(3750000)
-                        .warehouseName("제1창고")
-                        .warehouseType("A-01-01")
-                        .status("정상")
-                        .build(),
-                InventoryItemDto.builder()
-                        .itemId(2L)
-                        .itemCode("BOLT-M8-20")
-                        .itemName("볼트 M8x20")
-                        .category("부품")
-                        .currentStock(25)
-                        .safetyStock(100)
-                        .unit("EA")
-                        .price(500)
-                        .totalValue(12500)
-                        .warehouseName("제3창고")
-                        .warehouseType("B-02-15")
-                        .status("부족")
-                        .build(),
-                InventoryItemDto.builder()
-                        .itemId(3L)
-                        .itemCode("MOTOR-5HP-001")
-                        .itemName("산업용 모터 5HP")
-                        .category("완제품")
-                        .currentStock(8)
-                        .safetyStock(5)
-                        .unit("EA")
-                        .price(850000)
-                        .totalValue(6800000)
-                        .warehouseName("제2창고")
-                        .warehouseType("C-01-05")
-                        .status("정상")
-                        .build()
-        );
-        
-        PageDto pageInfo = PageDto.builder()
-                .number(page)
-                .size(size)
-                .totalElements(6)
-                .totalPages(1)
-                .hasNext(false)
-                .build();
-                
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", items);
-        response.put("page", pageInfo);
-        
-        return ResponseEntity.ok(ApiResponse.success(response, "재고 목록을 조회했습니다.", HttpStatus.OK));
-    }
 
     @PatchMapping("/sales-orders/{salesOrderId}/status")
     @Operation(
@@ -826,17 +591,13 @@ public class ImController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문 상태가 출고준비완료로 변경되었습니다.\",\n  \"data\": {\n    \"salesOrderId\": 1,\n    \"salesOrderCode\": \"SO-2024-001\",\n    \"status\": \"출고준비완료\"\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
     public ResponseEntity<ApiResponse<SalesOrderStatusDto>> updateOrderStatus(
             @Parameter(name = "salesOrderId", description = "주문 ID")
-            @PathVariable Long salesOrderId
+            @PathVariable String salesOrderId
     ) {
         SalesOrderStatusDto response = SalesOrderStatusDto.builder()
                 .salesOrderId(salesOrderId)
@@ -854,98 +615,37 @@ public class ImController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"출고 준비 완료 주문 상세를 조회했습니다.\",\n  \"data\": {\n    \"salesOrderId\": 1,\n    \"salesOrderCode\": \"SO-2024-002\",\n    \"customer\": \"현대건설\",\n    \"dueDate\": \"2024-01-22\",\n    \"status\": \"출고 준비완료\",\n    \"orderItems\": [\n      {\n        \"itemName\": \"볼트 M8x20\",\n        \"quantity\": 500,\n        \"unit\": \"EA\"\n      },\n      {\n        \"itemName\": \"베어링 6205\",\n        \"quantity\": 20,\n        \"unit\": \"EA\"\n      }\n    ]\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
     public ResponseEntity<ApiResponse<ReadyToShipDetailDto>> getReadyToShipDetail(
             @Parameter(name = "salesOrderId", description = "주문 ID")
-            @PathVariable Long salesOrderId
+            @PathVariable String salesOrderId
     ) {
         List<ReadyToShipDetailDto.OrderItemDto> orderItems = Arrays.asList(
                 ReadyToShipDetailDto.OrderItemDto.builder()
-                        .itemName("볼트 M8x20")
+                        .itemName("볼트")
                         .quantity(500)
-                        .unit("EA")
+                        .uomName("EA")
                         .build(),
                 ReadyToShipDetailDto.OrderItemDto.builder()
                         .itemName("베어링 6205")
                         .quantity(20)
-                        .unit("EA")
+                        .uomName("EA")
                         .build()
         );
 
         ReadyToShipDetailDto response = ReadyToShipDetailDto.builder()
                 .salesOrderId(salesOrderId)
-                .salesOrderCode("SO-2024-002")
-                .customer("현대건설")
-                .dueDate("2024-01-22")
-                .status("출고 준비완료")
+                .salesOrderNumber("SO-2024-002")
+                .customerComapnyName("현대건설")
+                .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
+                .statusCode("READY_FOR_SHIPMENT")
                 .orderItems(orderItems)
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success(response, "출고 준비 완료 주문 상세를 조회했습니다.", HttpStatus.OK));
-    }
-
-    @GetMapping("/sales-orders/ready-to-ship")
-    @Operation(
-            summary = "출고 준비 완료 목록",
-            description = "출고 준비 완료된 주문 목록을 조회합니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"출고 준비 완료 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"salesOrderId\": 1,\n        \"salesOrderCode\": \"SO-2024-001\",\n        \"customer\": \"대한제철\",\n        \"orderDate\": \"2024-01-10\",\n        \"dueDate\": \"2024-01-20\",\n        \"totalAmount\": 15750000,\n        \"status\": \"출고 준비완료\"\n      },\n      {\n        \"salesOrderId\": 2,\n        \"salesOrderCode\": \"SO-2024-002\",\n        \"customer\": \"신성기공\",\n        \"orderDate\": \"2024-01-12\",\n        \"dueDate\": \"2024-01-25\",\n        \"totalAmount\": 8700000,\n        \"status\": \"출고 준비완료\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 2,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
-                            )
-                    )
-            }
-    )
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getReadyToShipList(
-            @Parameter(name = "page", description = "페이지 번호")
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @Parameter(name = "size", description = "페이지 크기")
-            @RequestParam(required = false, defaultValue = "10") int size
-    ) {
-        List<ReadyToShipOrderDto> items = Arrays.asList(
-                ReadyToShipOrderDto.builder()
-                        .salesOrderId(1L)
-                        .salesOrderCode("SO-2024-001")
-                        .customer("대한제철")
-                        .orderDate("2024-01-10")
-                        .dueDate("2024-01-20")
-                        .totalAmount(15750000)
-                        .status("출고 준비완료")
-                        .build(),
-                ReadyToShipOrderDto.builder()
-                        .salesOrderId(2L)
-                        .salesOrderCode("SO-2024-002")
-                        .customer("신성기공")
-                        .orderDate("2024-01-12")
-                        .dueDate("2024-01-25")
-                        .totalAmount(8700000)
-                        .status("출고 준비완료")
-                        .build()
-        );
-
-        PageDto pageInfo = PageDto.builder()
-                .number(page)
-                .size(size)
-                .totalElements(2)
-                .totalPages(1)
-                .hasNext(false)
-                .build();
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", items);
-        response.put("page", pageInfo);
-
-        return ResponseEntity.ok(ApiResponse.success(response, "출고 준비 완료 목록을 조회했습니다.", HttpStatus.OK));
     }
 
     @GetMapping("/sales-orders/production/{salesOrderId}")
@@ -955,209 +655,651 @@ public class ImController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"주문 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"salesOrderId\": 1,\n    \"salesOrderCode\": \"SO-2024-001\",\n    \"customer\": \"대한제철\",\n    \"dueDate\": \"2024-01-20\",\n    \"status\": \"생산중\",\n    \"orderItems\": [\n      {\n        \"itemName\": \"스테인리스 파이프\",\n        \"quantity\": 100,\n        \"unit\": \"EA\"\n      },\n      {\n        \"itemName\": \"알루미늄 프로파일\",\n        \"quantity\": 50,\n        \"unit\": \"M\"\n      }\n    ]\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
     public ResponseEntity<ApiResponse<ReadyToShipDetailDto>> getProductionOrderDetail(
             @Parameter(name = "salesOrderId", description = "주문 ID")
-            @PathVariable Long salesOrderId
+            @PathVariable String salesOrderId
     ) {
         List<ReadyToShipDetailDto.OrderItemDto> orderItems = Arrays.asList(
                 ReadyToShipDetailDto.OrderItemDto.builder()
                         .itemName("스테인리스 파이프")
                         .quantity(100)
-                        .unit("EA")
+                        .uomName("EA")
                         .build(),
                 ReadyToShipDetailDto.OrderItemDto.builder()
                         .itemName("알루미늄 프로파일")
                         .quantity(50)
-                        .unit("M")
+                        .uomName("M")
                         .build()
         );
 
         ReadyToShipDetailDto response = ReadyToShipDetailDto.builder()
                 .salesOrderId(salesOrderId)
-                .salesOrderCode("SO-2024-001")
-                .customer("대한제철")
-                .dueDate("2024-01-20")
-                .status("생산중")
+                .salesOrderNumber("SO-2024-001")
+                .customerComapnyName("대한제철")
+                .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
+                .statusCode("IN_PRODUCTION")
                 .orderItems(orderItems)
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success(response, "주문 상세 정보를 조회했습니다.", HttpStatus.OK));
     }
 
-    @GetMapping("/sales-orders/production")
-    @Operation(
-            summary = "생산중 목록조회",
-            description = "생산 중인 주문 목록을 조회합니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"생산중 주문 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"salesOrderId\": 1,\n        \"salesOrderCode\": \"SO-2024-001\",\n        \"customer\": \"대한제철\",\n        \"orderDate\": \"2024-01-10\",\n        \"dueDate\": \"2024-01-20\",\n        \"orderAmount\": 15750000,\n        \"currency\": \"KRW\",\n        \"status\": \"생산중\"\n      },\n      {\n        \"salesOrderId\": 3,\n        \"salesOrderCode\": \"SO-2024-003\",\n        \"customer\": \"삼성물산\",\n        \"orderDate\": \"2024-01-12\",\n        \"dueDate\": \"2024-01-25\",\n        \"orderAmount\": 8900000,\n        \"currency\": \"KRW\",\n        \"status\": \"생산중\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 2,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
-                            )
-                    )
-            }
-    )
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getProductionOrderList(
-            @Parameter(name = "page", description = "페이지 번호")
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @Parameter(name = "size", description = "페이지 크기")
-            @RequestParam(required = false, defaultValue = "10") int size
+//    @GetMapping("/sales-orders/production")
+//    @Operation(
+//            summary = "생산중 목록조회",
+//            description = "생산 중인 주문 목록을 조회합니다.",
+//            responses = {
+//                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+//                            responseCode = "200",
+//                            description = "성공"
+//                    )
+//            }
+//    )
+//    public ResponseEntity<ApiResponse<Map<String, Object>>> getProductionOrderList(
+//            @Parameter(name = "page", description = "페이지 번호")
+//            @RequestParam(required = false, defaultValue = "0") int page,
+//            @Parameter(name = "size", description = "페이지 크기")
+//            @RequestParam(required = false, defaultValue = "10") int size
+//    ) {
+//        List<ProductionOrderDto> items = Arrays.asList(
+//                ProductionOrderDto.builder()
+//                        .salesOrderId("1")
+//                        .salesOrderNumber("SO-2024-001")
+//                        .customerCompanyName("대한제철")
+//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .orderAmount(15750000)
+//                        .statusCode("IN_PRODUCTION")
+//                        .build(),
+//                ProductionOrderDto.builder()
+//                        .salesOrderId("3")
+//                        .salesOrderNumber("SO-2024-003")
+//                        .customerCompanyName("삼성물산")
+//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .orderAmount(8900000)
+//                        .statusCode("IN_PRODUCTION")
+//                        .build()
+//        );
+//
+//        PageDto pageInfo = PageDto.builder()
+//                .number(page)
+//                .size(size)
+//                .totalElements(2)
+//                .totalPages(1)
+//                .hasNext(false)
+//                .build();
+//
+//        Map<String, Object> response = new HashMap<>();
+//        response.put("content", items);
+//        response.put("page", pageInfo);
+//
+//        return ResponseEntity.ok(ApiResponse.success(response, "생산중 주문 목록을 조회했습니다.", HttpStatus.OK));
+//    }
+
+//    @GetMapping("/purchase-orders/received")
+//    @Operation(
+//            summary = "입고완료 목록 조회",
+//            description = "입고 완료된 발주 목록을 조회합니다.",
+//            responses = {
+//                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+//                            responseCode = "200",
+//                            description = "성공"
+//                    )
+//            }
+//    )
+//    public ResponseEntity<ApiResponse<Map<String, Object>>> getReceivedPurchaseOrders(
+//            @Parameter(name = "page", description = "페이지 번호(0-base)")
+//            @RequestParam(required = false, defaultValue = "0") int page,
+//            @Parameter(name = "size", description = "페이지 크기")
+//            @RequestParam(required = false, defaultValue = "10") int size
+//    ) {
+//        List<ReceivedPurchaseOrderDto> items = Arrays.asList(
+//                ReceivedPurchaseOrderDto.builder()
+//                        .purchaseOrderId("1")
+//                        .purchaseOrderNumber("PO-2024-003")
+//                        .supplierCompanyName("부산금속상사")
+//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .receivedDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .totalAmount(3120000)
+//                        .statusCode("RECEIVED")
+//                        .build(),
+//                ReceivedPurchaseOrderDto.builder()
+//                        .purchaseOrderId("4")
+//                        .purchaseOrderNumber("PO-2024-004")
+//                        .supplierCompanyName("강남기계")
+//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .receivedDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .totalAmount(975000)
+//                        .statusCode("RECEIVED")
+//                        .build()
+//        );
+//
+//        PageDto pageInfo = PageDto.builder()
+//                .number(page)
+//                .size(size)
+//                .totalElements(2)
+//                .totalPages(1)
+//                .hasNext(false)
+//                .build();
+//
+//        Map<String, Object> response = new HashMap<>();
+//        response.put("content", items);
+//        response.put("page", pageInfo);
+//
+//        return ResponseEntity.ok(ApiResponse.success(response, "입고 완료 목록을 조회했습니다.", HttpStatus.OK));
+//    }
+
+//    @GetMapping("/purchase-orders/pending")
+//    @Operation(
+//            summary = "입고대기 목록 조회",
+//            description = "입고 대기 중인 발주 목록을 조회합니다.",
+//            responses = {
+//                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+//                            responseCode = "200",
+//                            description = "성공"
+//                    )
+//            }
+//    )
+//    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPurchaseOrders(
+//            @Parameter(name = "page", description = "페이지 번호(0-base)")
+//            @RequestParam(required = false, defaultValue = "0") int page,
+//            @Parameter(name = "size", description = "페이지 크기")
+//            @RequestParam(required = false, defaultValue = "10") int size
+//    ) {
+//        List<PendingPurchaseOrderDto> items = Arrays.asList(
+//                PendingPurchaseOrderDto.builder()
+//                        .purchaseOrderId("1")
+//                        .purchaseOrderNumber("PO-2024-001")
+//                        .supplierCompanyName("스테인리스코리아")
+//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .totalAmount(4250000)
+//                        .statusCode("RECEIVING")
+//                        .build(),
+//                PendingPurchaseOrderDto.builder()
+//                        .purchaseOrderId("2")
+//                        .purchaseOrderNumber("PO-2024-002")
+//                        .supplierCompanyName("금속유통")
+//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
+//                        .totalAmount(1860000)
+//                        .statusCode("RECEIVING")
+//                        .build()
+//        );
+//
+//        PageDto pageInfo = PageDto.builder()
+//                .number(page)
+//                .size(size)
+//                .totalElements(2)
+//                .totalPages(1)
+//                .hasNext(false)
+//                .build();
+//
+//        Map<String, Object> response = new HashMap<>();
+//        response.put("content", items);
+//        response.put("page", pageInfo);
+//
+//        return ResponseEntity.ok(ApiResponse.success(response, "입고 대기 목록을 조회했습니다.", HttpStatus.OK));
+//    }
+
+    @GetMapping("/inventory-items")
+    public ResponseEntity<ApiResponse<Object>> getInventoryItems(
+            @Parameter(description = "카테고리: 원자재, 부품")
+            @RequestParam(name = "category", required = false) String category,
+            @Parameter(description = "창고명")
+            @RequestParam(name = "warehouseName", required = false) String warehouseName,
+            @Parameter(description = "재고 상태: NORMAL, CAUTION, URGENT")
+            @RequestParam(name = "statusCode", required = false) String statusCode,
+            @Parameter(description = "품목명 (부분 검색 가능)")
+            @RequestParam(name = "itemName", required = false) String itemName,
+            @Parameter(description = "페이지 번호")
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "페이지 크기")
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
     ) {
-        List<ProductionOrderDto> items = Arrays.asList(
-                ProductionOrderDto.builder()
-                        .salesOrderId(1L)
-                        .salesOrderCode("SO-2024-001")
-                        .customer("대한제철")
-                        .orderDate("2024-01-10")
-                        .dueDate("2024-01-20")
-                        .orderAmount(15750000)
-                        .currency("KRW")
-                        .status("생산중")
-                        .build(),
-                ProductionOrderDto.builder()
-                        .salesOrderId(3L)
-                        .salesOrderCode("SO-2024-003")
-                        .customer("삼성물산")
-                        .orderDate("2024-01-12")
-                        .dueDate("2024-01-25")
-                        .orderAmount(8900000)
-                        .currency("KRW")
-                        .status("생산중")
-                        .build()
-        );
+        // --- 더미 데이터 생성 ---
+        List<InventoryItemDto> allItems = new ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            String itemCategory = ITEM_CATEGORIES[i % ITEM_CATEGORIES.length];
+            String warehouse = WAREHOUSE_NAMES[i % WAREHOUSE_NAMES.length];
+            String warehouseType = WAREHOUSE_TYPES[i % WAREHOUSE_TYPES.length];
+            String uom = UOM_NAMES[i % UOM_NAMES.length];
+            String itemNameValue = ITEM_NAMES[i % ITEM_NAMES.length] + " " + (i + 1);
+
+            int currentStock = 20 + (i * 5) % 300;
+            int safetyStock = 100;
+            String statusValue;
+
+            if (currentStock < safetyStock * 0.5) statusValue = "URGENT";
+            else if (currentStock < safetyStock) statusValue = "CAUTION";
+            else statusValue = "NORMAL";
+
+            int unitPrice = 5000 + (i * 1000) % 30000;
+
+            allItems.add(InventoryItemDto.builder()
+                    .itemId(String.valueOf(1001 + i))
+                    .itemNumber("ITEM-" + (1001 + i))
+                    .itemName(itemNameValue)
+                    .category(itemCategory)
+                    .currentStock(currentStock)
+                    .safetyStock(safetyStock)
+                    .uomName(uom)
+                    .unitPrice(unitPrice)
+                    .totalAmount(currentStock * unitPrice)
+                    .warehouseName(warehouse)
+                    .warehouseType(warehouseType)
+                    .statusCode(statusValue)
+                    .build());
+        }
+
+        // --- 필터링 로직 (대소문자 구분 X, 부분 일치 포함) ---
+        List<InventoryItemDto> filteredItems = allItems.stream()
+                .filter(item -> category == null || item.getCategory().equalsIgnoreCase(category.trim()))
+                .filter(item -> warehouseName == null || item.getWarehouseName().equalsIgnoreCase(warehouseName.trim()))
+                .filter(item -> statusCode == null || item.getStatusCode().equalsIgnoreCase(statusCode.trim()))
+                .filter(item -> itemName == null || item.getItemName().toLowerCase().contains(itemName.toLowerCase().trim()))
+                .collect(Collectors.toList());
+
+        // --- 페이지네이션 ---
+        int fromIndex = Math.min(page * size, filteredItems.size());
+        int toIndex = Math.min(fromIndex + size, filteredItems.size());
+        List<InventoryItemDto> pagedItems = filteredItems.subList(fromIndex, toIndex);
 
         PageDto pageInfo = PageDto.builder()
                 .number(page)
                 .size(size)
-                .totalElements(2)
-                .totalPages(1)
-                .hasNext(false)
+                .totalElements(filteredItems.size())
+                .totalPages((int) Math.ceil((double) filteredItems.size() / size))
+                .hasNext(toIndex < filteredItems.size())
                 .build();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("content", items);
+        response.put("content", pagedItems);
         response.put("page", pageInfo);
 
-        return ResponseEntity.ok(ApiResponse.success(response, "생산중 주문 목록을 조회했습니다.", HttpStatus.OK));
+        return ResponseEntity.ok(ApiResponse.success(response, "재고 목록을 조회했습니다.", HttpStatus.OK));
     }
+
+
+    @GetMapping("/iv/shortage")
+    @Operation(
+            summary = "부족 재고 목록 조회",
+            description = "부족 재고 목록을 조회합니다. (statusCode=URGENT 또는 CAUTION으로 필터링 가능)",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공"
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> getShortageItems(
+            @Parameter(description = "재고 상태: URGENT 또는 CAUTION")
+            @RequestParam(name = "statusCode", required = false) String statusCode,
+            @Parameter(description = "페이지 번호(0-base)")
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "페이지 크기")
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
+    ) {
+        List<ShortageItemDetailDto> allItems = new ArrayList<>();
+
+        for (int i = 0; i < 50; i++) {
+            String itemCategory = ITEM_CATEGORIES[i % ITEM_CATEGORIES.length];
+            String warehouse = WAREHOUSE_NAMES[i % WAREHOUSE_NAMES.length];
+            String warehouseNumber = "WH-" + (100 + i % 5);
+            String uom = UOM_NAMES[i % UOM_NAMES.length];
+            String itemNameValue = ITEM_NAMES[i % ITEM_NAMES.length] + " " + (i + 1);
+
+            int safetyStock = 100 + (i % 50);
+            int currentStock = safetyStock - 10 - (i % 90);
+            if (currentStock < 0) currentStock = 5;
+
+            // 상태 결정
+            String statusValue = currentStock < safetyStock * 0.5 ? "URGENT" : "CAUTION";
+
+            int unitPrice = 5000 + (i * 1000) % 30000;
+
+            ShortageItemDetailDto item = ShortageItemDetailDto.builder()
+                    .itemId(String.valueOf(1001 + i))
+                    .itemName(itemNameValue)
+                    .itemNumber("ITEM-" + (1001 + i))
+                    .category(itemCategory)
+                    .currentStock(currentStock)
+                    .safetyStock(safetyStock)
+                    .uomName(uom)
+                    .unitPrice(unitPrice)
+                    .totalAmount(currentStock * unitPrice)
+                    .warehouseName(warehouse)
+                    .warehouseNumber(warehouseNumber)
+                    .statusCode(statusValue)
+                    .build();
+
+            allItems.add(item);
+        }
+
+        // 실제 필터링 적용
+        List<ShortageItemDetailDto> filteredItems = allItems.stream()
+                .filter(item -> {
+                    if (statusCode == null || statusCode.isBlank()) return true;
+                    return item.getStatusCode().equalsIgnoreCase(statusCode.trim());
+                })
+                .collect(Collectors.toList());
+
+        // 페이지네이션
+        int fromIndex = Math.min(page * size, filteredItems.size());
+        int toIndex = Math.min(fromIndex + size, filteredItems.size());
+        List<ShortageItemDetailDto> pagedItems = filteredItems.subList(fromIndex, toIndex);
+
+        // 페이지 정보
+        PageDto pageInfo = PageDto.builder()
+                .number(page)
+                .size(size)
+                .totalElements(filteredItems.size())
+                .totalPages((int) Math.ceil((double) filteredItems.size() / size))
+                .hasNext(toIndex < filteredItems.size())
+                .build();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pagedItems);
+        response.put("page", pageInfo);
+
+        return ResponseEntity.ok(ApiResponse.success(response, "부족 재고 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
+
+    @GetMapping("/purchase-orders/pending")
+    public ResponseEntity<ApiResponse<Object>> getPendingPurchaseOrders(
+            @Parameter(description = "페이지 번호(0-base)")
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "페이지 크기")
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
+    ) {
+
+        // --- 더미 데이터 생성 ---
+        List<PendingPurchaseOrderDto> allOrders = new ArrayList<>();
+        LocalDateTime baseDate = LocalDateTime.now();
+
+        for (int i = 0; i < 50; i++) {
+            String supplier = SUPPLIER_NAMES[i % SUPPLIER_NAMES.length];
+
+            LocalDateTime orderDate = baseDate.minusDays(i % 30);
+            LocalDateTime dueDate = orderDate.plusDays(7 + (i % 14)); // Due date 1~3주 후
+            int totalAmount = 500000 + (i * 100000) % 4500000;
+
+            allOrders.add(PendingPurchaseOrderDto.builder()
+                    .purchaseOrderId(String.valueOf(2001 + i))
+                    .purchaseOrderNumber("PO-2025-" + String.format("%04d", i + 1))
+                    .supplierCompanyName(supplier)
+                    .orderDate(orderDate)
+                    .dueDate(dueDate)
+                    .totalAmount(totalAmount)
+                    .statusCode("PENDING")
+                    .build());
+        }
+
+        // --- 특정 날짜까지만 필터링 (2025-10-21T22:18 이전) ---
+        LocalDateTime cutoffDate = LocalDateTime.of(2025, 10, 21, 22, 18);
+        List<PendingPurchaseOrderDto> filteredOrders = allOrders.stream()
+                .filter(order -> order.getOrderDate().isBefore(cutoffDate) || order.getOrderDate().isEqual(cutoffDate))
+                .collect(Collectors.toList());
+
+        // --- 페이지네이션 ---
+        int fromIndex = Math.min(page * size, filteredOrders.size());
+        int toIndex = Math.min(fromIndex + size, filteredOrders.size());
+        List<PendingPurchaseOrderDto> pagedOrders = filteredOrders.subList(fromIndex, toIndex);
+
+        PageDto pageInfo = PageDto.builder()
+                .number(page)
+                .size(size)
+                .totalElements(filteredOrders.size())
+                .totalPages((int) Math.ceil((double) filteredOrders.size() / size))
+                .hasNext(toIndex < filteredOrders.size())
+                .build();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pagedOrders);
+        response.put("page", pageInfo);
+
+        return ResponseEntity.ok(ApiResponse.success(response, "입고대기 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
 
     @GetMapping("/purchase-orders/received")
     @Operation(
-            summary = "입고완료 목록 조회",
-            description = "입고 완료된 발주 목록을 조회합니다.",
+            summary = "입고 완료 목록 조회",
+            description = "입고 완료된 발주 목록을 조회합니다. (기간 필터 가능)",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"입고 완료 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"purchaseOrderCode\": \"PO-2024-003\",\n        \"supplier\": \"부산금속상사\",\n        \"orderDate\": \"2024-01-08\",\n        \"receivedDate\": \"2024-01-13\",\n        \"totalAmount\": 3120000,\n        \"status\": \"입고 완료\"\n      },\n      {\n        \"purchaseOrderCode\": \"PO-2024-004\",\n        \"supplier\": \"강남기계\",\n        \"orderDate\": \"2024-01-05\",\n        \"receivedDate\": \"2024-01-10\",\n        \"totalAmount\": 975000,\n        \"status\": \"입고 완료\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 2,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getReceivedPurchaseOrders(
-            @Parameter(name = "page", description = "페이지 번호(0-base)")
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @Parameter(name = "size", description = "페이지 크기")
-            @RequestParam(required = false, defaultValue = "10") int size
+    public ResponseEntity<ApiResponse<Object>> getReceivedPurchaseOrders(
+            @Parameter(description = "시작 날짜 (yyyy-MM-dd)")
+            @RequestParam(name = "startDate", required = false) String startDateStr,
+            @Parameter(description = "종료 날짜 (yyyy-MM-dd)")
+            @RequestParam(name = "endDate", required = false) String endDateStr,
+            @Parameter(description = "페이지 번호(0-base)")
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "페이지 크기")
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
     ) {
-        List<ReceivedPurchaseOrderDto> items = Arrays.asList(
-                ReceivedPurchaseOrderDto.builder()
-                        .purchaseOrderCode("PO-2024-003")
-                        .supplier("부산금속상사")
-                        .orderDate("2024-01-08")
-                        .receivedDate("2024-01-13")
-                        .totalAmount(3120000)
-                        .status("입고 완료")
-                        .build(),
-                ReceivedPurchaseOrderDto.builder()
-                        .purchaseOrderCode("PO-2024-004")
-                        .supplier("강남기계")
-                        .orderDate("2024-01-05")
-                        .receivedDate("2024-01-10")
-                        .totalAmount(975000)
-                        .status("입고 완료")
-                        .build()
-        );
+
+        // --- 더미 데이터 생성 ---
+        List<ReceivedPurchaseOrderDto> allOrders = new ArrayList<>();
+        LocalDateTime baseDate = LocalDateTime.now();
+
+        for (int i = 0; i < 50; i++) {
+            String supplier = SUPPLIER_NAMES[i % SUPPLIER_NAMES.length];
+
+            LocalDateTime orderDate = baseDate.minusDays(30 + (i % 90));
+            LocalDateTime receivedDate = orderDate.plusDays(7 + (i % 14));
+            int totalAmount = 500000 + (i * 100000) % 4500000;
+
+            allOrders.add(ReceivedPurchaseOrderDto.builder()
+                    .purchaseOrderId(String.valueOf(3001 + i))
+                    .purchaseOrderNumber("PO-2025-" + String.format("%04d", 500 + i))
+                    .supplierCompanyName(supplier)
+                    .orderDate(orderDate)
+                    .receivedDate(receivedDate)
+                    .totalAmount(totalAmount)
+                    .statusCode("RECEIVED")
+                    .build());
+        }
+
+        // --- 기준 날짜 제한 (2025-10-21T22:18 이전만) ---
+        LocalDateTime cutoffDate = LocalDateTime.of(2025, 10, 21, 22, 18);
+
+        // --- 날짜 파라미터 파싱 ---
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+
+        try {
+            if (startDateStr != null && !startDateStr.isBlank()) {
+                startDate = LocalDate.parse(startDateStr, dateFormatter);
+            }
+            if (endDateStr != null && !endDateStr.isBlank()) {
+                endDate = LocalDate.parse(endDateStr, dateFormatter);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    ApiResponse.fail("날짜 형식이 올바르지 않습니다. (예: 2025-10-01)", HttpStatus.BAD_REQUEST,null)
+            );
+        }
+
+        // --- 날짜 필터링 ---
+        LocalDate finalStartDate = startDate;
+        LocalDate finalEndDate = endDate;
+        List<ReceivedPurchaseOrderDto> filteredOrders = allOrders.stream()
+                // cutoffDate 이전만 포함
+                .filter(order -> order.getReceivedDate().isBefore(cutoffDate) || order.getReceivedDate().isEqual(cutoffDate))
+                // startDate ~ endDate 필터 적용 (있을 경우)
+                .filter(order -> {
+                    LocalDate receivedDate = order.getReceivedDate().toLocalDate();
+                    boolean afterStart = (finalStartDate == null) || !receivedDate.isBefore(finalStartDate);
+                    boolean beforeEnd = (finalEndDate == null) || !receivedDate.isAfter(finalEndDate);
+                    return afterStart && beforeEnd;
+                })
+                .collect(Collectors.toList());
+
+        // --- 페이지네이션 ---
+        int fromIndex = Math.min(page * size, filteredOrders.size());
+        int toIndex = Math.min(fromIndex + size, filteredOrders.size());
+        List<ReceivedPurchaseOrderDto> pagedOrders = filteredOrders.subList(fromIndex, toIndex);
 
         PageDto pageInfo = PageDto.builder()
                 .number(page)
                 .size(size)
-                .totalElements(2)
-                .totalPages(1)
-                .hasNext(false)
+                .totalElements(filteredOrders.size())
+                .totalPages((int) Math.ceil((double) filteredOrders.size() / size))
+                .hasNext(toIndex < filteredOrders.size())
                 .build();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("content", items);
+        response.put("content", pagedOrders);
         response.put("page", pageInfo);
 
         return ResponseEntity.ok(ApiResponse.success(response, "입고 완료 목록을 조회했습니다.", HttpStatus.OK));
     }
 
-    @GetMapping("/purchase-orders/pending")
+
+
+    @GetMapping("/sales-orders/production")
     @Operation(
-            summary = "입고대기 목록 조회",
-            description = "입고 대기 중인 발주 목록을 조회합니다.",
+            summary = "생산중 목록 조회",
+            description = "생산 중인 판매 주문 목록을 조회합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"입고 대기 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"purchaseOrderCode\": \"PO-2024-001\",\n        \"supplier\": \"스테인리스코리아\",\n        \"orderDate\": \"2024-01-10\",\n        \"dueDate\": \"2024-01-16\",\n        \"totalAmount\": 4250000,\n        \"status\": \"입고 대기\"\n      },\n      {\n        \"purchaseOrderCode\": \"PO-2024-002\",\n        \"supplier\": \"금속유통\",\n        \"orderDate\": \"2024-01-11\",\n        \"dueDate\": \"2024-01-17\",\n        \"totalAmount\": 1860000,\n        \"status\": \"입고 대기\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 2,\n      \"totalPages\": 1,\n      \"hasNext\": false\n    }\n  }\n}")
-                            )
+                            description = "성공"
                     )
             }
     )
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPurchaseOrders(
-            @Parameter(name = "page", description = "페이지 번호(0-base)")
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @Parameter(name = "size", description = "페이지 크기")
-            @RequestParam(required = false, defaultValue = "10") int size
+    public ResponseEntity<ApiResponse<Object>> getProductionSalesOrders(
+            @Parameter(description = "페이지 번호(0-base)")
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "페이지 크기")
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
     ) {
-        List<PendingPurchaseOrderDto> items = Arrays.asList(
-                PendingPurchaseOrderDto.builder()
-                        .purchaseOrderCode("PO-2024-001")
-                        .supplier("스테인리스코리아")
-                        .orderDate("2024-01-10")
-                        .dueDate("2024-01-16")
-                        .totalAmount(4250000)
-                        .status("입고 대기")
-                        .build(),
-                PendingPurchaseOrderDto.builder()
-                        .purchaseOrderCode("PO-2024-002")
-                        .supplier("금속유통")
-                        .orderDate("2024-01-11")
-                        .dueDate("2024-01-17")
-                        .totalAmount(1860000)
-                        .status("입고 대기")
-                        .build()
-        );
+        // Generate mock data
+        List<ProductionSalesOrderDto> allOrders = new ArrayList<>();
+        LocalDateTime baseDate = LocalDateTime.now();
 
+        for (int i = 0; i < 50; i++) {
+            String customer = CUSTOMER_NAMES[i % CUSTOMER_NAMES.length];
+
+            // Vary the dates
+            LocalDateTime orderDate = baseDate.minusDays(15 + (i % 45)); // Order date is 15-60 days ago
+            LocalDateTime dueDate = orderDate.plusDays(3 + (i % 7)); // Production starts 3-10 days after order
+
+            int progress = 10 + (i * 2) % 90; // Production progress 10%-100%
+            int totalAmount = 2000000 + (i * 500000) % 8000000;
+
+            ProductionSalesOrderDto order = ProductionSalesOrderDto.builder()
+                    .salesOrderId(String.valueOf(4001 + i))
+                    .salesOrderNumber("SO-2025-" + String.format("%04d", i + 1))
+                    .customerName(customer)
+                    .orderDate(orderDate)
+                    .dueDate(dueDate)
+                    .progress(progress)
+                    .totalAmount(totalAmount)
+                    .statusCode("PRODUCTION")
+                    .build();
+
+            allOrders.add(order);
+        }
+
+        // Apply pagination
+        int fromIndex = Math.min(page * size, allOrders.size());
+        int toIndex = Math.min(fromIndex + size, allOrders.size());
+        List<ProductionSalesOrderDto> pagedOrders = allOrders.subList(fromIndex, toIndex);
+
+        // Create response
         PageDto pageInfo = PageDto.builder()
                 .number(page)
                 .size(size)
-                .totalElements(2)
-                .totalPages(1)
-                .hasNext(false)
+                .totalElements(allOrders.size())
+                .totalPages((int) Math.ceil((double) allOrders.size() / size))
+                .hasNext(toIndex < allOrders.size())
                 .build();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("content", items);
+        response.put("content", pagedOrders);
         response.put("page", pageInfo);
 
-        return ResponseEntity.ok(ApiResponse.success(response, "입고 대기 목록을 조회했습니다.", HttpStatus.OK));
+        return ResponseEntity.ok(ApiResponse.success(response, "생산중 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
+    @GetMapping("/sales-orders/ready-to-ship")
+    @Operation(
+            summary = "출고 준비완료 목록 조회",
+            description = "출고 준비가 완료된 판매 주문 목록을 조회합니다.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "성공"
+                    )
+            }
+    )
+    public ResponseEntity<ApiResponse<Object>> getReadyToShipSalesOrders(
+            @Parameter(description = "페이지 번호(0-base)")
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "페이지 크기")
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
+    ) {
+
+        // Generate mock data
+        List<ReadyToShipSalesOrderDto> allOrders = new ArrayList<>();
+        LocalDateTime baseDate = LocalDateTime.now();
+
+        for (int i = 0; i < 50; i++) {
+            String customer = CUSTOMER_NAMES[i % CUSTOMER_NAMES.length];
+
+            // Vary the dates
+            LocalDateTime orderDate = baseDate.minusDays(45 + (i % 45)); // Order date is 45-90 days ago
+            LocalDateTime productionCompletionDate = orderDate.plusDays(20 + (i % 15)); // Production completed 20-35 days after order
+            LocalDateTime readyToShipDate = productionCompletionDate.plusDays(2 + (i % 5)); // Ready to ship 2-7 days after production completion
+
+            int totalAmount = 2000000 + (i * 500000) % 8000000;
+
+            ReadyToShipSalesOrderDto order = ReadyToShipSalesOrderDto.builder()
+                    .salesOrderId(String.valueOf(5001 + i))
+                    .salesOrderNumber("SO-2025-" + String.format("%04d", 500 + i))
+                    .customerName(customer)
+                    .orderDate(orderDate)
+                    .productionCompletionDate(productionCompletionDate)
+                    .readyToShipDate(readyToShipDate)
+                    .totalAmount(totalAmount)
+                    .statusCode("READY_TO_SHIP")
+                    .build();
+
+            allOrders.add(order);
+        }
+
+        // Apply pagination
+        int fromIndex = Math.min(page * size, allOrders.size());
+        int toIndex = Math.min(fromIndex + size, allOrders.size());
+        List<ReadyToShipSalesOrderDto> pagedOrders = allOrders.subList(fromIndex, toIndex);
+
+        // Create response
+        PageDto pageInfo = PageDto.builder()
+                .number(page)
+                .size(size)
+                .totalElements(allOrders.size())
+                .totalPages((int) Math.ceil((double) allOrders.size() / size))
+                .hasNext(toIndex < allOrders.size())
+                .build();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pagedOrders);
+        response.put("page", pageInfo);
+
+        return ResponseEntity.ok(ApiResponse.success(response, "출고 준비완료 목록을 조회했습니다.", HttpStatus.OK));
     }
 }

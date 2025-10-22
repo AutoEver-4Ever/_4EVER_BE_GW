@@ -14,10 +14,10 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BomDetailDto {
-    private Long bomId;
-    private String bomCode;
-    private Long productId;
-    private String productCode;
+    private String bomId;
+    private String bomNumber;
+    private String productId;
+    private String productNumber;
     private String productName;
     private String version;
     private String status;
@@ -31,8 +31,10 @@ public class BomDetailDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class LevelComponentDto {
-        private String code;
-        private String name;
-        private String quantity;
+        private String itemId;
+        private String itemNumber;
+        private String itemName;
+        private Integer quantity;
+        private String uomName;
     }
 }

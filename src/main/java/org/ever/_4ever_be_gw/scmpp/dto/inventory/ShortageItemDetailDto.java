@@ -10,16 +10,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ShortageItemDetailDto {
+    private String itemId;
     private String itemName;
-    private String itemCode;
+    private String itemNumber;
     private String category;
     private int currentStock;
-    private String currentUnit;
+    private String uomName;
     private int safetyStock;
-    private String safetyUnit;
     private int unitPrice;
-    private int totalValue;
+    private int totalAmount;
     private String warehouseName;
-    private String warehouseCode;
-    private String status;
+    private String warehouseNumber;
+    private String statusCode;
 }

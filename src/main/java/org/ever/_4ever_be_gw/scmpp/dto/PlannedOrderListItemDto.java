@@ -10,12 +10,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlannedOrderListItemDto {
-    private Long plannedId;
-    private Long quotationId;
-    private String quotationCode;
-    private Long itemId;
+    private String mrpId;
+    private String quotationId;
+    private String quotationNumber;
+    private String itemId;
     private String itemName;
     private int quantity;
     private String procurementStartDate;
-    private String status;
+    private String statusCode;
 }

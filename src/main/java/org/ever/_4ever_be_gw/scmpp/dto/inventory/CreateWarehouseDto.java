@@ -11,9 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateWarehouseDto {
     private String warehouseName;
-    private String warehouseCode;
     private String warehouseType;
     private String location;
-    private String manager;
-    private String phone;
+    private String managerId;
 }

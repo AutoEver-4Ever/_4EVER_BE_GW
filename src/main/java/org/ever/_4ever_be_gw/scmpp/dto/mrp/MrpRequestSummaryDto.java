@@ -22,13 +22,14 @@ public class MrpRequestSummaryDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class MrpItemDto {
-        private Long plannedId;
-        private String quotationCode;
+        private String mrpId;
+        private String quotationNumber;
+        private String itemId;
         private String itemName;
         private int quantity;
         private int unitPrice;
         private int totalAmount;
-        private String supplier;
+        private String supplierCompanyName;
         private String dueDate;
         private String status;
     }

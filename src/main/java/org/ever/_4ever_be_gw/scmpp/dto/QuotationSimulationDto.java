@@ -12,13 +12,13 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuotationSimulationDto {
-    private Long quotationId;
+    private String quotationId;
     private String quotationCode;
-    private Long customerId;
-    private String customerName;
-    private Long productId;
+    private String customerCompanyId;
+    private String customerCompanyName;
+    private String productId;
     private String productName;
-    private Integer requestQty;
+    private Integer requestQuantity;
     private String requestDueDate;
     private SimulationResultDto simulation;
     private List<ShortageItemDto> shortages;
@@ -39,10 +39,10 @@ public class QuotationSimulationDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ShortageItemDto {
-        private Long itemId;
+        private String itemId;
         private String itemName;
-        private Integer requiredQty;
-        private Integer stockQty;
-        private Integer shortQty;
+        private Integer requiredQuantity;
+        private Integer currentStock;
+        private Integer shortQuantity;
     }
 }

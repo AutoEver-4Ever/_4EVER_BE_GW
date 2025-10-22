@@ -12,11 +12,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BomListItemDto {
-    private Long bomId;
-    private String bomCode;
-    private Long productId;
-    private String productCode;
-    private String productName;
+    private String bomId;
+    private String bomNumber;
+    private String itemId;
+    private String itemCode;
+    private String itemName;
     private String version;
     private String status;
     private LocalDateTime lastModifiedAt;

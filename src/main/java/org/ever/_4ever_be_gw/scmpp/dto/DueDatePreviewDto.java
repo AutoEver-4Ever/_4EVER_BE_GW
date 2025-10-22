@@ -12,8 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DueDatePreviewDto {
-    private String quotationCode;
-    private String customerName;
+    private String quotationNumber;
+    private String customerCompanyName;
     private String productName;
     private String confirmedDueDate;
     private List<WeekPlanDto> weeks;
@@ -25,8 +25,8 @@ public class DueDatePreviewDto {
     public static class WeekPlanDto {
         private String week;
         private Integer demand;
-        private Integer requiredStock;
-        private Integer productionQty;
+        private Integer requiredQuantity;
+        private Integer productionQuantity;
         private Integer mps;
     }
 }
