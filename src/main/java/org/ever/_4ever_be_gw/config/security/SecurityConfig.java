@@ -43,7 +43,11 @@ public class SecurityConfig {
             "http://localhost:8080",
             "http://127.0.0.1:8080",
             "http://localhost:3000",
-            "http://127.0.0.1:3000"
+            "http://127.0.0.1:3000",
+            "https://4-ever-fe.vercel.app/**",
+            "https://4-ever-fe.vercel.app/",
+            "https://everp.co.kr/**",
+            "https://everp.co.kr/"
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
