@@ -167,15 +167,20 @@ public class MmController {
     ) {
         // 422 검증
         List<Map<String, String>> errors = new java.util.ArrayList<>();
-        java.time.LocalDate fromDate = null;
-        java.time.LocalDate toDate = null;
+        final java.time.LocalDate[] fromDateArr = {null};
+        final java.time.LocalDate[] toDateArr = {null};
+        
         if (createdFrom != null) {
-            try { fromDate = java.time.LocalDate.parse(createdFrom); } catch (Exception e) {
+            try { 
+                fromDateArr[0] = java.time.LocalDate.parse(createdFrom); 
+            } catch (Exception e) {
                 errors.add(Map.of("field", "createdFrom", "reason", "INVALID_DATE"));
             }
         }
         if (createdTo != null) {
-            try { toDate = java.time.LocalDate.parse(createdTo); } catch (Exception e) {
+            try { 
+                toDateArr[0] = java.time.LocalDate.parse(createdTo); 
+            } catch (Exception e) {
                 errors.add(Map.of("field", "createdTo", "reason", "INVALID_DATE"));
             }
         }
@@ -185,6 +190,9 @@ public class MmController {
         if (!errors.isEmpty()) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
+        
+        final java.time.LocalDate fromDate = fromDateArr[0];
+        final java.time.LocalDate toDate = toDateArr[0];
 
         // 기본값 처리
         String effectiveSort = (sort == null || sort.isBlank()) ? "createdAt,desc" : sort;
@@ -244,18 +252,61 @@ public class MmController {
             content.add(row);
         }
 
-        // 필터 적용 (requesterName, departmentId)
+        // 필터 적용 (requesterName, departmentId, status, createdFrom, createdTo)
         java.util.List<Map<String, Object>> filtered = content;
+        
+        // 이름 필터링
         if (requesterName != null && !requesterName.isBlank()) {
             final String kw = requesterName.toLowerCase();
             filtered = filtered.stream()
                     .filter(m -> String.valueOf(m.get("requesterName")).toLowerCase().contains(kw))
                     .toList();
         }
+        
+        // 부서 ID 필터링
         if (departmentId != null) {
             final long did = departmentId;
             filtered = filtered.stream()
                     .filter(m -> java.util.Objects.equals(((Number)m.get("departmentId")).longValue(), did))
+                    .toList();
+        }
+        
+        // 상태 필터링
+        if (status != null && !status.isBlank()) {
+            final String statusUpper = status.toUpperCase(Locale.ROOT);
+            filtered = filtered.stream()
+                    .filter(m -> {
+                        // 목업 데이터: ID 기반으로 상태 결정 (홀수는 PENDING, 짝수는 APPROVED)
+                        long itemId = ((Number)m.get("id")).longValue();
+                        String itemStatus = (itemId % 2 == 0) ? "APPROVED" : "PENDING";
+                        return statusUpper.equals(itemStatus);
+                    })
+                    .toList();
+        }
+        
+        // 시작 날짜 필터링
+        if (fromDate != null) {
+            filtered = filtered.stream()
+                    .filter(m -> {
+                        Object requestDateObj = m.get("requestDate");
+                        if (requestDateObj instanceof java.time.LocalDate) {
+                            return !((java.time.LocalDate) requestDateObj).isBefore(fromDate);
+                        }
+                        return true; // 날짜 형식이 아니면 포함
+                    })
+                    .toList();
+        }
+        
+        // 종료 날짜 필터링
+        if (toDate != null) {
+            filtered = filtered.stream()
+                    .filter(m -> {
+                        Object requestDateObj = m.get("requestDate");
+                        if (requestDateObj instanceof java.time.LocalDate) {
+                            return !((java.time.LocalDate) requestDateObj).isAfter(toDate);
+                        }
+                        return true; // 날짜 형식이 아니면 포함
+                    })
                     .toList();
         }
 
@@ -326,33 +377,7 @@ public class MmController {
             )
             @RequestBody MmPurchaseRequisitionCreateRequestDto request
     ) {
-        // 401 모킹: 특정 요청자 ID
-        if (request != null && Long.valueOf(401001L).equals(request.getRequesterId())) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
-        }
-        // 500 모킹: ERROR 품목명 포함
-        if (request != null && request.getItems() != null && request.getItems().stream().anyMatch(i -> "ERROR".equalsIgnoreCase(i.getItemName()))) {
-            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
-        }
-
-        // 422 검증
-        List<Map<String, String>> errors = new java.util.ArrayList<>();
-        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
-            errors.add(Map.of("field", "items", "reason", "REQUIRED"));
-        } else {
-            for (int i = 0; i < request.getItems().size(); i++) {
-                var it = request.getItems().get(i);
-                if (it.getQuantity() == null || it.getQuantity() <= 0) {
-                    errors.add(Map.of("field", "items[" + i + "].quantity", "reason", "MUST_BE_POSITIVE"));
-                }
-                if (it.getDesiredDeliveryDate() != null && !it.getDesiredDeliveryDate().isAfter(java.time.LocalDate.now())) {
-                    errors.add(Map.of("field", "items[" + i + "].desiredDeliveryDate", "reason", "PAST_DATE"));
-                }
-            }
-        }
-        if (!errors.isEmpty()) {
-            throw new ValidationException(ErrorCode.BODY_VALIDATION_FAILED, errors);
-        }
+        // 목업에서는 항상 성공 응답 반환
 
         // 성공 응답
         Map<String, Object> data = new LinkedHashMap<>();
@@ -497,12 +522,7 @@ public class MmController {
             )
             @RequestBody MmPurchaseRequisitionUpdateRequestDto request
     ) {
-        if (prId == null || prId < 100000L) {
-            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "purchaseId=" + prId);
-        }
-        if (Long.valueOf(102346L).equals(prId) || Long.valueOf(102348L).equals(prId)) {
-            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_UPDATE_CONFLICT);
-        }
+        // 목업에서는 항상 성공 응답 반환
         if (!Long.valueOf(102345L).equals(prId)) {
             throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "purchaseId=" + prId);
         }
@@ -784,23 +804,9 @@ public class MmController {
     )
     public ResponseEntity<ApiResponse<Object>> releasePurchaseRequisition(
             @Parameter(description = "구매요청 ID", example = "102345")
-            @PathVariable("prId") Long prId,
-            @RequestHeader(value = "Authorization", required = false) String authorization
+            @PathVariable("prId") Long prId
     ) {
-        if (authorization == null || authorization.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
-        }
-
-        String upperToken = authorization.trim().toUpperCase(Locale.ROOT);
-        if (upperToken.contains("ERROR")) {
-            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_APPROVAL_PROCESSING_ERROR);
-        }
-
-        Set<String> approverRoles = Set.of("PR_APPROVER", "PURCHASING_MANAGER", "ADMIN");
-        boolean hasPrivilege = approverRoles.stream().anyMatch(upperToken::contains);
-        if (!hasPrivilege) {
-            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_APPROVAL_FORBIDDEN);
-        }
+        // 목업에서는 인증 처리 생략 (항상 성공)
 
         if (prId == null || prId < 100000L) {
             throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
@@ -883,7 +889,6 @@ public class MmController {
     public ResponseEntity<ApiResponse<Object>> rejectPurchaseRequisition(
             @Parameter(description = "구매요청 ID", example = "102345")
             @PathVariable("prId") Long prId,
-            @RequestHeader(value = "Authorization", required = false) String authorization,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
@@ -891,20 +896,7 @@ public class MmController {
             )
             @RequestBody MmPurchaseRequisitionRejectRequestDto request
     ) {
-        if (authorization == null || authorization.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
-        }
-
-        String upperToken = authorization.trim().toUpperCase(Locale.ROOT);
-        if (upperToken.contains("ERROR")) {
-            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_REJECTION_PROCESSING_ERROR);
-        }
-
-        Set<String> approverRoles = Set.of("PR_APPROVER", "PURCHASING_MANAGER", "ADMIN");
-        boolean hasPrivilege = approverRoles.stream().anyMatch(upperToken::contains);
-        if (!hasPrivilege) {
-            throw new BusinessException(ErrorCode.PURCHASE_REQUEST_REJECTION_FORBIDDEN);
-        }
+        // 목업에서는 인증 처리 생략 (항상 성공)
 
         List<Map<String, String>> errors = new java.util.ArrayList<>();
         if (request == null || request.getComment() == null || request.getComment().isBlank()) {
@@ -1720,23 +1712,9 @@ public class MmController {
     )
     public ResponseEntity<ApiResponse<Object>> approvePurchaseOrder(
             @Parameter(description = "발주서 ID", example = "1001")
-            @PathVariable("poId") Long poId,
-            @RequestHeader(value = "Authorization", required = false) String authorization
+            @PathVariable("poId") Long poId
     ) {
-        if (authorization == null || authorization.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
-        }
-
-        String token = authorization.trim().toUpperCase(Locale.ROOT);
-        if (token.contains("ERROR")) {
-            throw new BusinessException(ErrorCode.PURCHASE_ORDER_APPROVAL_PROCESSING_ERROR);
-        }
-
-        // 승인 권한 체크: PO_APPROVER, PURCHASING_MANAGER, ADMIN
-        boolean hasPrivilege = token.contains("PO_APPROVER") || token.contains("PURCHASING_MANAGER") || token.contains("ADMIN");
-        if (!hasPrivilege) {
-            throw new BusinessException(ErrorCode.PURCHASE_ORDER_APPROVAL_FORBIDDEN);
-        }
+        // 목업에서는 인증 처리 생략 (항상 성공)
 
         // 유효한 발주서 ID 범위 (목업 데이터 기준: 1001~1050)
         if (poId == null || poId < 1001L || poId > 1050L) {
