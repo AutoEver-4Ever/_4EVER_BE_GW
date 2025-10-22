@@ -17,13 +17,12 @@ public class CustomerUpdateResponseDto {
     private String businessNumber;
     private String statusCode;
 
-    private String contactPhone;
-    private String contactEmail;
-    private String address;
+    private String customerPhone;
+    private String customerEmail;
+    private String baseAddress;
     private String detailAddress;
 
     private CustomerManagerDto manager;
     private String note;
-    private String updatedAt; // ISO-8601
 }
 

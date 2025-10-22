@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PoItemDto {
-    private Long itemId;
+    private String itemId;
     private String itemName;
     private int quantity;
     private String uomName;

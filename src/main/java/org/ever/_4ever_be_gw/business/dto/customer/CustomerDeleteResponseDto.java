@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CustomerDeleteResponseDto {
     private String customerId;
+    private String statusCode;       // 활성화 상태
     private boolean deleted;
     private String deletedAt; // ISO-8601
 }

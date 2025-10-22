@@ -10,11 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderSummaryDto {
-    private Long soId;          // 상세용 ID
-    private String soNumber;    // 예: SO-2024-001
-    private String orderDate;   // yyyy-MM-dd
-    private String deliveryDate;// yyyy-MM-dd
-    private String statusCode;  // MATERIAL_PREPARATION, PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED, ALL
-    private Long totalAmount;   // 총액
+    private String salesOrderId;             // 주문서 ID
+    private String salesOrderNumber;         // 예: SO-______ -> uuid v7 id의 앞 6자리
+    private String orderDate;                // 주문일(yyyy-MM-dd)
+    private String dueDate;                  // 납기일(yyyy-MM-dd)
+    private String statusCode;               // MATERIAL_PREPARATION, PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED, ALL
+    private Long totalAmount;                // 총액
 }
-
