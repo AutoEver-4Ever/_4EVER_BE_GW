@@ -15,11 +15,11 @@ import lombok.NoArgsConstructor;
 public class PoDetailDto {
     private String statusCode;
     private LocalDate dueDate;
-    private Long purchaseOrderId;
+    private String purchaseOrderId;
     private String purchaseOrderNumber;
     private LocalDate orderDate;
     private LocalDate requestedDeliveryDate;
-    private Long supplierId;
+    private String supplierId;
     private String supplierNumber;
     private String supplierName;
     private String managerPhone;
@@ -37,7 +37,7 @@ public class PoDetailDto {
     @AllArgsConstructor
     public static class ReferenceInfo {
         private String type;
-        private Long purchaseOrderId;
+        private String purchaseOrderId;
         private String purchaseOrderNumber;
         private LocalDate orderDate;
         private LocalDate requestedDeliveryDate;
