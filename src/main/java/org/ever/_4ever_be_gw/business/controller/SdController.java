@@ -911,7 +911,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 정보가 수정되었습니다.\",\n  \"data\": {\n    \"customerId\": \"018f2c1a-3bfa-7e21-8a3c-7f9d5e2a1c44\",\n    \"customerNumber\": \"C-001\",\n    \"customerName\": \"삼성전자\",\n    \"ceoName\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"info@samsung.com\",\n    \"address\": \"서울시 강남구 테헤란로 123\",\n    \"detailAddress\": null,\n    \"manager\": { \"managerName\": \"김철수\", \"managerPhone\": \"010-1234-5678\", \"managerEmail\": \"manager@samsung.com\" },\n    \"note\": \"주요 거래처\",\n    \"updatedAt\": \"2025-10-12T12:34:56Z\"\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 정보가 수정되었습니다.\",\n  \"data\": {\n    \"customerId\": \"018f2c1a-3bfa-7e21-8a3c-7f9d5e2a1c44\",\n    \"customerNumber\": \"CUS-018f2c\",\n    \"customerName\": \"삼성전자\",\n    \"ceoName\": \"이재용\",\n    \"businessNumber\": \"123-45-67890\",\n    \"statusCode\": \"ACTIVE\",\n    \"contactPhone\": \"02-1234-5678\",\n    \"contactEmail\": \"info@samsung.com\",\n    \"baseAddress\": \"서울시 강남구 테헤란로 123\",\n    \"detailAddress\": \"4층\",\n    \"manager\": { \"managerName\": \"김철수\", \"managerPhone\": \"010-1234-5678\", \"managerEmail\": \"manager@samsung.com\" },\n    \"note\": \"주요 거래처\"\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -935,7 +935,7 @@ import java.util.stream.Collectors;
                             responseCode = "422",
                             description = "검증 실패",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"businessNumber\", \"reason\": \"INVALID_FORMAT (###-##-#####)\" },\n    { \"field\": \"contact.phone\", \"reason\": \"INVALID_PHONE_FORMAT\" },\n    { \"field\": \"manager.email\", \"reason\": \"INVALID_EMAIL_FORMAT\" }\n  ]\n}"))
+                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"businessNumber\", \"reason\": \"INVALID_FORMAT (###-##-#####)\" },\n    { \"field\": \"customerPhone\", \"reason\": \"INVALID_PHONE_FORMAT\" },\n    { \"field\": \"manager.managerEmail\", \"reason\": \"INVALID_EMAIL_FORMAT\" }\n  ]\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "500",
@@ -947,66 +947,36 @@ import java.util.stream.Collectors;
     )
     public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.business.dto.customer.CustomerUpdateResponseDto>> updateCustomer(
             @org.springframework.web.bind.annotation.PathVariable("customerId") String customerId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "request", value = "{\n  \"customerName\": \"삼성전자\",\n  \"ceoName\": \"이재용\",\n  \"businessNumber\": \"123-45-67890\",\n  \"customerPhone\": \"02-1234-5678\",\n  \"customerEmail\": \"info@samsung.com\",\n  \"baseAddress\": \"서울시 강남구 테헤란로 123\",\n  \"detailAddress\": \"4층\",\n  \"statusCode\": \"ACTIVE\",\n  \"manager\": {\n    \"managerName\": \"김철수\",\n    \"managerPhone\": \"010-1234-5678\",\n    \"managerEmail\": \"manager@samsung.com\"\n  },\n  \"note\": \"주요 거래처\"\n}"))
+            )
             @RequestBody CustomerUpdateRequestDto request
     ) {
-        // 500 모킹 트리거
-        if (request != null && request.getCompanyName() != null && request.getCompanyName().equalsIgnoreCase("ERROR")) {
-            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
-        }
-        // 403 모킹
-        if ("403001".equals(customerId)) {
-            throw new BusinessException(ErrorCode.CUSTOMER_UPDATE_FORBIDDEN);
-        }
-        // 404 체크 (간단 존재여부 모킹)
-        if (customerId == null || customerId.isBlank()) {
-            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + customerId);
-        }
-
-        // 422 형식 검증
-        java.util.List<java.util.Map<String, String>> errors = new java.util.ArrayList<>();
-        if (request != null) {
-            if (request.getBusinessNumber() != null && !request.getBusinessNumber().matches("\\d{3}-\\d{2}-\\d{5}")) {
-                errors.add(java.util.Map.of("field", "businessNumber", "reason", "INVALID_FORMAT (###-##-#####)"));
-            }
-            if (request.getContact() != null && request.getContact().getPhone() != null && !request.getContact().getPhone().isBlank()) {
-                if (!request.getContact().getPhone().matches("^\\d{2,3}-\\d{3,4}-\\d{4}$")) {
-                    errors.add(java.util.Map.of("field", "contact.phone", "reason", "INVALID_PHONE_FORMAT"));
-                }
-            }
-            if (request.getManager() != null && request.getManager().getEmail() != null && !request.getManager().getEmail().isBlank()) {
-                if (!request.getManager().getEmail().matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
-                    errors.add(java.util.Map.of("field", "manager.email", "reason", "INVALID_EMAIL_FORMAT"));
-                }
-            }
-        }
-        if (!errors.isEmpty()) {
-            throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
-        }
-
         String code = "CUS-" + (customerId != null && customerId.length() >= 6 ? customerId.substring(0, 6) : String.valueOf(customerId));
 
         var managerDto = (request != null && request.getManager() != null)
                 ? org.ever._4ever_be_gw.business.dto.customer.CustomerManagerDto.builder()
-                    .managerName(request.getManager().getName())
-                    .managerPhone(request.getManager().getMobile())
-                    .managerEmail(request.getManager().getEmail())
+                    .managerName(request.getManager().getManagerName())
+                    .managerPhone(request.getManager().getManagerPhone())
+                    .managerEmail(request.getManager().getManagerEmail())
                     .build()
                 : null;
 
-        var data = org.ever._4ever_be_gw.business.dto.customer.CustomerUpdateResponseDto.builder()
+        var data = CustomerUpdateResponseDto.builder()
                 .customerId(customerId)
                 .customerNumber(code)
-                .customerName(request != null ? request.getCompanyName() : null)
-                .ceoName(request != null ? request.getCeo() : null)
+                .customerName(request != null ? request.getCustomerName() : null)
+                .ceoName(request != null ? request.getCeoName() : null)
                 .businessNumber(request != null ? request.getBusinessNumber() : null)
-                .statusCode(request != null ? request.getStatus() : null)
-                .contactPhone(request != null && request.getContact() != null ? request.getContact().getPhone() : null)
-                .contactEmail(request != null && request.getContact() != null ? request.getContact().getEmail() : null)
-                .address(request != null && request.getContact() != null ? request.getContact().getAddress() : null)
-                .detailAddress(null)
+                .statusCode(request != null ? request.getStatusCode() : null)
+                .customerPhone(request != null ? request.getCustomerPhone() : null)
+                .customerEmail(request != null ? request.getCustomerEmail() : null)
+                .baseAddress(request != null ? request.getBaseAddress() : null)
+                .detailAddress(request != null ? request.getDetailAddress() : null)
                 .manager(managerDto)
                 .note(request != null ? request.getNote() : null)
-                .updatedAt(java.time.OffsetDateTime.now().toString())
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success(data, "고객사 정보가 수정되었습니다.", HttpStatus.OK));
@@ -1055,28 +1025,12 @@ import java.util.stream.Collectors;
                     )
             }
     )
-    public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.business.dto.customer.CustomerDeleteResponseDto>> deleteCustomer(
+    public ResponseEntity<ApiResponse<CustomerDeleteResponseDto>> deleteCustomer(
             @org.springframework.web.bind.annotation.PathVariable("customerId") String customerId
     ) {
-        // 500 모킹
-        if ("500001".equals(customerId)) {
-            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
-        }
-        // 403 모킹
-        if ("403001".equals(customerId)) {
-            throw new BusinessException(ErrorCode.CUSTOMER_DELETE_FORBIDDEN);
-        }
-        // 409 모킹
-        if ("409001".equals(customerId)) {
-            throw new BusinessException(ErrorCode.CUSTOMER_DELETE_CONFLICT);
-        }
-        // 404 범위 외 (간단 체크)
-        if (customerId == null || customerId.isBlank()) {
-            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + customerId);
-        }
-
-        var data = org.ever._4ever_be_gw.business.dto.customer.CustomerDeleteResponseDto.builder()
+        var data = CustomerDeleteResponseDto.builder()
                 .customerId(customerId)
+                .statusCode("INACTIVE")
                 .deleted(true)
                 .deletedAt(java.time.OffsetDateTime.now().toString())
                 .build();
