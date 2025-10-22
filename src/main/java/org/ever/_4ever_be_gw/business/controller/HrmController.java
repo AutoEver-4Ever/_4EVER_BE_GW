@@ -616,7 +616,7 @@ public class HrmController {
         int[] annualSalaries = {30000000, 35000000, 40000000, 50000000, 60000000, 70000000,
             80000000, 90000000, 100000000, 120000000};
 
-        int index = (int) ((positionId - 1) % positionNames.length);
+        int index = Math.abs(positionId.hashCode() % positionNames.length);
 
         position.put("positionId", uuidV7());
         position.put("positionNumber", positionNumbers[index]);
