@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ShortageItemPreviewDto {
+    private String itemId;
     private String itemName;
     private int currentStock;
-    private String currentUnit;
+    private String uomName;
     private int safetyStock;
-    private String safetyUnit;
-    private String status;
+    private String statusCode;
 }

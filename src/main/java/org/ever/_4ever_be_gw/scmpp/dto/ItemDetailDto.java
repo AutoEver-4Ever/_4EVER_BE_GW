@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -13,21 +14,20 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ItemDetailDto {
-    private Long itemId;
-    private String itemCode;
+    private String itemId;
+    private String itemNumber;
     private String itemName;
     private String category;
-    private String supplier;
-    private String status;
+    private String supplierCompanyName;
+    private String statusCode;
     private int currentStock;
-    private String unit;
-    private int price;
-    private int totalValue;
+    private String uomName;
+    private int unitPrice;
+    private int totalAmount;
     private String warehouseName;
-    private String warehouseCode;
-    private LocalDate lastModified;
+    private String warehouseNumber;
+    private LocalDateTime lastModified;
     private String description;
-    private String specification;
     private List<StockMovementDto> stockMovements;
     
     @Data
@@ -37,12 +37,12 @@ public class ItemDetailDto {
     public static class StockMovementDto {
         private String type;
         private int quantity;
-        private String unit;
+        private String uomName;
         private String from;
         private String to;
-        private LocalDate date;
-        private String manager;
-        private String locationCode;
+        private LocalDateTime movementDate;
+        private String managerName;
+        private String referenceNumber;
         private String note;
     }
 }

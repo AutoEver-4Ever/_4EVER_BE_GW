@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SalesOrderStatusDto {
-    private Long salesOrderId;
+    private String salesOrderId;
     private String salesOrderCode;
     private String status;
 }
