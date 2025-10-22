@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderItemDto {
-    private String productName;  // 제품 이름
+    private String itemId;       // 제품 Id
+    private String itemName;     // 제품 이름
     private Integer quantity;    // 수량
     private String uonName;      // 단위
     private Long unitPrice;      // 단위가격
