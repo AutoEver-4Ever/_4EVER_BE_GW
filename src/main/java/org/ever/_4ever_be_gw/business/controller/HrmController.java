@@ -123,8 +123,8 @@ public class HrmController {
         }
     )
     public ResponseEntity<ApiResponse<Object>> updateEmployee(
-        @Parameter(description = "직원 ID", example = "1")
-        @PathVariable("employeeId") Long employeeId,
+        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("employeeId") String employeeId,
         @Valid @RequestBody EmployeeUpdateRequestDto requestDto
     ) {
         // 요청 데이터 로깅 (실제 구현에서는 서비스로 전달)
@@ -142,9 +142,9 @@ public class HrmController {
     )
     public ResponseEntity<ApiResponse<Object>> getEmployees(
         @Parameter(description = "부서 필터")
-        @RequestParam(name = "department", required = false) Long department,
+        @RequestParam(name = "department", required = false) String department,
         @Parameter(description = "직급 필터")
-        @RequestParam(name = "position", required = false) Long position,
+        @RequestParam(name = "position", required = false) String position,
         @Parameter(description = "이름 검색")
         @RequestParam(name = "name", required = false) String name,
         @Parameter(description = "페이지 번호(0-base)")
@@ -198,10 +198,10 @@ public class HrmController {
         description = "직원 상세 정보를 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getEmployeeDetail(
-        @Parameter(description = "직원 ID", example = "1")
-        @PathVariable("employeeId") Long employeeId
+        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("employeeId") String employeeId
     ) {
-        if (employeeId == null || employeeId < 1 || employeeId > 100) {
+        if (employeeId == null || employeeId.isBlank()) {
             throw new BusinessException(ErrorCode.EMPLOYEE_NOT_FOUND);
         }
 
@@ -294,10 +294,10 @@ public class HrmController {
         description = "직급 상세 정보를 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getPositionDetail(
-        @Parameter(description = "직급 ID", example = "1")
-        @PathVariable("positionId") Long positionId
+        @Parameter(description = "직급 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("positionId") String positionId
     ) {
-        if (positionId == null || positionId < 1 || positionId > 10) {
+        if (positionId == null || positionId.isBlank()) {
             throw new BusinessException(ErrorCode.POSITION_NOT_FOUND);
         }
 
@@ -315,8 +315,8 @@ public class HrmController {
         description = "출퇴근 기록을 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getAttendance(
-        @Parameter(description = "직원 ID")
-        @RequestParam(name = "employeeId", required = false) Long employeeId,
+        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @RequestParam(name = "employeeId", required = false) String employeeId,
         @Parameter(description = "시작일(YYYY-MM-DD)")
         @RequestParam(name = "startDate", required = false) String startDate,
         @Parameter(description = "종료일(YYYY-MM-DD)")
@@ -476,10 +476,10 @@ public class HrmController {
         return employees;
     }
 
-    private Map<String, Object> generateEmployeeDetailMockData(Long employeeId) {
+    private Map<String, Object> generateEmployeeDetailMockData(String employeeId) {
         Map<String, Object> employee = new LinkedHashMap<>();
         employee.put("employeeId", uuidV7());
-        employee.put("employeeNumber", String.format("EMP-%03d", employeeId));
+        employee.put("employeeNumber", "EMP-001");
         employee.put("name", "김철수");
         employee.put("email", "kim@company.com");
         employee.put("phone", "010-1234-5678");
@@ -607,7 +607,7 @@ public class HrmController {
         return positions;
     }
 
-    private Map<String, Object> generatePositionDetailMockData(Long positionId) {
+    private Map<String, Object> generatePositionDetailMockData(String positionId) {
         Map<String, Object> position = new LinkedHashMap<>();
         String[] positionNames = {"사원", "주임", "대리", "과장", "차장", "부장", "이사", "상무", "전무", "사장"};
         String[] positionNumbers = {"AA-001", "AA-002", "AA-003", "AA-004", "AA-005",
@@ -616,7 +616,7 @@ public class HrmController {
         int[] annualSalaries = {30000000, 35000000, 40000000, 50000000, 60000000, 70000000,
             80000000, 90000000, 100000000, 120000000};
 
-        int index = (int) ((positionId - 1) % positionNames.length);
+        int index = Math.abs(positionId.hashCode() % positionNames.length);
 
         position.put("positionId", uuidV7());
         position.put("positionNumber", positionNumbers[index]);
@@ -714,9 +714,9 @@ public class HrmController {
         @Parameter(description = "직원 이름(선택)")
         @RequestParam(name = "name", required = false) String employeeName,
         @Parameter(description = "부서 ID(선택)")
-        @RequestParam(name = "department", required = false) Long departmentId,
+        @RequestParam(name = "department", required = false) String departmentId,
         @Parameter(description = "직급 ID(선택)")
-        @RequestParam(name = "position", required = false) Long positionId,
+        @RequestParam(name = "position", required = false) String positionId,
         @Parameter(description = "페이지 번호(0-base)")
         @RequestParam(name = "page", required = false) Integer page,
         @Parameter(description = "페이지 크기(최대 200)")
@@ -764,12 +764,12 @@ public class HrmController {
         }
     )
     public ResponseEntity<ApiResponse<Object>> getMonthlyPayrollDetail(
-        @Parameter(description = "급여 명세서 ID", example = "1")
-        @PathVariable("payrollId") Long payrollId
+        @Parameter(description = "급여 명세서 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("payrollId") String payrollId
     ) {
         List<Map<String, String>> errors = new ArrayList<>();
-        if (payrollId == null || payrollId < 1) {
-            errors.add(Map.of("field", "payrollId", "reason", "MIN_1"));
+        if (payrollId == null || payrollId.isBlank()) {
+            errors.add(Map.of("field", "payrollId", "reason", "REQUIRED"));
         }
         if (!errors.isEmpty()) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
@@ -837,7 +837,7 @@ public class HrmController {
         return response;
     }
 
-    private Map<String, Object> generateMonthlyPayrollDetailMock(Long paystubId) {
+    private Map<String, Object> generateMonthlyPayrollDetailMock(String paystubId) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("payrollId", uuidV7());
 
@@ -923,8 +923,8 @@ public class HrmController {
         description = "출퇴근 기록을 수정합니다."
     )
     public ResponseEntity<ApiResponse<Object>> updateTimeRecord(
-        @Parameter(description = "근태 기록 ID", example = "101")
-        @PathVariable("timerecordId") Long timerecordId,
+        @Parameter(description = "근태 기록 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("timerecordId") String timerecordId,
         @Valid @RequestBody TimeRecordUpdateRequestDto requestDto
     ) {
         // 요청 데이터 로깅
@@ -976,8 +976,8 @@ public class HrmController {
         description = "휴가 신청을 승인합니다."
     )
     public ResponseEntity<ApiResponse<Object>> approveLeaveRequest(
-        @Parameter(description = "휴가 신청 ID", example = "201")
-        @PathVariable("requestId") Long requestId
+        @Parameter(description = "휴가 신청 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("requestId") String requestId
     ) {
         // 요청 데이터 로깅
         System.out.println("휴가 신청 승인 요청 - ID: " + requestId);
@@ -999,8 +999,8 @@ public class HrmController {
         description = "휴가 신청을 반려합니다."
     )
     public ResponseEntity<ApiResponse<Object>> rejectLeaveRequest(
-        @Parameter(description = "휴가 신청 ID", example = "201")
-        @PathVariable("requestId") Long requestId
+        @Parameter(description = "휴가 신청 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("requestId") String requestId
     ) {
         // 요청 데이터 로깅
         System.out.println("휴가 신청 반려 요청 - ID: " + requestId);
@@ -1025,9 +1025,9 @@ public class HrmController {
     )
     public ResponseEntity<ApiResponse<Object>> getTimeRecords(
         @Parameter(description = "부서 ID")
-        @RequestParam(name = "department", required = false) Long departmentId,
+        @RequestParam(name = "department", required = false) String departmentId,
         @Parameter(description = "직책 ID")
-        @RequestParam(name = "position", required = false) Long positionId,
+        @RequestParam(name = "position", required = false) String positionId,
         @Parameter(description = "직원 이름")
         @RequestParam(name = "name", required = false) String employeeName,
         @Parameter(description = "검색 일자(YYYY-MM-DD)")
@@ -1073,12 +1073,12 @@ public class HrmController {
         description = "단일 출퇴근 기록 상세 정보를 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getTimeRecordDetail(
-        @Parameter(description = "출퇴근 기록 ID", example = "1")
-        @PathVariable("timerecordId") Long timerecordId
+        @Parameter(description = "출퇴근 기록 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("timerecordId") String timerecordId
     ) {
-        if (timerecordId == null || timerecordId < 1) {
+        if (timerecordId == null || timerecordId.isBlank()) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED,
-                List.of(Map.of("field", "timerecordId", "reason", "MIN_1")));
+                List.of(Map.of("field", "timerecordId", "reason", "REQUIRED")));
         }
 
         Map<String, Object> data = generateTimeRecordDetailMock(timerecordId);
@@ -1098,9 +1098,9 @@ public class HrmController {
     )
     public ResponseEntity<ApiResponse<Object>> getLeaveRequestList(
         @Parameter(description = "부서 ID")
-        @RequestParam(name = "department", required = false) Long departmentId,
+        @RequestParam(name = "department", required = false) String departmentId,
         @Parameter(description = "직책 ID")
-        @RequestParam(name = "position", required = false) Long positionId,
+        @RequestParam(name = "position", required = false) String positionId,
         @Parameter(description = "직원 이름")
         @RequestParam(name = "name", required = false) String employeeName,
         @Parameter(description = "휴가 유형: ANNUAL, SICK")
@@ -1261,7 +1261,7 @@ public class HrmController {
         return response;
     }
 
-    private Map<String, Object> generateTimeRecordDetailMock(Long timerecordId) {
+    private Map<String, Object> generateTimeRecordDetailMock(String timerecordId) {
         LocalDate baseDate = LocalDate.of(2025, 10, 7);
 
         Map<String, Object> data = new LinkedHashMap<>();
@@ -1350,9 +1350,9 @@ public class HrmController {
     )
     public ResponseEntity<ApiResponse<Object>> getTrainingStatusList(
         @Parameter(description = "부서 ID")
-        @RequestParam(name = "department", required = false) Long departmentId,
+        @RequestParam(name = "department", required = false) String departmentId,
         @Parameter(description = "직급 ID")
-        @RequestParam(name = "position", required = false) Long positionId,
+        @RequestParam(name = "position", required = false) String positionId,
         @Parameter(description = "직원 이름")
         @RequestParam(name = "name", required = false) String employeeName,
         @Parameter(description = "페이지 번호(0-base)")
@@ -1388,12 +1388,12 @@ public class HrmController {
         description = "특정 직원의 교육 현황 및 이력을 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getTrainingStatusDetail(
-        @Parameter(description = "직원 ID", example = "101")
-        @PathVariable("employeeId") Long employeeId
+        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("employeeId") String employeeId
     ) {
-        if (employeeId == null || employeeId < 1) {
+        if (employeeId == null || employeeId.isBlank()) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED,
-                List.of(Map.of("field", "employeeId", "reason", "MIN_1")));
+                List.of(Map.of("field", "employeeId", "reason", "REQUIRED")));
         }
 
         Map<String, Object> data = generateTrainingStatusDetailMock(employeeId);
@@ -1464,12 +1464,12 @@ public class HrmController {
         description = "단일 교육 프로그램 상세 정보를 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getTrainingProgramDetail(
-        @Parameter(description = "프로그램 ID", example = "1")
-        @PathVariable("programId") Long programId
+        @Parameter(description = "프로그램 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("programId") String programId
     ) {
-        if (programId == null || programId < 1) {
+        if (programId == null || programId.isBlank()) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED,
-                List.of(Map.of("field", "programId", "reason", "MIN_1")));
+                List.of(Map.of("field", "programId", "reason", "REQUIRED")));
         }
 
         Map<String, Object> data = generateTrainingProgramDetailMock(programId);
@@ -1525,10 +1525,10 @@ public class HrmController {
         return row;
     }
 
-    private Map<String, Object> generateTrainingStatusDetailMock(Long employeeId) {
+    private Map<String, Object> generateTrainingStatusDetailMock(String employeeId) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", uuidV7());
-        data.put("employeeNumber", String.format("EMP-%03d", employeeId));
+        data.put("employeeNumber", "EMP-001");
         data.put("employeeName", "김민수");
         data.put("department", "개발팀");
         data.put("position", "과장");
@@ -1596,7 +1596,7 @@ public class HrmController {
         return row;
     }
 
-    private Map<String, Object> generateTrainingProgramDetailMock(Long programId) {
+    private Map<String, Object> generateTrainingProgramDetailMock(String programId) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("programId", uuidV7());
         data.put("programName", "신입사원 온보딩");
