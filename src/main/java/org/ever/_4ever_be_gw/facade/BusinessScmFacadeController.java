@@ -38,27 +38,7 @@ public class BusinessScmFacadeController {
     @GetMapping("/workflows")
     @Operation(
             summary = "대시보드 워크플로우 조회",
-            description = "role별로 탭 2개를 함께 반환합니다. 각 탭은 5개 항목을 제공합니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"워크플로우를 조회했습니다.\",\n  \"data\": {\n    \"role\": \"MM_USER\",\n    \"tabs\": [\n      { \"tabCode\": \"PR\", \"items\": [ { \"id\": \"018f17e1-5c08-7a4b-8abc-1234567890ab\", \"title\": \"구매요청 검토\", \"code\": \"PR-2025-001\", \"statusCode\": \"PENDING\", \"date\": \"2025-10-22\" } ] },\n      { \"tabCode\": \"PO\", \"items\": [ { \"id\": \"018f17e1-5c09-7a4b-8abc-1234567890ab\", \"title\": \"발주서 진행\", \"code\": \"PO-2025-014\", \"statusCode\": \"ISSUED\", \"date\": \"2025-10-23\" } ] }\n    ]\n  }\n}"))
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "400",
-                            description = "잘못된 role",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "invalid_role", value = "{\n  \"status\": 400,\n  \"success\": false,\n  \"message\": \"잘못된 입력값입니다.\"\n}"))
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "500",
-                            description = "서버 오류",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"워크플로우 조회 중 서버 오류가 발생했습니다.\"\n}"))
-                    )
-            }
+            description = "role별로 탭 2개를 함께 반환합니다. 각 탭은 5개 항목을 제공합니다."
     )
     public ResponseEntity<ApiResponse<DashboardWorkflowResponseDto>> getWorkflows(
             @Parameter(description = "사용자 역할 (예: SD_USER, MM_ADMIN, HRM_USER, FIN_ADMIN)", example = "SD_USER")
@@ -121,9 +101,9 @@ public class BusinessScmFacadeController {
             String title = makeTitle(type);
             String status = sampleStatus(type, i);
             list.add(DashboardWorkflowItemDto.builder()
-                    .id(id)
-                    .title(title)
-                    .number(code)
+                    .itemId(id)
+                    .itemTitle(title)
+                    .itemNumber(code)
                     .statusCode(status)
                     .date(now.plusDays(i).toLocalDate().toString())
                     .build());
@@ -191,27 +171,7 @@ public class BusinessScmFacadeController {
     @GetMapping("/statistics")
     @Operation(
             summary = "대시보드 통계 조회",
-            description = "대시보드 요약 지표(총 매출, 총 매입, 순이익, 총 직원수)를 기간별로 조회합니다. 'periods' 파라미터로 week,month,quarter,year를 선택할 수 있습니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"대시보드 통계를 조회했습니다.\",\n  \"data\": {\n    \"week\": {\n      \"total_sales\":      { \"value\": 68500000,  \"delta_rate\": 0.082 },\n      \"total_purchases\":  { \"value\": 43200000,  \"delta_rate\": 0.054 },\n      \"net_profit\":       { \"value\": 25300000,  \"delta_rate\": 0.097 },\n      \"employee_count\":   { \"value\": 123,       \"delta_rate\": 0.000 }\n    },\n    \"month\": {\n      \"total_sales\":      { \"value\": 275000000, \"delta_rate\": 0.125 },\n      \"total_purchases\":  { \"value\": 189000000, \"delta_rate\": 0.083 },\n      \"net_profit\":       { \"value\": 86000000,  \"delta_rate\": 0.153 },\n      \"employee_count\":   { \"value\": 123,       \"delta_rate\": 0.000 }\n    },\n    \"quarter\": {\n      \"total_sales\":      { \"value\": 812000000, \"delta_rate\": 0.094 },\n      \"total_purchases\":  { \"value\": 596000000, \"delta_rate\": 0.071 },\n      \"net_profit\":       { \"value\": 216000000, \"delta_rate\": 0.118 },\n      \"employee_count\":   { \"value\": 123,       \"delta_rate\": 0.000 }\n    },\n    \"year\": {\n      \"total_sales\":      { \"value\": 3215000000, \"delta_rate\": 0.068 },\n      \"total_purchases\":  { \"value\": 2425000000, \"delta_rate\": 0.057 },\n      \"net_profit\":       { \"value\": 790000000,  \"delta_rate\": 0.103 },\n      \"employee_count\":   { \"value\": 123,        \"delta_rate\": 0.000 }\n    }\n  }\n}"))
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "422",
-                            description = "검증 실패",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [ { \"field\": \"periods\", \"reason\": \"ALLOWED_VALUES: WEEK, MONTH, QUARTER, YEAR\" } ]\n}"))
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "500",
-                            description = "서버 오류",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "server_error", value = "{\n  \"status\": 500,\n  \"success\": false,\n  \"message\": \"요청 처리 중 알 수 없는 오류가 발생했습니다.\"\n}"))
-                    )
-            }
+            description = "대시보드 요약 지표(총 매출, 총 매입, 순이익, 총 직원수)를 기간별로 조회합니다. 'periods' 파라미터로 week,month,quarter,year를 선택할 수 있습니다."
     )
     public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getDashboardStatistics(
             @Parameter(description = "조회 기간 목록(콤마 구분)")
@@ -259,10 +219,10 @@ public class BusinessScmFacadeController {
     ) {
         long netProfit = Math.max(0, totalSales - totalPurchases);
         return StatsMetricsDto.builder()
-                .put("total_sales", PeriodStatDto.builder().value(totalSales).deltaRate(totalSalesChange).build())
-                .put("total_purchases", PeriodStatDto.builder().value(totalPurchases).deltaRate(totalPurchasesChange).build())
-                .put("net_profit", PeriodStatDto.builder().value(netProfit).deltaRate(new java.math.BigDecimal("0.097")).build())
-                .put("total_employee", PeriodStatDto.builder().value(employeeCount).deltaRate(employeeCountChange).build())
+                .put("totalSales", PeriodStatDto.builder().value(totalSales).deltaRate(totalSalesChange).build())
+                .put("totalPurchases", PeriodStatDto.builder().value(totalPurchases).deltaRate(totalPurchasesChange).build())
+                .put("netProfit", PeriodStatDto.builder().value(netProfit).deltaRate(new java.math.BigDecimal("0.097")).build())
+                .put("totalEmployee", PeriodStatDto.builder().value(employeeCount).deltaRate(employeeCountChange).build())
                 .build();
     }
 }

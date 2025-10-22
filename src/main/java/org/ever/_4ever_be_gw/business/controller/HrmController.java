@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.ever._4ever_be_gw.business.dto.*;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeCreateRequestDto;
@@ -42,15 +43,7 @@ public class HrmController {
     @GetMapping("/statistics")
     @Operation(
         summary = "HRM 통계 조회",
-        description = "기간별 인적자원 통계 정보를 조회합니다.",
-            responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"대시보드 정보를 성공적으로 조회했습니다.\",\n  \"data\": {\n    \"week\": {\n      \"total_employee_count\": { \"value\": 100, \"delta_rate\": 0.012 },\n      \"new_employee_count\": { \"value\": 2, \"delta_rate\": 0.045 },\n      \"ongoing_program_count\": { \"value\": 8, \"delta_rate\": 0.038 },\n      \"completed_program_count\": { \"value\": 3, \"delta_rate\": 0.025 }\n    },\n    \"month\": {\n      \"total_employee_count\": { \"value\": 100, \"delta_rate\": 0.018 },\n      \"new_employee_count\": { \"value\": 10, \"delta_rate\": 0.062 },\n      \"ongoing_program_count\": { \"value\": 15, \"delta_rate\": 0.041 },\n      \"completed_program_count\": { \"value\": 5, \"delta_rate\": 0.033 }\n    }\n  }\n}"))
-            )
-        }
+        description = "기간별 인적자원 통계 정보를 조회합니다."
     )
     public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getEmployeeStatistics(
         @Parameter(description = "조회 기간 목록(콤마 구분)")
@@ -103,15 +96,7 @@ public class HrmController {
     @PostMapping("/employee/signup")
     @Operation(
         summary = "직원 신규 등록",
-        description = "새로운 직원을 등록합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"직원 등록이 완료되었습니다.\",\n  \"data\": null\n}"))
-            )
-        }
+        description = "새로운 직원을 등록합니다."
     )
     public ResponseEntity<ApiResponse<Object>> signupEmployee(
         @Valid @RequestBody EmployeeCreateRequestDto requestDto
@@ -153,15 +138,7 @@ public class HrmController {
     @GetMapping("/employee")
     @Operation(
         summary = "직원 목록 조회",
-        description = "직원 목록을 페이지네이션으로 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"직원 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"employeeId\": 1,\n        \"employeeNumber\": \"EMP001\",\n        \"name\": \"김철수\",\n        \"email\": \"kim@company.com\",\n        \"phone\": \"010-1234-5678\",\n        \"position\": \"대리\",\n        \"department\": \"개발팀\",\n        \"status\": \"ACTIVE\",\n        \"statusLabel\": \"재직\",\n        \"hireDate\": \"2023-01-15\",\n        \"birthDate\": \"1990-05-20\",\n        \"address\": \"서울시 강남구\",\n        \"emergencyContact\": \"김영희\",\n        \"emergencyPhone\": \"010-9876-5432\",\n        \"bankAccount\": \"1234567890\",\n        \"bankName\": \"국민은행\",\n        \"accountHolder\": \"김철수\",\n        \"createdAt\": \"2023-01-15\",\n        \"updatedAt\": \"2024-01-15\",\n        \"skills\": [\"Java\", \"Spring Boot\", \"React\"],\n        \"managerName\": \"박영수\",\n        \"managerId\": 2,\n        \"workLocation\": \"본사\",\n        \"employmentType\": \"정규직\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 150,\n      \"totalPages\": 8,\n      \"hasNext\": true\n    }\n  }\n}"))
-            )
-        }
+        description = "직원 목록을 페이지네이션으로 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getEmployees(
         @Parameter(description = "부서 필터")
@@ -218,21 +195,7 @@ public class HrmController {
     @GetMapping("/employees/{employeeId}")
     @Operation(
         summary = "직원 상세 조회",
-        description = "직원 상세 정보를 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"직원 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"employeeId\": 1,\n    \"employeeNumber\": \"EMP001\",\n    \"name\": \"김철수\",\n    \"email\": \"kim@company.com\",\n    \"phone\": \"010-1234-5678\",\n    \"position\": \"대리\",\n    \"department\": \"개발팀\",\n    \"status\": \"ACTIVE\",\n    \"statusLabel\": \"재직\",\n    \"hireDate\": \"2023-01-15\",\n    \"birthDate\": \"1990-05-20\",\n    \"address\": \"서울시 강남구 테헤란로 123\",\n    \"emergencyContact\": \"김영희\",\n    \"emergencyPhone\": \"010-9876-5432\",\n    \"bankAccount\": \"1234567890\",\n    \"bankName\": \"국민은행\",\n    \"accountHolder\": \"김철수\",\n    \"createdAt\": \"2023-01-15\",\n    \"updatedAt\": \"2024-01-15\",\n    \"skills\": [\"Java\", \"Spring Boot\", \"React\", \"MySQL\"],\n    \"managerName\": \"박영수\",\n    \"managerId\": 2,\n    \"workLocation\": \"본사\",\n    \"employmentType\": \"정규직\"\n  }\n}"))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "직원을 찾을 수 없음",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"해당 직원을 찾을 수 없습니다.\",\n  \"errors\": { \"code\": 2001 }\n}"))
-            )
-        }
+        description = "직원 상세 정보를 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getEmployeeDetail(
         @Parameter(description = "직원 ID", example = "1")
@@ -253,15 +216,7 @@ public class HrmController {
     @GetMapping("/departments")
     @Operation(
         summary = "부서 목록 조회",
-        description = "부서 목록을 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"부서 목록을 조회했습니다.\",\n  \"data\": {\n    \"total\": 8,\n    \"page\": 1,\n    \"size\": 10,\n    \"totalPages\": 1,\n    \"hasNext\": false,\n    \"hasPrev\": false,\n    \"departments\": [\n      {\n        \"departmentId\": 1,\n        \"departmentCode\": \"DEV\",\n        \"departmentName\": \"개발팀\",\n        \"description\": \"소프트웨어 개발 및 유지보수\",\n        \"managerName\": \"박영수\",\n        \"managerId\": 2,\n        \"location\": \"본사 3층\",\n        \"status\": \"ACTIVE\",\n        \"statusLabel\": \"활성\",\n        \"employeeCount\": 25,\n        \"budget\": 500000000.0,\n        \"budgetCurrency\": \"KRW\",\n        \"establishedDate\": \"2020-01-01\",\n        \"createdAt\": \"2020-01-01\",\n        \"updatedAt\": \"2024-01-01\",\n        \"responsibilities\": [\"소프트웨어 개발\", \"시스템 유지보수\", \"기술 연구\"],\n        \"parentDepartment\": \"IT본부\",\n        \"parentDepartmentId\": 1\n      }\n    ]\n  }\n}"))
-            )
-        }
+        description = "부서 목록을 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getDepartments(
         @Parameter(description = "상태 필터: ACTIVE, INACTIVE")
@@ -322,15 +277,7 @@ public class HrmController {
     @GetMapping("/positions")
     @Operation(
         summary = "직급 목록 조회",
-        description = "직급 목록을 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"직급 목록을 조회했습니다.\",\n  \"data\": [\n    {\n      \"positionId\": 1,\n      \"positionName\": \"사원\",\n      \"headCount\": 15,\n      \"payment\": 30000000\n    },\n    {\n      \"positionId\": 2,\n      \"positionName\": \"주임\",\n      \"headCount\": 12,\n      \"payment\": 35000000\n    }\n  ]\n}"))
-            )
-        }
+        description = "직급 목록을 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getPositions() {
         // Mock 데이터 생성
@@ -344,21 +291,7 @@ public class HrmController {
     @GetMapping("/positions/{positionId}")
     @Operation(
         summary = "직급 상세 조회",
-        description = "직급 상세 정보를 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"직급 상세 정보를 조회했습니다.\",\n  \"data\": {\n    \"positionId\": 1,\n    \"positionCode\": \"STAFF\",\n    \"positionName\": \"사원\",\n    \"headCount\": 15,\n    \"payment\": 30000000,\n    \"employees\": [\n      {\n        \"employeeId\": 101,\n        \"employeeName\": \"김철수\",\n        \"departmentId\": 1,\n        \"departmentName\": \"개발팀\",\n        \"hireDate\": \"2020-01-01\"\n      }\n    ]\n  }\n}"))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "직급을 찾을 수 없음",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "not_found", value = "{\n  \"status\": 404,\n  \"success\": false,\n  \"message\": \"해당 직급을 찾을 수 없습니다.\",\n  \"errors\": { \"code\": 2002 }\n}"))
-            )
-        }
+        description = "직급 상세 정보를 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getPositionDetail(
         @Parameter(description = "직급 ID", example = "1")
@@ -379,15 +312,7 @@ public class HrmController {
     @GetMapping("/attendance")
     @Operation(
         summary = "출퇴근 기록 조회",
-        description = "출퇴근 기록을 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"출퇴근 기록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"attendanceId\": 1,\n        \"employeeId\": 1,\n        \"employeeName\": \"김철수\",\n        \"employeeNumber\": \"EMP001\",\n        \"attendanceDate\": \"2024-01-15\",\n        \"checkInTime\": \"09:00:00\",\n        \"checkOutTime\": \"18:00:00\",\n        \"status\": \"NORMAL\",\n        \"statusLabel\": \"정상\",\n        \"workType\": \"OFFICE\",\n        \"workTypeLabel\": \"사무실\",\n        \"location\": \"본사\",\n        \"notes\": \"\",\n        \"workingHours\": 8.0,\n        \"overtimeHours\": 0.0,\n        \"approvalStatus\": \"APPROVED\",\n        \"approvalStatusLabel\": \"승인\",\n        \"approverName\": \"박영수\",\n        \"approverId\": 2,\n        \"createdAt\": \"2024-01-15\",\n        \"updatedAt\": \"2024-01-15\",\n        \"department\": \"개발팀\",\n        \"position\": \"대리\",\n        \"isLate\": false,\n        \"isEarlyLeave\": false,\n        \"lateReason\": null,\n        \"earlyLeaveReason\": null\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 500,\n      \"totalPages\": 25,\n      \"hasNext\": true\n    }\n  }\n}"))
-            )
-        }
+        description = "출퇴근 기록을 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getAttendance(
         @Parameter(description = "직원 ID")
@@ -462,80 +387,6 @@ public class HrmController {
 
     // ==================== 휴가 관리 ====================
 
-    @GetMapping("/leave-requests")
-    @Operation(
-        summary = "휴가 신청 목록 조회",
-        description = "휴가 신청 목록을 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청 목록을 조회했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"leaveRequestId\": 1,\n        \"employeeId\": 1,\n        \"employeeName\": \"김철수\",\n        \"employeeNumber\": \"EMP001\",\n        \"leaveType\": \"ANNUAL\",\n        \"leaveTypeLabel\": \"연차\",\n        \"reason\": \"개인사정\",\n        \"description\": \"가족 행사 참석\",\n        \"startDate\": \"2024-01-20\",\n        \"endDate\": \"2024-01-22\",\n        \"totalDays\": 3.0,\n        \"status\": \"PENDING\",\n        \"statusLabel\": \"대기\",\n        \"approvalStatus\": \"PENDING\",\n        \"approvalStatusLabel\": \"승인대기\",\n        \"approverName\": \"박영수\",\n        \"approverId\": 2,\n        \"approverComment\": null,\n        \"requestDate\": \"2024-01-15\",\n        \"approvalDate\": null,\n        \"createdAt\": \"2024-01-15\",\n        \"updatedAt\": \"2024-01-15\",\n        \"department\": \"개발팀\",\n        \"position\": \"대리\",\n        \"emergencyContact\": \"김영희\",\n        \"emergencyPhone\": \"010-9876-5432\",\n        \"isPaidLeave\": true,\n        \"remainingLeaveDays\": 12.0,\n        \"attachmentUrl\": null,\n        \"attachments\": []\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 20,\n      \"totalElements\": 80,\n      \"totalPages\": 4,\n      \"hasNext\": true\n    }\n  }\n}"))
-            )
-        }
-    )
-    public ResponseEntity<ApiResponse<Object>> getLeaveRequests(
-        @Parameter(description = "직원 ID")
-        @RequestParam(name = "employeeId", required = false) Long employeeId,
-        @Parameter(description = "휴가 유형: ANNUAL, SICK, PERSONAL, MATERNITY, PATERNITY")
-        @RequestParam(name = "leaveType", required = false) String leaveType,
-        @Parameter(description = "상태 필터: PENDING, APPROVED, REJECTED")
-        @RequestParam(name = "status", required = false) String status,
-        @Parameter(description = "페이지 번호(0-base)")
-        @RequestParam(name = "page", required = false) Integer page,
-        @Parameter(description = "페이지 크기(최대 200)")
-        @RequestParam(name = "size", required = false) Integer size
-    ) {
-        // 검증
-        List<Map<String, String>> errors = new ArrayList<>();
-        if (leaveType != null) {
-            var allowed = Set.of("ANNUAL", "SICK", "PERSONAL", "MATERNITY", "PATERNITY");
-            if (!allowed.contains(leaveType)) {
-                errors.add(Map.of("field", "leaveType", "reason",
-                    "ALLOWED_VALUES: ANNUAL, SICK, PERSONAL, MATERNITY, PATERNITY"));
-            }
-        }
-        if (status != null) {
-            var allowed = Set.of("PENDING", "APPROVED", "REJECTED");
-            if (!allowed.contains(status)) {
-                errors.add(Map.of("field", "status", "reason",
-                    "ALLOWED_VALUES: PENDING, APPROVED, REJECTED"));
-            }
-        }
-        if (size != null && size > 200) {
-            errors.add(Map.of("field", "size", "reason", "MAX_200"));
-        }
-        if (!errors.isEmpty()) {
-            throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
-        }
-
-        // 기본값 처리
-        int p = (page == null || page < 0) ? 0 : page;
-        int s = (size == null || size < 1) ? 20 : size;
-
-        // Mock 데이터 생성
-        List<Map<String, Object>> content = generateLeaveRequestMockData(10);
-
-        int totalElements = 80;
-        int totalPages = s == 0 ? 0 : (int) Math.ceil((double) totalElements / s);
-        PageDto pageInfo = PageDto.builder()
-            .number(p)
-            .size(s)
-            .totalElements(totalElements)
-            .totalPages(totalPages)
-            .hasNext(p + 1 < totalPages)
-            .build();
-
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("content", content);
-        data.put("page", pageInfo);
-
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "휴가 신청 목록을 조회했습니다.", HttpStatus.OK
-        ));
-    }
-
     // ==================== Mock 데이터 생성 메서드들 ====================
 
     // ==================== 인적자원 통계 Mock 데이터 생성 ====================
@@ -551,19 +402,19 @@ public class HrmController {
         double completedProgramDelta
     ) {
         return StatsMetricsDto.builder()
-            .put("total_employee_count", PeriodStatDto.builder()
+            .put("totalEmployeeCount", PeriodStatDto.builder()
                 .value(totalEmployeeCount)
                 .deltaRate(BigDecimal.valueOf(totalEmployeeDelta))
                 .build())
-            .put("new_employee_count", PeriodStatDto.builder()
+            .put("newEmployeeCount", PeriodStatDto.builder()
                 .value(newEmployeeCount)
                 .deltaRate(BigDecimal.valueOf(newEmployeeDelta))
                 .build())
-            .put("ongoing_program_count", PeriodStatDto.builder()
+            .put("ongoingProgramCount", PeriodStatDto.builder()
                 .value(ongoingProgramCount)
                 .deltaRate(BigDecimal.valueOf(ongoingProgramDelta))
                 .build())
-            .put("completed_program_count", PeriodStatDto.builder()
+            .put("completedProgramCount", PeriodStatDto.builder()
                 .value(completedProgramCount)
                 .deltaRate(BigDecimal.valueOf(completedProgramDelta))
                 .build())
@@ -581,13 +432,13 @@ public class HrmController {
 
         for (int i = 0; i < count; i++) {
             Map<String, Object> employee = new LinkedHashMap<>();
-            employee.put("employeeId", i + 1);
+            employee.put("employeeId", uuidV7());
             employee.put("employeeCode", String.format("EMP%03d", i + 1));
             employee.put("employeeName", names[i % names.length]);
 
-            employee.put("positionId", (i % positions.length) + 1);
+            employee.put("positionId", uuidV7());
             employee.put("position", positions[i % positions.length]);
-            employee.put("departmentId", (i % departments.length) + 1);
+            employee.put("departmentId", uuidV7());
             employee.put("department", departments[i % departments.length]);
 
             employee.put("hireDate", LocalDate.now().minusMonths(12 + i));
@@ -606,20 +457,19 @@ public class HrmController {
 
         for (int i = 0; i < count; i++) {
             Map<String, Object> employee = new LinkedHashMap<>();
-            employee.put("employeeId", i + 1);
-            employee.put("employeeCode", String.format("EMP%03d", i + 1));
-            employee.put("employeeName", names[i % names.length]);
-
-            employee.put("positionId", (i % positions.length) + 1);
+            employee.put("employeeId", uuidV7());
+            employee.put("employeeNumber", String.format("EMP%03d", i + 1));
+            employee.put("name", names[i % names.length]);
+            employee.put("email", String.format("employee%d@company.com", i + 1));
+            employee.put("phone", String.format("010-%04d-%04d", 1000 + i, 1000 + i));
             employee.put("position", positions[i % positions.length]);
-            employee.put("departmentId", (i % departments.length) + 1);
             employee.put("department", departments[i % departments.length]);
-
+            employee.put("statusCode", "ACTIVE");
             employee.put("hireDate", LocalDate.now().minusMonths(12 + i));
             employee.put("birthDate", LocalDate.of(1990 + (i % 10), (i % 12) + 1, (i % 28) + 1));
             employee.put("address", "서울시 강남구 테헤란로 " + (100 + i));
-            employee.put("email", String.format("employee%d@company.com", i + 1));
-            employee.put("phone", String.format("010-%04d-%04d", 1000 + i, 1000 + i));
+            employee.put("createdAt", LocalDate.now().minusMonths(12 + i));
+            employee.put("updatedAt", LocalDate.now());
 
             employees.add(employee);
         }
@@ -628,22 +478,21 @@ public class HrmController {
 
     private Map<String, Object> generateEmployeeDetailMockData(Long employeeId) {
         Map<String, Object> employee = new LinkedHashMap<>();
-        employee.put("employeeId", employeeId);
-        employee.put("employeeCode", String.format("EMP%03d", employeeId));
-        employee.put("employeeName", "김철수");
-
-        employee.put("positionId", (employeeId % 10) + 1);
-        employee.put("position", "대리");
-        employee.put("departmentId", 1);
-        employee.put("department", "개발팀");
-
-        employee.put("hireDate", LocalDate.of(2023, 1, 15));
-        employee.put("birthDate", LocalDate.of(1990, 5, 20));
+        employee.put("employeeId", uuidV7());
+        employee.put("employeeNumber", String.format("EMP-%03d", employeeId));
+        employee.put("name", "김철수");
         employee.put("email", "kim@company.com");
         employee.put("phone", "010-1234-5678");
+        employee.put("position", "대리");
+        employee.put("department", "개발팀");
+        employee.put("statusCode", "ACTIVE");
+        employee.put("hireDate", LocalDate.of(2023, 1, 15));
+        employee.put("birthDate", LocalDate.of(1990, 5, 20));
         employee.put("address", "서울시 강남구 테헤란로 123");
         employee.put("academicHistory", "서울대학교 컴퓨터공학과 졸업");
         employee.put("careerHistory", "5년차 소프트웨어 개발자");
+        employee.put("createdAt", LocalDate.of(2023, 1, 15));
+        employee.put("updatedAt", LocalDate.of(2024, 1, 15));
 
         return employee;
     }
@@ -670,15 +519,37 @@ public class HrmController {
     private List<Map<String, Object>> generateDepartmentListMockData() {
         List<Map<String, Object>> departments = new ArrayList<>();
         String[] names = {"개발팀", "기획팀", "마케팅팀", "인사팀", "재무팀", "영업팀", "디자인팀", "QA팀"};
+        String[] codes = {"DEV", "PLAN", "MKT", "HR", "FIN", "SALES", "DESIGN", "QA"};
         String[] managers = {"박영수", "김영희", "이민수", "최수진", "정지훈", "한미영", "송동현", "강서연"};
+        String[] locations = {"본사 3층", "본사 2층", "본사 4층", "본사 1층", "본사 5층", "지사 1층", "본사 3층", "본사 4층"};
+        String[] descriptions = {
+            "소프트웨어 개발 및 유지보수",
+            "사업 기획 및 전략 수립",
+            "마케팅 및 홍보",
+            "인사 관리 및 복지",
+            "재무 관리 및 회계",
+            "영업 및 고객 관리",
+            "UX/UI 디자인",
+            "품질 관리 및 테스트"
+        };
 
         for (int i = 0; i < names.length; i++) {
             Map<String, Object> dept = new LinkedHashMap<>();
-            dept.put("departmentId", i + 1);
+            dept.put("departmentId", uuidV7());
+            dept.put("departmentCode", codes[i]);
             dept.put("departmentName", names[i]);
-            dept.put("managerId", i + 1);
+            dept.put("description", descriptions[i]);
             dept.put("managerName", managers[i]);
+            dept.put("managerId", uuidV7());
+            dept.put("location", locations[i]);
+            dept.put("statusCode", "ACTIVE");
             dept.put("employeeCount", 20 + i * 5);
+            dept.put("budget", 500000000.0 + i * 100000000.0);
+            dept.put("budgetCurrency", "KRW");
+            dept.put("establishedDate", LocalDate.of(2020, 1, 1));
+            dept.put("createdAt", LocalDate.of(2020, 1, 1));
+            dept.put("updatedAt", LocalDate.of(2024, 1, 1));
+            dept.put("responsibilities", List.of("주요 업무 " + (i + 1), "보조 업무 " + (i + 1)));
 
             departments.add(dept);
         }
@@ -688,7 +559,7 @@ public class HrmController {
     private Map<String, Object> generateDepartmentDetailMockData() {
         Map<String, Object> dept = new LinkedHashMap<>();
         dept.put("departmentId", 1);
-        dept.put("departmentCode", "DEV");
+        dept.put("departmentNumber", "DEV");
         dept.put("departmentName", "개발팀");
         dept.put("managerId", 1);
         dept.put("managerName", "박영수");
@@ -726,7 +597,7 @@ public class HrmController {
 
         for (int i = 0; i < positionNames.length; i++) {
             Map<String, Object> position = new LinkedHashMap<>();
-            position.put("positionId", i + 1);
+            position.put("positionId", uuidV7());
             position.put("positionName", positionNames[i]);
             position.put("headCount", headCounts[i]);
             position.put("payment", annualSalaries[i]);
@@ -739,16 +610,16 @@ public class HrmController {
     private Map<String, Object> generatePositionDetailMockData(Long positionId) {
         Map<String, Object> position = new LinkedHashMap<>();
         String[] positionNames = {"사원", "주임", "대리", "과장", "차장", "부장", "이사", "상무", "전무", "사장"};
-        String[] positionCodes = {"STAFF", "ASSISTANT", "ASSOCIATE", "MANAGER", "SENIOR_MANAGER",
-            "DIRECTOR", "EXECUTIVE", "SENIOR_EXECUTIVE", "VICE_PRESIDENT", "PRESIDENT"};
+        String[] positionNumbers = {"AA-001", "AA-002", "AA-003", "AA-004", "AA-005",
+            "AA-006", "AA-007", "AA-008", "AA-009", "AA-010"};
         int[] headCounts = {15, 12, 10, 8, 6, 4, 3, 2, 1, 1};
         int[] annualSalaries = {30000000, 35000000, 40000000, 50000000, 60000000, 70000000,
             80000000, 90000000, 100000000, 120000000};
 
         int index = (int) ((positionId - 1) % positionNames.length);
 
-        position.put("positionId", positionId);
-        position.put("positionCode", positionCodes[index]);
+        position.put("positionId", uuidV7());
+        position.put("positionNumber", positionNumbers[index]);
         position.put("positionName", positionNames[index]);
         position.put("headCount", headCounts[index]);
         position.put("payment", annualSalaries[index]);
@@ -763,29 +634,25 @@ public class HrmController {
         List<Map<String, Object>> attendance = new ArrayList<>();
         String[] names = {"김철수", "박영수", "이영희", "최민수", "정수진", "한지훈", "송미영", "강동현", "윤서연", "임태호"};
         String[] statuses = {"NORMAL", "LATE", "EARLY_LEAVE", "ABSENT"};
-        String[] statusLabels = {"정상", "지각", "조기퇴근", "결근"};
 
         for (int i = 0; i < count; i++) {
             Map<String, Object> record = new LinkedHashMap<>();
-            record.put("attendanceId", i + 1);
-            record.put("employeeId", i + 1);
+            record.put("attendanceId", uuidV7());
+            record.put("employeeId", uuidV7());
             record.put("employeeName", names[i % names.length]);
             record.put("employeeNumber", String.format("EMP%03d", i + 1));
             record.put("attendanceDate", LocalDate.now().minusDays(i));
             record.put("checkInTime", "09:00:00");
             record.put("checkOutTime", "18:00:00");
-            record.put("status", statuses[i % statuses.length]);
-            record.put("statusLabel", statusLabels[i % statusLabels.length]);
+            record.put("statusCode", statuses[i % statuses.length]);
             record.put("workType", "OFFICE");
-            record.put("workTypeLabel", "사무실");
             record.put("location", "본사");
             record.put("notes", "");
             record.put("workingHours", 8.0);
             record.put("overtimeHours", i % 2 == 0 ? 1.0 : 0.0);
             record.put("approvalStatus", "APPROVED");
-            record.put("approvalStatusLabel", "승인");
             record.put("approverName", "박영수");
-            record.put("approverId", 2L);
+            record.put("approverId", uuidV7());
             record.put("createdAt", LocalDate.now().minusDays(i));
             record.put("updatedAt", LocalDate.now().minusDays(i));
             record.put("department", "개발팀");
@@ -803,7 +670,6 @@ public class HrmController {
         String[] leaveTypes = {"ANNUAL", "SICK", "PERSONAL", "MATERNITY", "PATERNITY"};
         String[] leaveTypeLabels = {"연차", "병가", "개인사정", "출산휴가", "육아휴가"};
         String[] statuses = {"PENDING", "APPROVED", "REJECTED"};
-        String[] statusLabels = {"대기", "승인", "반려"};
 
         for (int i = 0; i < count; i++) {
             Map<String, Object> request = new LinkedHashMap<>();
@@ -819,9 +685,7 @@ public class HrmController {
             request.put("endDate", LocalDate.now().plusDays(i + 3));
             request.put("totalDays", 3.0);
             request.put("status", statuses[i % statuses.length]);
-            request.put("statusLabel", statusLabels[i % statusLabels.length]);
             request.put("approvalStatus", statuses[i % statuses.length]);
-            request.put("approvalStatusLabel", statusLabels[i % statusLabels.length]);
             request.put("approverName", "박영수");
             request.put("approverId", 2L);
             request.put("requestDate", LocalDate.now().minusDays(i));
@@ -840,15 +704,7 @@ public class HrmController {
     @GetMapping("/payroll")
     @Operation(
         summary = "월별 급여 목록 조회",
-        description = "월별 사내 급여 명세서 목록을 조회합니다.",
-		responses = {
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(
-				responseCode = "200",
-				description = "성공",
-				content = @Content(mediaType = "application/json",
-					examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"급여 명세서 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [{\n      \"paystubId\": 101,\n      \"employee\": {\n        \"employeeId\": 1,\n        \"employeeName\": \"김민수\",\n        \"departmentId\": 1,\n        \"department\": \"구매관리부\",\n        \"positionId\": 1,\n        \"position\": \"과장\"\n      },\n      \"pay\": {\n        \"basePay\": 4500000,\n        \"overtimePay\": 150000,\n        \"deduction\": 450000,\n        \"netPay\": 4200000,\n        \"status\": \"COMPLETED\"\n      }\n    }],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 25,\n      \"totalPages\": 3,\n      \"hasNext\": true\n    },\n    \"first\": true,\n    \"last\": false,\n    \"numberOfElements\": 3\n  }\n}"))
-			)
-		}
+        description = "월별 사내 급여 명세서 목록을 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getMonthlyPayrollList(
         @Parameter(description = "연도", example = "2025")
@@ -893,8 +749,8 @@ public class HrmController {
     }
 
     // 월별 사내 급여 상세 조회
-    // GET /api/business/payroll/employee/{paystubId}?year=&month=
-    @GetMapping("employee/{paystubId}")
+    // GET /api/business/payroll/employee/{payrollId}?year=&month=
+    @GetMapping("employee/{payrollId}")
     @Operation(
         summary = "월별 급여 상세 조회",
         description = "월별 사내 급여 명세서 상세를 조회합니다.",
@@ -903,23 +759,23 @@ public class HrmController {
                 responseCode = "200",
                 description = "성공",
                 content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"급여 명세서 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"paystubId\": 1,\n    \"employee\": {\n      \"employeeId\": 1,\n      \"employeeCode\": \"EMP001\",\n      \"employeeName\": \"김민수\",\n      \"department\": \"개발팀\",\n      \"position\": \"과장\"\n    },\n    \"pay\": {\n      \"basePay\": 4500000,\n      \"basePayItem\": [{\n        \"itemContent\": \"정기 급여\",\n        \"itemSum\": 4200000\n      },{\n        \"itemContent\": \"직책 수당\",\n        \"itemSum\": 300000\n      }],\n      \"overtimePay\": 150000,\n      \"overtimePayItem\": [{\n        \"itemContent\": \"야간 근무 수당 (5시간)\",\n        \"itemSum\": 100000\n      },{\n        \"itemContent\": \"휴일 근무 수당 (2시간)\",\n        \"itemSum\": 50000\n      }],\n      \"deduction\": -450000,\n      \"deductionItem\": [{\n        \"itemContent\": \"국민연금\",\n        \"itemSum\": -200000\n      },{\n        \"itemContent\": \"건강보험\",\n        \"itemSum\": -150000\n      },{\n        \"itemContent\": \"소득세\",\n        \"itemSum\": -100000\n      }],\n      \"netPay\": 4200000\n    },\n    \"status\": \"COMPLETED\",\n    \"expectedDate\": \"2024-01-25\"\n  }\n}"))
+                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"급여 명세서 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"payrollId\": \"0193e7c8-1234-7abc-9def-0123456789ab\",\n    \"employee\": {\n      \"employeeId\": \"0193e7c8-5678-7abc-9def-fedcba987654\",\n      \"employeeNumber\": \"EMP001\",\n      \"employeeName\": \"김민수\",\n      \"department\": \"개발팀\",\n      \"position\": \"과장\"\n    },\n    \"pay\": {\n      \"basePay\": 4500000,\n      \"basePayItem\": [{\n        \"itemContent\": \"정기 급여\",\n        \"itemSum\": 4200000\n      },{\n        \"itemContent\": \"직책 수당\",\n        \"itemSum\": 300000\n      }],\n      \"overtimePay\": 150000,\n      \"overtimePayItem\": [{\n        \"itemContent\": \"야간 근무 수당 (5시간)\",\n        \"itemSum\": 100000\n      },{\n        \"itemContent\": \"휴일 근무 수당 (2시간)\",\n        \"itemSum\": 50000\n      }],\n      \"deduction\": -450000,\n      \"deductionItem\": [{\n        \"itemContent\": \"국민연금\",\n        \"itemSum\": -200000\n      },{\n        \"itemContent\": \"건강보험\",\n        \"itemSum\": -150000\n      },{\n        \"itemContent\": \"소득세\",\n        \"itemSum\": -100000\n      }],\n      \"netPay\": 4200000\n    },\n    \"statusCode\": \"COMPLETED\",\n    \"expectedDate\": \"2024-01-25\"\n  }\n}"))
             )
         }
     )
     public ResponseEntity<ApiResponse<Object>> getMonthlyPayrollDetail(
         @Parameter(description = "급여 명세서 ID", example = "1")
-        @PathVariable("paystubId") Long paystubId
+        @PathVariable("payrollId") Long payrollId
     ) {
         List<Map<String, String>> errors = new ArrayList<>();
-        if (paystubId == null || paystubId < 1) {
-            errors.add(Map.of("field", "paystubId", "reason", "MIN_1"));
+        if (payrollId == null || payrollId < 1) {
+            errors.add(Map.of("field", "payrollId", "reason", "MIN_1"));
         }
         if (!errors.isEmpty()) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        Map<String, Object> data = generateMonthlyPayrollDetailMock(paystubId);
+        Map<String, Object> data = generateMonthlyPayrollDetailMock(payrollId);
         return ResponseEntity.ok(ApiResponse.success(
             data, "급여 명세서 상세 조회에 성공했습니다.", HttpStatus.OK
         ));
@@ -939,14 +795,14 @@ public class HrmController {
         for (int i = 0; i < 3; i++) {
             int idx = i % names.length;
             Map<String, Object> row = new LinkedHashMap<>();
-            row.put("paystubId", 101 + i);
+            row.put("payrollId", uuidV7());
 
             Map<String, Object> employee = new LinkedHashMap<>();
-            employee.put("employeeId", (long) (i + 1));
+            employee.put("employeeId", uuidV7());
             employee.put("employeeName", names[idx]);
-            employee.put("departmentId", (long) (idx + 1));
+            employee.put("departmentId", uuidV7());
             employee.put("department", departments[idx % departments.length]);
-            employee.put("positionId", (long) (idx + 1));
+            employee.put("positionId", uuidV7());
             employee.put("position", positions[idx % positions.length]);
             row.put("employee", employee);
 
@@ -959,7 +815,7 @@ public class HrmController {
             pay.put("overtimePay", overtime);
             pay.put("deduction", deduction);
             pay.put("netPay", net);
-            pay.put("status", (i % 2 == 0 ? "PENDING" : "COMPLETED"));
+            pay.put("statusCode", (i % 2 == 0 ? "PENDING" : "COMPLETED"));
             row.put("pay", pay);
 
             content.add(row);
@@ -978,20 +834,16 @@ public class HrmController {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("content", content);
         response.put("page", pageInfo);
-        response.put("first", page == 0);
-        response.put("last", page >= totalPages - 1);
-        response.put("numberOfElements", content.size());
-        response.put("empty", content.isEmpty());
         return response;
     }
 
     private Map<String, Object> generateMonthlyPayrollDetailMock(Long paystubId) {
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("paystubId", paystubId);
+        data.put("payrollId", uuidV7());
 
         Map<String, Object> employee = new LinkedHashMap<>();
-        employee.put("employeeId", 1L);
-        employee.put("employeeCode", "EMP001");
+        employee.put("employeeId", uuidV7());
+        employee.put("employeeNumber", "EMP001");
         employee.put("employeeName", "김민수");
         employee.put("department", "개발팀");
         employee.put("position", "과장");
@@ -1020,7 +872,7 @@ public class HrmController {
         pay.put("netPay", 4200000);
         data.put("pay", pay);
 
-        data.put("status", "COMPLETED");
+        data.put("statusCode", "COMPLETED");
         data.put("expectedDate", LocalDate.now().withDayOfMonth(25));
 
         return data;
@@ -1031,15 +883,7 @@ public class HrmController {
     @PatchMapping("/attendance/check-in")
     @Operation(
         summary = "출근 상태 변경",
-        description = "직원의 출근 상태를 변경합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"출근 처리가 완료되었습니다.\",\n  \"data\": {\n    \"timerecordId\": 101,\n    \"employeeId\": 1,\n    \"checkInTime\": \"2025-01-15T09:00:00\",\n    \"status\": \"ON_TIME\"\n  }\n}"))
-            )
-        }
+        description = "직원의 출근 상태를 변경합니다."
     )
     public ResponseEntity<ApiResponse<Object>> checkIn() {
         // Mock 데이터 생성
@@ -1057,15 +901,7 @@ public class HrmController {
     @PatchMapping("/attendance/check-out")
     @Operation(
         summary = "퇴근 상태 변경",
-        description = "직원의 퇴근 상태를 변경합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"퇴근 처리가 완료되었습니다.\",\n  \"data\": {\n    \"timerecordId\": 101,\n    \"employeeId\": 1,\n    \"checkOutTime\": \"2025-01-15T18:00:00\",\n    \"totalWorkMinutes\": 540,\n    \"overtimeMinutes\": 0\n  }\n}"))
-            )
-        }
+        description = "직원의 퇴근 상태를 변경합니다."
     )
     public ResponseEntity<ApiResponse<Object>> checkOut() {
         // Mock 데이터 생성
@@ -1084,15 +920,7 @@ public class HrmController {
     @PutMapping("/time-record/{timerecordId}")
     @Operation(
         summary = "출퇴근 기록 수정",
-        description = "출퇴근 기록을 수정합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"출퇴근 기록 수정이 완료되었습니다.\",\n  \"data\": {\n    \"timerecordId\": 101,\n    \"employeeId\": 1,\n    \"inTime\": \"2025-01-15T09:00:00\",\n    \"outTime\": \"2025-01-15T18:00:00\",\n    \"attendanceStatus\": \"ON_TIME\"\n  }\n}"))
-            )
-        }
+        description = "출퇴근 기록을 수정합니다."
     )
     public ResponseEntity<ApiResponse<Object>> updateTimeRecord(
         @Parameter(description = "근태 기록 ID", example = "101")
@@ -1120,15 +948,7 @@ public class HrmController {
     @PostMapping("/leave/request")
     @Operation(
         summary = "휴가 신청",
-        description = "새로운 휴가를 신청합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청이 완료되었습니다.\",\n  \"data\": {\n    \"leaveRequestId\": 201,\n    \"employeeId\": 101,\n    \"leaveType\": \"ANNUAL\",\n    \"startDate\": \"2025-10-15\",\n    \"endDate\": \"2025-10-18\",\n    \"status\": \"PENDING\"\n  }\n}"))
-            )
-        }
+        description = "새로운 휴가를 신청합니다."
     )
     public ResponseEntity<ApiResponse<Object>> requestLeave(
         @Valid @RequestBody LeaveRequestDto requestDto
@@ -1153,15 +973,7 @@ public class HrmController {
     @PatchMapping("/leave/request/{requestId}/release")
     @Operation(
         summary = "휴가 신청 승인",
-        description = "휴가 신청을 승인합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청이 승인되었습니다.\",\n  \"data\": {\n    \"leaveRequestId\": 201,\n    \"status\": \"APPROVED\",\n    \"approvedAt\": \"2025-01-15\"\n  }\n}"))
-            )
-        }
+        description = "휴가 신청을 승인합니다."
     )
     public ResponseEntity<ApiResponse<Object>> approveLeaveRequest(
         @Parameter(description = "휴가 신청 ID", example = "201")
@@ -1184,15 +996,7 @@ public class HrmController {
     @PatchMapping("/leave/request/{requestId}/reject")
     @Operation(
         summary = "휴가 신청 반려",
-        description = "휴가 신청을 반려합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청이 반려되었습니다.\",\n  \"data\": {\n    \"leaveRequestId\": 201,\n    \"status\": \"REJECTED\",\n    \"rejectedAt\": \"2025-01-15\"\n  }\n}"))
-            )
-        }
+        description = "휴가 신청을 반려합니다."
     )
     public ResponseEntity<ApiResponse<Object>> rejectLeaveRequest(
         @Parameter(description = "휴가 신청 ID", example = "201")
@@ -1217,15 +1021,7 @@ public class HrmController {
     @GetMapping("/time-record")
     @Operation(
         summary = "출퇴근 기록 목록 조회",
-        description = "부서/직책/이름/일자로 출퇴근 기록을 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"근태 기록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [{\n      \"timerecordId\": 101,\n      \"employee\": {\n        \"employeeId\": 1,\n        \"employeeName\": \"김민수\",\n        \"departmentId\": 1,\n        \"department\": \"개발팀\",\n        \"positionId\": 1,\n        \"position\": \"과장\"\n      },\n      \"workDate\": \"2025-10-13\",\n      \"checkInTime\": \"2025-10-13T08:50:10Z\",\n      \"checkOutTime\": \"2025-10-13T18:20:35Z\",\n      \"totalWorkMinutes\": 510,\n      \"overtimeMinutes\": 60,\n      \"status\": \"ON_TIME\"\n    }],\n    \"totalPages\": 5,\n    \"totalElements\": 98\n  }\n}"))
-            )
-        }
+        description = "부서/직책/이름/일자로 출퇴근 기록을 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getTimeRecords(
         @Parameter(description = "부서 ID")
@@ -1274,15 +1070,7 @@ public class HrmController {
     @GetMapping("/time-record/{timerecordId}")
     @Operation(
         summary = "출퇴근 기록 상세 조회",
-        description = "단일 출퇴근 기록 상세 정보를 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"근태 기록 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"timerecordId\": 1,\n    \"employee\": {\n      \"employeeId\": 1,\n      \"employeeCode\": \"EMP001\",\n      \"employeeName\": \"김민수\",\n      \"departmentId\": 1,\n      \"department\": \"개발팀\",\n      \"positionId\": 1,\n      \"position\": \"과장\"\n    },\n    \"workDate\": \"2025-10-07\",\n    \"checkInTime\": \"2025-10-07T08:50:10Z\",\n    \"checkOutTime\": \"2025-10-07T18:20:35Z\",\n    \"totalWorkMinutes\": 510,\n    \"overtimeMinutes\": 60,\n    \"status\": \"ON_TIME\"\n  }\n}"))
-            )
-        }
+        description = "단일 출퇴근 기록 상세 정보를 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getTimeRecordDetail(
         @Parameter(description = "출퇴근 기록 ID", example = "1")
@@ -1306,15 +1094,7 @@ public class HrmController {
     @GetMapping("/leave-request")
     @Operation(
         summary = "휴가 신청 목록 조회",
-        description = "부서/직책/이름/유형으로 휴가 신청 목록을 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"휴가 신청 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [{\n      \"leaveRequestId\": 1,\n      \"employee\": {\n        \"employeeId\": 1,\n        \"employeeName\": \"김민수\",\n        \"department\": \"개발팀\",\n        \"position\": \"과장\"\n      },\n      \"leaveType\": \"ANNUAL\",\n      \"startDate\": \"2024-01-20\",\n      \"endDate\": \"2024-01-22\",\n      \"numberOfLeaveDays\": 3,\n      \"remainingLeaveDays\": 12\n    }],\n    \"totalPages\": 4,\n    \"totalElements\": 35\n  }\n}"))
-            )
-        }
+        description = "부서/직책/이름/유형으로 휴가 신청 목록을 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getLeaveRequestList(
         @Parameter(description = "부서 ID")
@@ -1393,10 +1173,6 @@ public class HrmController {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("content", content);
         response.put("page", pageInfo);
-        response.put("first", page == 0);
-        response.put("last", page + 1 >= totalPages);
-        response.put("numberOfElements", content.size());
-        response.put("empty", content.isEmpty());
         return response;
     }
 
@@ -1413,10 +1189,10 @@ public class HrmController {
         int remainingLeaveDays
     ) {
         Map<String, Object> row = new LinkedHashMap<>();
-        row.put("leaveRequestId", leaveRequestId);
+        row.put("leaveRequestId", uuidV7());
 
         Map<String, Object> employee = new LinkedHashMap<>();
-        employee.put("employeeId", employeeId);
+        employee.put("employeeId", uuidV7());
         employee.put("employeeName", employeeName);
         employee.put("department", department);
         employee.put("position", position);
@@ -1442,14 +1218,14 @@ public class HrmController {
 
         for (int i = 0; i < 3; i++) {
             Map<String, Object> row = new LinkedHashMap<>();
-            row.put("timerecordId", 101 + i);
+            row.put("timerecordId", uuidV7());
 
             Map<String, Object> employee = new LinkedHashMap<>();
-            employee.put("employeeId", (long) (i + 1));
+            employee.put("employeeId", uuidV7());
             employee.put("employeeName", names[i]);
-            employee.put("departmentId", (long) ((i % departments.length) + 1));
+            employee.put("departmentId", uuidV7());
             employee.put("department", departments[i % departments.length]);
-            employee.put("positionId", (long) ((i % positions.length) + 1));
+            employee.put("positionId", uuidV7());
             employee.put("position", positions[i % positions.length]);
             row.put("employee", employee);
 
@@ -1460,7 +1236,7 @@ public class HrmController {
                 baseDate.getDayOfMonth(), 18, 20 - (i * 5) % 20, 35));
             row.put("totalWorkMinutes", totalMinutes[i]);
             row.put("overtimeMinutes", overtime[i]);
-            row.put("status", statuses[i]);
+            row.put("statusCode", statuses[i]);
 
             content.add(row);
         }
@@ -1489,15 +1265,15 @@ public class HrmController {
         LocalDate baseDate = LocalDate.of(2025, 10, 7);
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("timerecordId", timerecordId);
+        data.put("timerecordId", uuidV7());
 
         Map<String, Object> employee = new LinkedHashMap<>();
-        employee.put("employeeId", 1L);
-        employee.put("employeeCode", "EMP001");
+        employee.put("employeeId", uuidV7());
+        employee.put("employeeNumber", "EMP001");
         employee.put("employeeName", "김민수");
-        employee.put("departmentId", 1L);
+        employee.put("departmentId", uuidV7());
         employee.put("department", "개발팀");
-        employee.put("positionId", 1L);
+        employee.put("positionId", uuidV7());
         employee.put("position", "과장");
         data.put("employee", employee);
 
@@ -1506,7 +1282,7 @@ public class HrmController {
         data.put("checkOutTime", LocalDateTime.of(2025, 10, 7, 18, 20, 35));
         data.put("totalWorkMinutes", 510);
         data.put("overtimeMinutes", 60);
-        data.put("status", "ON_TIME");
+        data.put("statusCode", "ON_TIME");
 
         return data;
     }
@@ -1515,15 +1291,7 @@ public class HrmController {
     @PostMapping("/employee/request")
     @Operation(
         summary = "교육 신청",
-        description = "직원이 교육 프로그램에 신청합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"교육 신청이 완료되었습니다.\",\n  \"data\": {\n    \"requestId\": 301,\n    \"programId\": 1001,\n    \"employeeId\": 101,\n    \"status\": \"PENDING\"\n  }\n}"))
-            )
-        }
+        description = "직원이 교육 프로그램에 신청합니다."
     )
     public ResponseEntity<ApiResponse<Object>> requestTraining(
         @Valid @RequestBody TrainingRequestDto requestDto
@@ -1546,15 +1314,7 @@ public class HrmController {
     @PostMapping("/program")
     @Operation(
         summary = "교육 프로그램 추가",
-        description = "새로운 교육 프로그램을 추가합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"교육 프로그램이 추가되었습니다.\",\n  \"data\": {\n    \"programId\": 2001,\n    \"programName\": \"신입사원 온보딩\",\n    \"category\": \"BASIC_TRAINING\",\n    \"trainingHour\": 4,\n    \"isOnline\": true,\n    \"startDate\": \"2024-02-01\",\n    \"capacity\": 15,\n    \"status\": \"RECRUITING\"\n  }\n}"))
-            )
-        }
+        description = "새로운 교육 프로그램을 추가합니다."
     )
     public ResponseEntity<ApiResponse<Object>> createProgram(
         @Valid @RequestBody ProgramCreateRequestDto requestDto
@@ -1586,15 +1346,7 @@ public class HrmController {
     @GetMapping("/training-status")
     @Operation(
         summary = "직원 교육 현황 목록 조회",
-        description = "부서/직급/이름으로 직원 교육 현황 목록을 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"items\": [{\n      \"employeeId\": 101,\n      \"name\": \"김민수\",\n      \"department\": \"개발팀\",\n      \"position\": \"과장\",\n      \"completedCount\": 8,\n      \"inProgressCount\": 2,\n      \"requiredMissingCount\": 3,\n      \"lastTrainingDate\": \"2024-01-10\"\n    }],\n    \"page\": { \"number\": 0, \"size\": 20, \"totalElements\": 4, \"totalPages\": 1 }\n  }\n}"))
-            )
-        }
+        description = "부서/직급/이름으로 직원 교육 현황 목록을 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getTrainingStatusList(
         @Parameter(description = "부서 ID")
@@ -1633,15 +1385,7 @@ public class HrmController {
     @GetMapping("/employee/{employeeId}")
     @Operation(
         summary = "직원 교육 현황 상세 조회",
-        description = "특정 직원의 교육 현황 및 이력을 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"직원 교육 이력 조회에 성공했습니다.\",\n  \"data\": {\n    \"employeeId\": \"EMP-001\",\n    \"employeeName\": \"김민수\",\n    \"department\": \"개발팀\",\n    \"position\": \"과장\",\n    \"completedCount\": 5,\n    \"inProgressCount\": 2,\n    \"requiredMissingCount\": 1,\n    \"lastTrainingDate\": \"2024-08-15\",\n    \"programHistory\": [{\n      \"programId\": 101,\n      \"programName\": \"React 기초\",\n      \"programStatus\": \"완료\",\n      \"date\": \"2024-01-10\"\n    }]\n  }\n}"))
-            )
-        }
+        description = "특정 직원의 교육 현황 및 이력을 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getTrainingStatusDetail(
         @Parameter(description = "직원 ID", example = "101")
@@ -1663,15 +1407,7 @@ public class HrmController {
     @GetMapping("/program")
     @Operation(
         summary = "교육 프로그램 목록 조회",
-        description = "프로그램 이름/상태/카테고리로 교육 프로그램 목록을 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"교육 프로그램 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [{\n      \"programId\": 1,\n      \"programName\": \"신입사원 온보딩\",\n      \"status\": \"IN_PROGRESS\",\n      \"category\": \"BASIC_TRAINING\",\n      \"trainingHour\": 4,\n      \"isOnline\": true,\n      \"capacity\": 15\n    }],\n    \"totalPages\": 5,\n    \"totalElements\": 48\n  }\n}"))
-            )
-        }
+        description = "프로그램 이름/상태/카테고리로 교육 프로그램 목록을 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getTrainingPrograms(
         @Parameter(description = "프로그램 이름")
@@ -1725,15 +1461,7 @@ public class HrmController {
     @GetMapping("/program/{programId}")
     @Operation(
         summary = "교육 프로그램 상세 조회",
-        description = "단일 교육 프로그램 상세 정보를 조회합니다.",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"교육 프로그램 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"programId\": 1,\n    \"programName\": \"신입사원 온보딩\",\n    \"category\": \"BASIC_TRAINING\",\n    \"trainingHour\": 4,\n    \"isOnline\": true,\n    \"startDate\": \"2025-10-07\",\n    \"status\": \"IN_PROGRESS\",\n    \"designatedEmployee\": [{\n      \"employeeId\": 1,\n      \"employeeName\": \"김신입\",\n      \"department\": \"개발팀\",\n      \"position\": \"사원\",\n      \"status\": \"INCOMPLETED\",\n      \"completedAt\": null\n    }]}\n  }\n}"))
-            )
-        }
+        description = "단일 교육 프로그램 상세 정보를 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getTrainingProgramDetail(
         @Parameter(description = "프로그램 ID", example = "1")
@@ -1786,7 +1514,7 @@ public class HrmController {
         LocalDate lastTrainingDate
     ) {
         Map<String, Object> row = new LinkedHashMap<>();
-        row.put("employeeId", employeeId);
+        row.put("employeeId", uuidV7());
         row.put("name", name);
         row.put("department", department);
         row.put("position", position);
@@ -1799,7 +1527,8 @@ public class HrmController {
 
     private Map<String, Object> generateTrainingStatusDetailMock(Long employeeId) {
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("employeeId", employeeId);
+        data.put("id", uuidV7());
+        data.put("employeeNumber", String.format("EMP-%03d", employeeId));
         data.put("employeeName", "김민수");
         data.put("department", "개발팀");
         data.put("position", "과장");
@@ -1808,12 +1537,6 @@ public class HrmController {
         data.put("requiredMissingCount", 1);
         data.put("lastTrainingDate", LocalDate.of(2024, 8, 15).atStartOfDay());
 
-        List<Map<String, Object>> history = new ArrayList<>();
-        history.add(buildProgramHistory(101L, "React 기초", "완료", LocalDate.of(2024, 1, 10)));
-        history.add(buildProgramHistory(105L, "효과적인 커뮤니케이션", "완료", LocalDate.of(2024, 3, 22)));
-        history.add(buildProgramHistory(110L, "Java Spring 심화", "진행중", LocalDate.of(2024, 9, 1)));
-        history.add(buildProgramHistory(112L, "프로젝트 관리 방법론", "진행중", LocalDate.of(2024, 9, 15)));
-        data.put("programHistory", history);
         return data;
     }
 
@@ -1863,9 +1586,9 @@ public class HrmController {
         boolean isOnline, int capacity
     ) {
         Map<String, Object> row = new LinkedHashMap<>();
-        row.put("programId", programId);
+        row.put("programId", uuidV7());
         row.put("programName", programName);
-        row.put("status", status);
+        row.put("statusCode", status);
         row.put("category", category);
         row.put("trainingHour", trainingHour);
         row.put("isOnline", isOnline);
@@ -1875,14 +1598,14 @@ public class HrmController {
 
     private Map<String, Object> generateTrainingProgramDetailMock(Long programId) {
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("programId", programId);
+        data.put("programId", uuidV7());
         data.put("programName", "신입사원 온보딩");
         data.put("programDescription", "신입사원을 위한 기본 교육 프로그램입니다.");
         data.put("category", "BASIC_TRAINING");
         data.put("trainingHour", 4);
         data.put("isOnline", true);
         data.put("startDate", LocalDate.of(2025, 10, 7));
-        data.put("status", "IN_PROGRESS");
+        data.put("statusCode", "IN_PROGRESS");
 
         List<Map<String, Object>> designated = new ArrayList<>();
         designated.add(buildDesignatedEmployee(1L, "김신입", "개발팀", "사원", "INCOMPLETED", null));
@@ -1902,13 +1625,35 @@ public class HrmController {
         LocalDate completedAt
     ) {
         Map<String, Object> row = new LinkedHashMap<>();
-        row.put("employeeId", employeeId);
+        row.put("employeeId", uuidV7());
         row.put("employeeName", employeeName);
         row.put("department", department);
         row.put("position", position);
-        row.put("status", status);
+        row.put("statusCode", status);
         row.put("completedAt", completedAt);
         return row;
+    }
+
+    // UUID v7 형태(시간 기반 정렬) 모킹 생성기
+    private String uuidV7() {
+        long ms = System.currentTimeMillis();
+        String timeHex = String.format("%012x", ms); // 48-bit time
+
+        String timeLow = timeHex.substring(4);      // 8 hex
+        String timeMid = timeHex.substring(0, 4);   // 4 hex
+
+        String randA = String.format("%03x", ThreadLocalRandom.current().nextInt(0x1000)); // 12 bits
+        String timeHiAndVersion = "7" + randA; // version 7
+
+        int rnd = ThreadLocalRandom.current().nextInt(0, 256);
+        int variant = (rnd & 0x3F) | 0x80; // set '10' in top two bits
+        String clockSeqHiAndReserved = String.format("%02x", variant);
+        String clockSeqLow = String.format("%02x", ThreadLocalRandom.current().nextInt(0, 256));
+
+        long nodeRand = ThreadLocalRandom.current().nextLong(0, 1L << 48);
+        String node = String.format("%012x", nodeRand);
+
+        return timeLow + "-" + timeMid + "-" + timeHiAndVersion + "-" + clockSeqHiAndReserved + clockSeqLow + "-" + node;
     }
 
 }
