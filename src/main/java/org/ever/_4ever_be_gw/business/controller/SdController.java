@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ever._4ever_be_gw.business.dto.customer.*;
+import org.ever._4ever_be_gw.business.constants.QuotationStatus;
 import org.ever._4ever_be_gw.business.dto.quotation.*;
 import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
@@ -52,19 +53,19 @@ import java.util.stream.Collectors;
         String[] customers = {"삼성전자", "LG전자", "현대자동차", "카카오", "네이버", "SK하이닉스", "포스코", "두산중공업", "한화시스템", "CJ대한통운"};
         String[] managers = {"김철수", "이영희", "박민수", "최지훈", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유"};
         String[] ceoNames = {"이재용", "구광모", "장재경", "김범수", "최수연", "곽노정", "김학동", "박정원", "김동관", "손경식"};
-        String[] codes = {"PENDING", "REVIEW", "APPROVED", "REJECTED"};
+        QuotationStatus[] codes = QuotationStatus.values();
 
         for (int i = 0; i < 50; i++) {
-            String qoId = UuidV7.string();
-            String qoNumber = String.format("QO-2024-%03d", i + 1);
+            String quotationId = UuidV7.string();
+            String quotationNumber = "QO-" + quotationId.substring(0, 6);       // uuid의 앞자리 6개
             String quotationDate = String.format("2024-01-%02d", 1 + (i % 28));
             String dueDate = String.format("2024-02-%02d", 1 + (i % 28));
             long totalAmount = 15_000_000L - (i * 250_000L);
-            String statusCode = codes[i % codes.length];
+            String statusCode = codes[i % codes.length].getCode();
 
             var listItem = QuotationListItemDto.builder()
-                    .qoId(qoId)
-                    .qoNumber(qoNumber)
+                    .quotationId(quotationId)
+                    .quotationNumber(quotationNumber)
                     .customerName(customers[i % customers.length])
                     .managerName(managers[i % managers.length])
                     .quotationDate(quotationDate)
@@ -92,8 +93,8 @@ import java.util.stream.Collectors;
                     .amount(5_000_000L)
                     .build();
             var detail = QuotationDetailDto.builder()
-                    .qoId(qoId)
-                    .qoNumber(qoNumber)
+                    .qoId(quotationId)
+                    .qoNumber(quotationNumber)
                     .qoDate(java.time.LocalDate.parse("2024-01-15"))
                     .dueDate(java.time.LocalDate.parse("2024-02-15"))
                     .statusCode(statusCode)
@@ -102,7 +103,7 @@ import java.util.stream.Collectors;
                     .items(java.util.List.of(item1, item2))
                     .totalAmount(item1.getAmount() + item2.getAmount())
                     .build();
-            MOCK_QO_DETAIL.put(qoId, detail);
+            MOCK_QO_DETAIL.put(quotationId, detail);
         }
     }
 
@@ -391,7 +392,7 @@ import java.util.stream.Collectors;
             switch (type) {
                 case "qoNumber":
                     filtered = filtered.stream()
-                            .filter(m -> m.getQoNumber().toLowerCase(Locale.ROOT).contains(kw))
+                            .filter(m -> m.getQuotationNumber().toLowerCase(Locale.ROOT).contains(kw))
                             .toList();
                     break;
                 case "customerName":
@@ -708,7 +709,7 @@ import java.util.stream.Collectors;
 
         // 성공 응답 DTO
         String customerId = UuidV7.string();
-        String customerNumber = "C-0001"; // 목업 예시
+        String customerNumber = "CUS-" + customerId.substring(0, 6);
         CustomerManagerDto managerDto = null;
         if (request.getManager() != null) {
             managerDto = CustomerManagerDto.builder()
@@ -789,48 +790,12 @@ import java.util.stream.Collectors;
             @Parameter(description = "페이지 크기(최대 200)")
             @RequestParam(name = "size", required = false) Integer size
     ) {
-        // 500 모킹 트리거
-        if (search != null && ("error".equalsIgnoreCase(search) || "500".equalsIgnoreCase(search))) {
-            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
-        }
-        // 403 모킹 트리거
-        if (search != null && (search.equalsIgnoreCase("금지") || search.equalsIgnoreCase("forbidden"))) {
-            throw new BusinessException(ErrorCode.FORBIDDEN_DATA_ACCESS);
-        }
-
-        // 422 검증
-        List<Map<String, String>> errors = new ArrayList<>();
-        if (status != null) {
-            var allowed = java.util.Set.of("ALL", "ACTIVE", "DEACTIVE");
-            if (!allowed.contains(status)) {
-                errors.add(Map.of("field", "status", "reason", "ALLOWED_VALUES: ALL, ACTIVE, DEACTIVE"));
-            }
-        }
-        if (page != null && page < 0) {
-            errors.add(Map.of("field", "page", "reason", "MIN_0"));
-        }
-        if (size != null && size > 200) {
-            errors.add(Map.of("field", "size", "reason", "MAX_200"));
-        }
-        // 검색 타입 검증
-        if (search != null && !search.isBlank()) {
-            java.util.Set<String> allowedTypes = java.util.Set.of("customerNumber", "customerName", "managerName");
-            if (type == null || type.isBlank()) {
-                errors.add(Map.of("field", "type", "reason", "REQUIRED_WHEN_SEARCH"));
-            } else if (!allowedTypes.contains(type)) {
-                errors.add(Map.of("field", "type", "reason", "ALLOWED_VALUES: customerNumber, customerName, managerName"));
-            }
-        }
-
-        if (!errors.isEmpty()) {
-            throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
-        }
-
         int pageIndex = (page == null || page < 0) ? 0 : page;
         int s = (size == null || size < 1) ? 10 : size;
 
         // 목업 데이터 준비 (DTO)
         List<CustomerListItemDto> all = new ArrayList<>();
+
         String[] companies = {"삼성전자", "LG화학", "현대자동차", "SK하이닉스", "네이버", "카카오", "포스코", "두산중공업", "CJ대한통운", "한화시스템", "아모레퍼시픽", "롯데케미칼"};
         String[] persons = {"김철수", "박영희", "이민호", "최지우", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유", "신동엽", "강호동"};
         String[] phones = {"02-1234-5678", "02-2345-6789", "031-111-2222", "02-9876-5432"};
@@ -843,13 +808,15 @@ import java.util.stream.Collectors;
                     .managerPhone(phones[i % phones.length])
                     .managerEmail((i % 2 == 0) ? (persons[i % persons.length].charAt(0) + "@" + companies[i % companies.length] + ".com") : emails[i % emails.length])
                     .build();
+            String genCustomerId = UuidV7.string();
+            String genCustomerNumber = "CUS-" + genCustomerId.substring(0, 6);
             all.add(CustomerListItemDto.builder()
-                    .customerId(String.valueOf(i + 1))
-                    .customerNumber(String.format("C-%03d", i + 1))
-                    .companyName(companies[i % companies.length])
+                    .customerId(genCustomerId)
+                    .customerNumber(genCustomerNumber)
+                    .customerName(companies[i % companies.length])
                     .manager(managerDto)
                     .address((i % 2 == 0) ? "서울시 강남구 테헤란로 123" : "서울시 영등포구 여의도동 456")
-                    .transactionAmount(1_250_000_000L - (i * 37_000_000L))
+                    .totalAmount(1_250_000_000L - (i * 37_000_000L))
                     .orderCount(45 - (i % 10))
                     .lastOrderDate("2024" + (i + 1) + "-01-01")
                     .statusCode(statusCode2)
@@ -868,8 +835,8 @@ import java.util.stream.Collectors;
                 case "customerNumber" -> filtered = filtered.stream()
                         .filter(m -> (m.getCustomerNumber() != null && m.getCustomerNumber().toLowerCase().contains(kw)))
                         .toList();
-                case "companyName" -> filtered = filtered.stream()
-                        .filter(m -> (m.getCompanyName() != null && m.getCompanyName().toLowerCase().contains(kw)))
+                case "customerName" -> filtered = filtered.stream()
+                        .filter(m -> (m.getCustomerName() != null && m.getCustomerName().toLowerCase().contains(kw)))
                         .toList();
                 case "managerName" -> filtered = filtered.stream()
                         .filter(m -> (m.getManager() != null && m.getManager().getManagerName() != null && m.getManager().getManagerName().toLowerCase().contains(kw)))
@@ -1041,7 +1008,7 @@ import java.util.stream.Collectors;
             throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        String code = String.format("C-%03d", Math.abs(customerId.hashCode()) % 1000 + 1);
+        String code = "CUS-" + (customerId != null && customerId.length() >= 6 ? customerId.substring(0, 6) : String.valueOf(customerId));
 
         var managerDto = (request != null && request.getManager() != null)
                 ? org.ever._4ever_be_gw.business.dto.customer.CustomerManagerDto.builder()
