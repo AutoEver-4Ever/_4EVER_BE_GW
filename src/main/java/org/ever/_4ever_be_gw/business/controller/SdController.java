@@ -11,7 +11,6 @@ import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
-import org.ever._4ever_be_gw.common.util.PageResponseUtils;
 import org.ever._4ever_be_gw.common.util.UuidV7;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
@@ -31,7 +30,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -754,7 +752,7 @@ import java.util.stream.Collectors;
                             responseCode = "200",
                             description = "성공",
                             content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 목록을 조회했습니다.\",\n  \"data\": {\n    \"customers\": [\n      {\n        \"customerId\": \"018f2c1a-3bfa-7e21-8a3c-7f9d5e2a1c44\",\n        \"customerNumber\": \"C-001\",\n        \"customerName\": \"삼성전자\",\n        \"ceoName\": \"이재용\",\n        \"businessNumber\": \"123-45-67890\",\n        \"statusCode\": \"ACTIVE\",\n        \"contactPhone\": \"02-1234-5678\",\n        \"contactEmail\": \"contact@samsung.com\",\n        \"address\": \"서울시 강남구 테헤란로 123\",\n        \"manager\": { \"managerName\": \"김철수\", \"managerPhone\": \"010-1234-5678\", \"managerEmail\": \"kim@samsung.com\" },\n        \"totalOrders\": 45,\n        \"totalTransactionAmount\": 1250000000,\n        \"lastOrderDate\": \"2024-01-15\"\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 3, \"totalPages\": 1, \"hasNext\": false }\n  }\n}"))
+                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"고객사 목록을 조회했습니다.\",\n  \"data\": {\n    \"customers\": [\n      {\n        \"customerId\": \"018f2c1a-3bfa-7e21-8a3c-7f9d5e2a1c44\",\n        \"customerNumber\": \"C-001\",\n        \"customerName\": \"삼성전자\",\n        \"statusCode\": \"ACTIVE\",\n        \"address\": \"서울시 강남구 테헤란로 123\",\n        \"manager\": { \"managerName\": \"김철수\", \"managerPhone\": \"010-1234-5678\", \"managerEmail\": \"kim@samsung.com\" },\n        \"totalOrders\": 45,\n        \"totalTransactionAmount\": 1250000000\n      }\n    ],\n    \"page\": { \"number\": 0, \"size\": 10, \"totalElements\": 3, \"totalPages\": 1, \"hasNext\": false }\n  }\n}"))
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
@@ -819,11 +817,11 @@ import java.util.stream.Collectors;
         }
         // 검색 타입 검증
         if (search != null && !search.isBlank()) {
-            java.util.Set<String> allowedTypes = java.util.Set.of("customerNumber", "customerName", "ceoName", "managerName");
+            java.util.Set<String> allowedTypes = java.util.Set.of("customerNumber", "customerName", "managerName");
             if (type == null || type.isBlank()) {
                 errors.add(Map.of("field", "type", "reason", "REQUIRED_WHEN_SEARCH"));
             } else if (!allowedTypes.contains(type)) {
-                errors.add(Map.of("field", "type", "reason", "ALLOWED_VALUES: customerNumber, customerName, ceoName, managerName"));
+                errors.add(Map.of("field", "type", "reason", "ALLOWED_VALUES: customerNumber, customerName, managerName"));
             }
         }
 
@@ -851,16 +849,13 @@ import java.util.stream.Collectors;
             all.add(CustomerListItemDto.builder()
                     .customerId(String.valueOf(i + 1))
                     .customerNumber(String.format("C-%03d", i + 1))
-                    .customerName(companies[i % companies.length])
-                    .businessNumber("123-45-67890")
-                    .statusCode(statusCode2)
-                    .contactPhone(phones[i % phones.length])
-                    .contactEmail((i % 2 == 0) ? (persons[i % persons.length].charAt(0) + "@" + companies[i % companies.length] + ".com") : emails[i % emails.length])
-                    .address((i % 2 == 0) ? "서울시 강남구 테헤란로 123" : "서울시 영등포구 여의도동 456")
+                    .companyName(companies[i % companies.length])
                     .manager(managerDto)
-                    .totalOrders(45 - (i % 10))
-                    .totalTransactionAmount(1_250_000_000L - (i * 37_000_000L))
-                    .lastOrderDate(String.format("2024-01-%02d", 15 - (i % 10)))
+                    .address((i % 2 == 0) ? "서울시 강남구 테헤란로 123" : "서울시 영등포구 여의도동 456")
+                    .transactionAmount(1_250_000_000L - (i * 37_000_000L))
+                    .orderCount(45 - (i % 10))
+                    .lastOrderDate("2024" + (i + 1) + "-01-01")
+                    .statusCode(statusCode2)
                     .build());
         }
 
@@ -876,8 +871,8 @@ import java.util.stream.Collectors;
                 case "customerNumber" -> filtered = filtered.stream()
                         .filter(m -> (m.getCustomerNumber() != null && m.getCustomerNumber().toLowerCase().contains(kw)))
                         .toList();
-                case "customerName" -> filtered = filtered.stream()
-                        .filter(m -> (m.getCustomerName() != null && m.getCustomerName().toLowerCase().contains(kw)))
+                case "companyName" -> filtered = filtered.stream()
+                        .filter(m -> (m.getCompanyName() != null && m.getCompanyName().toLowerCase().contains(kw)))
                         .toList();
                 case "managerName" -> filtered = filtered.stream()
                         .filter(m -> (m.getManager() != null && m.getManager().getManagerName() != null && m.getManager().getManagerName().toLowerCase().contains(kw)))
