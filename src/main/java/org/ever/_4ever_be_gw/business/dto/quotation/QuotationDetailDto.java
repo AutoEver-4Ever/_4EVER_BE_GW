@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuotationDetailDto {
-    private Long quotationId;                   // 견적서 Id
-    private String quotationCode;               // 견적서 Code, ex) Q2025-001
-    private LocalDate quotationDate;            // 견적 날짜, YYYY-MM-DD
+    private String qoId;                 // 견적서 Id
+    private String qoNumber;               // 견적서 Code, ex) Q2025-001
+    private LocalDate qoDate;            // 견적 날짜, YYYY-MM-DD
     private LocalDate dueDate;                  // 요청 납기 일자
     private String statusCode;                  // 상태 코드
     private String customerName;                // 고객사 이름

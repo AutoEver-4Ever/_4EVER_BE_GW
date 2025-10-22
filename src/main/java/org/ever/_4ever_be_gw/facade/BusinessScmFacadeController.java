@@ -123,7 +123,7 @@ public class BusinessScmFacadeController {
             list.add(DashboardWorkflowItemDto.builder()
                     .id(id)
                     .title(title)
-                    .code(code)
+                    .number(code)
                     .statusCode(status)
                     .date(now.plusDays(i).toLocalDate().toString())
                     .build());

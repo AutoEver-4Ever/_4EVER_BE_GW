@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InventoryCheckItemDto {
-    private Long itemId;            // 품목 ID
+    private String itemId;          // 품목 ID
     private String itemName;        // 품목명
     private int requiredQty;        // 필요 수량
     private int inventoryQty;       // 현재 재고 수량

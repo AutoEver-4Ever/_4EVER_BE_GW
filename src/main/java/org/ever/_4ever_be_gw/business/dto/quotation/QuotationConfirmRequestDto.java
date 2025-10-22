@@ -6,6 +6,5 @@ import java.util.List;
 
 @Getter
 public class QuotationConfirmRequestDto {
-    private List<Long> quotationIds;
+    private String qoId; // 확인 대상 견적 ID (UUID)
 }
-
