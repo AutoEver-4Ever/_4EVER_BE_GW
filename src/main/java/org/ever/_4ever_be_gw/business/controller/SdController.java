@@ -533,9 +533,6 @@ import java.util.stream.Collectors;
             @RequestBody QuotationRequestDto request
     ) {
         java.time.LocalDate today = java.time.LocalDate.now();
-        if (request.getDueDate() == null || !request.getDueDate().isAfter(today)) {
-            throw new BusinessException(ErrorCode.QUOTATION_DUE_DATE_INVALID);
-        }
 
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new BusinessException(ErrorCode.QUOTATION_ITEMS_EMPTY);
@@ -553,7 +550,7 @@ import java.util.stream.Collectors;
         var data = QuotationCreateResponseDto.builder()
                 .qoId(qoId)
                 .qoDate(today.toString())
-                .dueDate(request.getDueDate().toString())
+                .dueDate("2025-11-01")
                 .totalAmount(totalAmount)
                 .statusCode("PENDING")
                 .build();
