@@ -12,9 +12,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MpsProductPlanDto {
-    private Long productId;
+    private String productId;
     private String productName;
     private String periodType;
+    private String startDate;
+    private String endDate;
     private List<String> periods;
     private List<Integer> demand;
     private List<Integer> requiredInventory;

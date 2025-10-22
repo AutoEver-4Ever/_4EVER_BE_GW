@@ -10,16 +10,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MrpOrderDto {
-    private Long itemId;
+    private String itemId;
     private String itemName;
-    private int requiredQty;
+    private int requiredQuantity;
     private int currentStock;
     private int safetyStock;
     private int availableStock;
-    private String availableStatus;
+    private String availableStatusCode;
     private Integer shortageQty;
     private String itemType;
     private String procurementStartDate;
     private String expectedArrivalDate;
-    private String supplier;
+    private String supplierCompanyName;
 }
