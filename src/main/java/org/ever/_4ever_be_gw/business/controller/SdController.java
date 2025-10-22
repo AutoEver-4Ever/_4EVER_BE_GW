@@ -105,6 +105,54 @@ import java.util.stream.Collectors;
                     .build();
             MOCK_QO_DETAIL.put(quotationId, detail);
         }
+        // 고객사 목업 데이터 초기화 (목록/상세 연결)
+        String[] companies = {"삼성전자", "LG화학", "현대자동차", "SK하이닉스", "네이버", "카카오", "포스코", "두산중공업", "CJ대한통운", "한화시스템", "아모레퍼시픽", "롯데케미칼"};
+        String[] persons2 = {"김철수", "박영희", "이민호", "최지우", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유", "신동엽", "강호동"};
+        String[] phones2 = {"02-1234-5678", "02-2345-6789", "031-111-2222", "02-9876-5432"};
+        String[] emails2 = {"contact@corp.com", "sales@corp.com", "info@corp.com"};
+        for (int i = 0; i < 50; i++) {
+            String customerId = UuidV7.string();
+            String customerNumber = "CUS-" + customerId.substring(0, 6);
+            boolean active = (i % 3) != 0;
+            String statusCode2 = active ? "ACTIVE" : "DEACTIVE";
+
+            CustomerManagerDto managerDto = CustomerManagerDto.builder()
+                    .managerName(persons2[i % persons2.length])
+                    .managerPhone(phones2[i % phones2.length])
+                    .managerEmail(emails2[i % emails2.length])
+                    .build();
+
+            CustomerListItemDto listItem = CustomerListItemDto.builder()
+                    .customerId(customerId)
+                    .customerNumber(customerNumber)
+                    .customerName(companies[i % companies.length])
+                    .manager(managerDto)
+                    .address((i % 2 == 0) ? "서울시 강남구 테헤란로 123" : "서울시 영등포구 여의도동 456")
+                    .totalTransactionAmount(1_250_000_000L - (long) i * 37_000_000L)
+                    .orderCount(45 - (i % 10))
+                    .lastOrderDate("2024-01-" + String.format("%02d", (i % 28) + 1))
+                    .statusCode(statusCode2)
+                    .build();
+            MOCK_CUS_LIST.add(listItem);
+
+            org.ever._4ever_be_gw.business.dto.customer.CustomerDetailDto detailDto = org.ever._4ever_be_gw.business.dto.customer.CustomerDetailDto.builder()
+                    .customerId(customerId)
+                    .customerNumber(customerNumber)
+                    .customerName(companies[i % companies.length])
+                    .ceoName(persons2[i % persons2.length])
+                    .businessNumber(String.format("%03d-%02d-%05d", 100 + (i % 900), 10 + (i % 90), 10000 + (i % 90000)))
+                    .statusCode(statusCode2)
+                    .customerPhone(phones2[i % phones2.length])
+                    .customerEmail(emails2[i % emails2.length])
+                    .baseAddress((i % 2 == 0) ? "서울시 강남구 테헤란로 123" : "서울시 영등포구 여의도동 456")
+                    .detailAddress((i % 2 == 0) ? "4층" : "12층")
+                    .manager(managerDto)
+                    .totalOrders(45 - (i % 10))
+                    .totalTransactionAmount(1_250_000_000L - (long) i * 37_000_000L)
+                    .note("주요 고객사")
+                    .build();
+            MOCK_CUS_DETAIL.put(customerId, detailDto);
+        }
     }
 
     // SD 통계 조회
@@ -747,35 +795,8 @@ import java.util.stream.Collectors;
         int pageIndex = (page == null || page < 0) ? 0 : page;
         int s = (size == null || size < 1) ? 10 : size;
 
-        // 목업 데이터 준비 (DTO)
-        List<CustomerListItemDto> all = new ArrayList<>();
-
-        String[] companies = {"삼성전자", "LG화학", "현대자동차", "SK하이닉스", "네이버", "카카오", "포스코", "두산중공업", "CJ대한통운", "한화시스템", "아모레퍼시픽", "롯데케미칼"};
-        String[] persons = {"김철수", "박영희", "이민호", "최지우", "한소라", "정우성", "장나라", "오세훈", "유재석", "아이유", "신동엽", "강호동"};
-        String[] phones = {"02-1234-5678", "02-2345-6789", "031-111-2222", "02-9876-5432"};
-        String[] emails = {"contact@corp.com", "sales@corp.com", "info@corp.com"};
-        for (int i = 0; i < 50; i++) {
-            boolean active = (i % 3) != 0;
-            String statusCode2 = active ? "ACTIVE" : "DEACTIVE";
-            var managerDto = CustomerManagerDto.builder()
-                    .managerName(persons[i % persons.length])
-                    .managerPhone(phones[i % phones.length])
-                    .managerEmail((i % 2 == 0) ? (persons[i % persons.length].charAt(0) + "@" + companies[i % companies.length] + ".com") : emails[i % emails.length])
-                    .build();
-            String genCustomerId = UuidV7.string();
-            String genCustomerNumber = "CUS-" + genCustomerId.substring(0, 6);
-            all.add(CustomerListItemDto.builder()
-                    .customerId(genCustomerId)
-                    .customerNumber(genCustomerNumber)
-                    .customerName(companies[i % companies.length])
-                    .manager(managerDto)
-                    .address((i % 2 == 0) ? "서울시 강남구 테헤란로 123" : "서울시 영등포구 여의도동 456")
-                    .totalTransactionAmount(1_250_000_000L - (i * 37_000_000L))
-                    .orderCount(45 - (i % 10))
-                    .lastOrderDate("2024" + (i + 1) + "-01-01")
-                    .statusCode(statusCode2)
-                    .build());
-        }
+        // 정적 목업 목록 사용
+        List<CustomerListItemDto> all = new ArrayList<>(MOCK_CUS_LIST);
 
         // 필터 적용
         List<CustomerListItemDto> filtered = all;
@@ -824,7 +845,7 @@ import java.util.stream.Collectors;
         return ResponseEntity.ok(ApiResponse.success(data, "고객사 목록을 조회했습니다.", HttpStatus.OK));
     }
 
-    @GetMapping("/customers/{cusId}")
+    @GetMapping("/customers/{customerId}")
     @Operation(
             summary = "고객사 상세 조회",
             description = "고객사 상세 정보를 조회합니다.",
@@ -862,21 +883,21 @@ import java.util.stream.Collectors;
             }
     )
     public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.business.dto.customer.CustomerDetailDto>> getCustomerDetail(
-            @Parameter(description = "고객사 ID (UUID)")
-            @org.springframework.web.bind.annotation.PathVariable("cusId") String cusId
+            @Parameter(description = "고객사 ID (UUID)", example = "000019a0-a7b0-c667-839c-7d23811a5e5a")
+            @org.springframework.web.bind.annotation.PathVariable("customerId") String customerId
     ) {
-        if (cusId == null || cusId.isBlank()) {
-            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + cusId);
+        if (customerId == null || customerId.isBlank()) {
+            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + customerId);
         }
-        if ("403001".equals(cusId)) {
+        if ("403001".equals(customerId)) {
             throw new BusinessException(ErrorCode.CUSTOMER_FORBIDDEN);
         }
-        if ("500001".equals(cusId)) {
+        if ("500001".equals(customerId)) {
             throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
         }
-        var dto = MOCK_CUS_DETAIL.get(cusId);
+        var dto = MOCK_CUS_DETAIL.get(customerId);
         if (dto == null) {
-            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + cusId);
+            throw new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND, "customerId=" + customerId);
         }
         return ResponseEntity.ok(ApiResponse.success(dto, "고객사 상세 정보를 조회했습니다.", HttpStatus.OK));
     }
