@@ -143,7 +143,7 @@ public class FcmController {
 		description = "매입(AP) 전표 상세 정보를 조회합니다."
 	)
 	public ResponseEntity<ApiResponse<InvoiceDetailDto>> getApinvoiceDetail(
-		@Parameter(description = "전표 ID", example = "1") @PathVariable("invoiceId") Long invoiceId
+		@Parameter(description = "전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab") @PathVariable("invoiceId") String invoiceId
 	) {
 		InvoiceDetailDto detail = generatePurchaseInvoiceDetailMock(invoiceId);
 		return ResponseEntity.ok(ApiResponse.success(detail, "매입 전표 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
@@ -155,7 +155,7 @@ public class FcmController {
 		description = "매출(AR) 전표 상세 정보를 조회합니다."
 	)
 	public ResponseEntity<ApiResponse<InvoiceDetailDto>> getAsinvoiceDetail(
-		@Parameter(description = "전표 ID", example = "1") @PathVariable("invoiceId") Long invoiceId
+		@Parameter(description = "전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab") @PathVariable("invoiceId") String invoiceId
 	) {
 		InvoiceDetailDto detail = generateSalesInvoiceDetailMock(invoiceId);
 		return ResponseEntity.ok(ApiResponse.success(detail, "매출 전표 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
@@ -166,7 +166,7 @@ public class FcmController {
     @PatchMapping("/invoice/ap/{invoiceId}")
     @Operation(summary = "매입 전표 수정", description = "매입(AP) 전표를 수정합니다. 데이터만 받고 200 반환")
     public ResponseEntity<ApiResponse<Object>> patchApinvoice(
-        @Parameter(description = "전표 ID") @PathVariable("invoiceId") Long invoiceId,
+        @Parameter(description = "전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab") @PathVariable("invoiceId") String invoiceId,
         @Valid @RequestBody InvoiceUpdateRequestDto request
     ) {
         System.out.println("매입 전표 수정 요청 - ID: " + invoiceId + ", 데이터: " + request);
@@ -176,7 +176,7 @@ public class FcmController {
     @PatchMapping("/invoice/ar/{invoiceId}")
     @Operation(summary = "매출 전표 수정", description = "매출(AR) 전표를 수정합니다. 데이터만 받고 200 반환")
     public ResponseEntity<ApiResponse<Object>> patchAsinvoice(
-        @Parameter(description = "전표 ID") @PathVariable("invoiceId") Long invoiceId,
+        @Parameter(description = "전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab") @PathVariable("invoiceId") String invoiceId,
         @Valid @RequestBody InvoiceUpdateRequestDto request
     ) {
         System.out.println("매출 전표 수정 요청 - ID: " + invoiceId + ", 데이터: " + request);
@@ -191,7 +191,7 @@ public class FcmController {
         description = "미납/확인요청 상태의 매출(AR) 전표에 대해 미수 처리를 완료합니다. (모의 처리: 항상 성공 반환)"
     )
     public ResponseEntity<ApiResponse<Object>> completeReceivable(
-        @Parameter(description = "매출 전표 ID") @PathVariable("invoiceId") Long invoiceId
+        @Parameter(description = "매출 전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab") @PathVariable("invoiceId") String invoiceId
     ) {
         System.out.println("미수 처리 완료 요청(모의) - ID: " + invoiceId);
         return ResponseEntity.ok(ApiResponse.success(null, "미수 처리 완료되었습니다.", HttpStatus.OK));
@@ -205,7 +205,7 @@ public class FcmController {
         description = "매입(AP) 전표에 대해 공급사에 미수 처리 요청을 발송합니다. (모의 처리: 항상 성공 반환)"
     )
     public ResponseEntity<ApiResponse<Object>> requestApReceivable(
-        @Parameter(description = "매입 전표 ID", required = true) @RequestParam("invoiceId") Long invoiceId
+        @Parameter(description = "매입 전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab", required = true) @RequestParam("invoiceId") String invoiceId
     ) {
         System.out.println("매입 전표 미수 처리 요청(모의) - ID: " + invoiceId);
         return ResponseEntity.ok(ApiResponse.success(null, "미수 처리 요청을 공급사에 발송했습니다.", HttpStatus.OK));
@@ -288,16 +288,16 @@ public class FcmController {
 	}
 
 	private Map<String, Object> buildinvoiceRow(
-			Long invoiceId,
+			Long invoiceId,  // unused - mock only
 			String invoiceCode,
-			Long connectionId,
+			Long connectionId,  // unused - mock only
 			String connectionCode,
 			String connectionName,
 			int totalAmount,
 			LocalDate issueDate,
 			LocalDate dueDate,
 			String status,
-			Long referenceId,
+			Long referenceId,  // unused - mock only
 			String referenceCode,
 			String type
 		) {
@@ -320,14 +320,14 @@ public class FcmController {
 		row.put("statusCode", status);
 		row.put("referenceNumber", referenceCode);
 		Map<String, Object> reference = new LinkedHashMap<>();
-		reference.put("referenceId", referenceId);
+		reference.put("referenceId", uuidV7());  // Generate UUID instead of using Long referenceId
 		reference.put("referenceCode", referenceCode);
 		row.put("reference", reference);
 		return row;
 	}
 
-    private InvoiceDetailDto generatePurchaseInvoiceDetailMock(Long invoiceId) {
-        long resolvedId = invoiceId == null ? 2001L : invoiceId;
+    private InvoiceDetailDto generatePurchaseInvoiceDetailMock(String invoiceId) {
+        long resolvedId = 2001L;
 
         PurchaseInvoiceItemDto item1 = PurchaseInvoiceItemDto.builder()
                 .itemId(uuidV7())
@@ -364,8 +364,8 @@ public class FcmController {
                 .build();
     }
 
-    private InvoiceDetailDto generateSalesInvoiceDetailMock(Long invoiceId) {
-        long resolvedId = invoiceId == null ? 1001L : invoiceId;
+    private InvoiceDetailDto generateSalesInvoiceDetailMock(String invoiceId) {
+        long resolvedId = 1001L;
 
         PurchaseInvoiceItemDto item1 = PurchaseInvoiceItemDto.builder()
                 .itemId(uuidV7())
