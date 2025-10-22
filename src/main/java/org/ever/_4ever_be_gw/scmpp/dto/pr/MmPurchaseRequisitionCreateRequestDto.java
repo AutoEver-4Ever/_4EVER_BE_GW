@@ -15,9 +15,8 @@ public class MmPurchaseRequisitionCreateRequestDto {
         private Integer quantity;
         private String uomName;
         private Long expectedUnitPrice;
-        private Long expectedTotalPrice;
-        private String preferredVendorName;
-        private LocalDate desiredDeliveryDate;
+        private String preferredSupplierName;
+        private LocalDate dueDate;
         private String purpose;
         private String note;
     }
