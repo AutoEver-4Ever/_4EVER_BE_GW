@@ -10,12 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InventoryCheckItemDto {
-    private String itemId;          // 품목 ID
-    private String itemName;        // 품목명
-    private int requiredQty;        // 필요 수량
-    private int inventoryQty;       // 현재 재고 수량
-    private int shortageQty;        // 부족 수량(음수 없음)
-    private String statusCode;      // FULFILLED | SHORTAGE
+    private String itemId;              // 품목 ID
+    private String itemName;            // 품목명
+    private int requiredQuantity;       // 필요 수량
+    private int inventoryQuantity;      // 현재 재고 수량
+    private int shortageQuantity;       // 부족 수량(음수 없음)
+    private String statusCode;          // FULFILLED | SHORTAGE
     private boolean productionRequired; // 생산 필요 여부
 }
-

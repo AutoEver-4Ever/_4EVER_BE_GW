@@ -4,8 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class InventoryCheckItemRequestDto {
-    private String itemId;         // 품목 ID
-    private String itemName;     // 품목명
-    private Integer requiredQty; // 필요 수량 (> 0)
+    private String itemId;             // 품목 ID
+    private String itemName;           // 품목명
+    private Integer requiredQuantity;  // 필요 수량 (> 0)
 }
-

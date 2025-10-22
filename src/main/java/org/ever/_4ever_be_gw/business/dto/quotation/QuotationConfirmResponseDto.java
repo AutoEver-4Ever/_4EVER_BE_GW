@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuotationConfirmResponseDto {
-    private String qoId;        // 확인 대상 견적 ID (UUID)
+    private String quotationId;        // 확인 대상 견적 ID (UUID)
     private String statusCode;  // REVIEW 등
     private String requestedAt; // ISO-8601 문자열
 }

@@ -8,19 +8,18 @@ import java.util.List;
 @Getter
 public class MmPurchaseRequisitionUpdateRequestDto {
 
-    private LocalDate desiredDeliveryDate;
+    private LocalDate dueDate;
     private List<ItemOperation> items;
 
     @Getter
     public static class ItemOperation {
-        private String op;
-        private Long id;
-        private Integer lineNo;
+        private String operation;
+        private Long itemId;
         private String itemName;
         private Integer quantity;
         private String uomName;
-        private Long expectedUnitPrice;
-        private String preferredVendorName;
+        private Long unitPrice;
+        private String supplierName;
         private String purpose;
         private String note;
     }

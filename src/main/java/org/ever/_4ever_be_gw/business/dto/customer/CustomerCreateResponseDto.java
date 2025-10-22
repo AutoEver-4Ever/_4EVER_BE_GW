@@ -15,21 +15,17 @@ public class CustomerCreateResponseDto {
     private String customerName;         // 고객사명
     private String ceoName;              // 대표자명
     private String businessNumber;       // 사업자 등록번호 (###-##-#####)
-    private String statusCode;           // ACTIVE/DEACTIVE 등
 
     // 연락처 및 주소
     private String contactPhone;         // 대표 전화번호
     private String contactEmail;         // 대표 이메일
     private String zipCode;              // 우편번호
-    private String address;              // 주소
+    private String baseAddress;          // 기본 주소
     private String detailAddress;        // 상세 주소
 
     // 담당자
     private CustomerManagerDto manager;  // { managerName, managerPhone, managerEmail }
 
     // 부가 정보
-    private Integer totalOrders;         // 총 주문 건수
-    private Long totalTransactionAmount; // 총 거래 금액
     private String note;                 // 메모/비고
-
 }
