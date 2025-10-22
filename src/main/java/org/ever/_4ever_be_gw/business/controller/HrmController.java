@@ -536,7 +536,7 @@ public class HrmController {
         for (int i = 0; i < names.length; i++) {
             Map<String, Object> dept = new LinkedHashMap<>();
             dept.put("departmentId", uuidV7());
-            dept.put("departmentCode", codes[i]);
+            dept.put("departmentNumber", codes[i]);
             dept.put("departmentName", names[i]);
             dept.put("description", descriptions[i]);
             dept.put("managerName", managers[i]);
@@ -749,8 +749,8 @@ public class HrmController {
     }
 
     // 월별 사내 급여 상세 조회
-    // GET /api/business/payroll/employee/{payrollId}?year=&month=
-    @GetMapping("employee/{payrollId}")
+    // GET /api/business/hrm/payroll/{payrollId}
+    @GetMapping("/payroll/{payrollId}")
     @Operation(
         summary = "월별 급여 상세 조회",
         description = "월별 사내 급여 명세서 상세를 조회합니다.",
@@ -1231,9 +1231,9 @@ public class HrmController {
 
             row.put("workDate", baseDate);
             row.put("checkInTime", LocalDateTime.of(baseDate.getYear(), baseDate.getMonthValue(),
-                baseDate.getDayOfMonth(), 8 + i, 50 + (i * 5) % 60, 10));
+                baseDate.getDayOfMonth(), 8 + i, (50 + i * 5) % 60, 10));
             row.put("checkOutTime", LocalDateTime.of(baseDate.getYear(), baseDate.getMonthValue(),
-                baseDate.getDayOfMonth(), 18, 20 - (i * 5) % 20, 35));
+                baseDate.getDayOfMonth(), 18, (20 + i * 5) % 60, 35));
             row.put("totalWorkMinutes", totalMinutes[i]);
             row.put("overtimeMinutes", overtime[i]);
             row.put("statusCode", statuses[i]);
@@ -1381,8 +1381,8 @@ public class HrmController {
     }
 
     // 직원 교육 현황 상세 조회
-    // GET /api/business/training/employee/{employeeId}
-    @GetMapping("/employee/{employeeId}")
+    // GET /api/business/hrm/training/employee/{employeeId}
+    @GetMapping("/training/employee/{employeeId}")
     @Operation(
         summary = "직원 교육 현황 상세 조회",
         description = "특정 직원의 교육 현황 및 이력을 조회합니다."
