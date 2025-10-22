@@ -15,7 +15,7 @@ public class CustomerListItemDto {
     private String customerName;               // 고객사명
     private CustomerManagerDto manager;        // 담당자 정보
     private String address;                    // 주소 요약
-    private Long totalAmount;                  // 총 거래 금액
+    private Long totalTransactionAmount;       // 총 거래 금액
     private Integer orderCount;                // 총 주문 건수
     private String lastOrderDate;              // 마지막 거래 일시
     private String statusCode;                 // ACTIVE / INACTIVE

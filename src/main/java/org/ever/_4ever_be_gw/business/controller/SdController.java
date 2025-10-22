@@ -664,49 +664,6 @@ import java.util.stream.Collectors;
             )
             @RequestBody CustomerCreateRequestDto request
     ) {
-        // 500 모킹 트리거: 특정 회사명
-        if (request != null && request.getCompanyName() != null && request.getCompanyName().equalsIgnoreCase("error")) {
-            throw new BusinessException(ErrorCode.UNKNOWN_PROCESSING_ERROR);
-        }
-
-        // 400 필수값 검증
-        java.util.List<java.util.Map<String, String>> missing = new java.util.ArrayList<>();
-        if (request == null || request.getCompanyName() == null || request.getCompanyName().isBlank()) {
-            missing.add(java.util.Map.of("field", "companyName", "reason", "REQUIRED"));
-        }
-        if (request == null || request.getBusinessNumber() == null || request.getBusinessNumber().isBlank()) {
-            missing.add(java.util.Map.of("field", "businessNumber", "reason", "REQUIRED"));
-        }
-        if (request == null || request.getCeoName() == null || request.getCeoName().isBlank()) {
-            missing.add(java.util.Map.of("field", "ceoName", "reason", "REQUIRED"));
-        }
-        boolean noPhone = (request == null || request.getContactPhone() == null || request.getContactPhone().isBlank());
-        boolean noEmail = (request == null || request.getContactEmail() == null || request.getContactEmail().isBlank());
-        if (noPhone && noEmail) {
-            missing.add(java.util.Map.of("field", "contactPhone/contactEmail", "reason", "AT_LEAST_ONE_REQUIRED"));
-        }
-        if (!missing.isEmpty()) {
-            throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.CUSTOMER_REQUIRED_FIELDS_MISSING, missing);
-        }
-
-        // 422 형식 검증
-        java.util.List<java.util.Map<String, String>> errors = new java.util.ArrayList<>();
-        var bn = request.getBusinessNumber();
-        if (bn != null && !bn.matches("\\d{3}-\\d{2}-\\d{5}")) {
-            errors.add(java.util.Map.of("field", "businessNumber", "reason", "INVALID_FORMAT (###-##-#####)"));
-        }
-        var email = request.getContactEmail();
-        if (email != null && !email.isBlank() && !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
-            errors.add(java.util.Map.of("field", "contactEmail", "reason", "INVALID_EMAIL"));
-        }
-        var phone = request.getContactPhone();
-        if (phone != null && !phone.isBlank() && !phone.matches("^\\d{2,3}-\\d{3,4}-\\d{4}$")) {
-            errors.add(java.util.Map.of("field", "contactPhone", "reason", "INVALID_PHONE"));
-        }
-        if (!errors.isEmpty()) {
-            throw new org.ever._4ever_be_gw.common.exception.ValidationException(ErrorCode.VALIDATION_FAILED, errors);
-        }
-
         // 성공 응답 DTO
         String customerId = UuidV7.string();
         String customerNumber = "CUS-" + customerId.substring(0, 6);
@@ -725,15 +682,12 @@ import java.util.stream.Collectors;
                 .customerName(request.getCompanyName())
                 .ceoName(request.getCeoName())
                 .businessNumber(request.getBusinessNumber())
-                .statusCode("ACTIVE")
                 .contactPhone(request.getContactPhone())
                 .contactEmail(request.getContactEmail())
                 .zipCode(request.getZipCode())
-                .address(request.getAddress())
+                .baseAddress(request.getAddress())
                 .detailAddress(request.getDetailAddress())
                 .manager(managerDto)
-                .totalOrders(0)
-                .totalTransactionAmount(0L)
                 .note(request.getNote())
                 .build();
 
@@ -816,7 +770,7 @@ import java.util.stream.Collectors;
                     .customerName(companies[i % companies.length])
                     .manager(managerDto)
                     .address((i % 2 == 0) ? "서울시 강남구 테헤란로 123" : "서울시 영등포구 여의도동 456")
-                    .totalAmount(1_250_000_000L - (i * 37_000_000L))
+                    .totalTransactionAmount(1_250_000_000L - (i * 37_000_000L))
                     .orderCount(45 - (i % 10))
                     .lastOrderDate("2024" + (i + 1) + "-01-01")
                     .statusCode(statusCode2)
