@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -84,9 +85,9 @@ public class MmController {
             }
     )
     public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getStatistics(
-            @Parameter(name = "periods", description = "조회 기간 목록(콤마 구분)")
-            @RequestParam(name = "periods", required = false) String periods
+
     ) {
+        String periods = "";
         // 파라미터 파싱 및 유효성 검증
         List<String> requested = periods == null || periods.isBlank()
                 ? List.of("week", "month", "quarter", "year")
@@ -140,7 +141,7 @@ public class MmController {
             @Parameter(description = "요청자명 검색")
             @RequestParam(name = "requesterName", required = false) String requesterName,
             @Parameter(description = "요청 부서 ID 필터")
-            @RequestParam(name = "departmentId", required = false) Long departmentId,
+            @RequestParam(name = "departmentId", required = false) String departmentId,
             @Parameter(description = "생성일 시작(YYYY-MM-DD)")
             @RequestParam(name = "createdFrom", required = false) String createdFrom,
             @Parameter(description = "생성일 종료(YYYY-MM-DD)")
@@ -194,8 +195,8 @@ public class MmController {
         // 성공 응답 (목업) - 50개
         java.util.List<Map<String, Object>> content = new java.util.ArrayList<>();
         for (int i = 0; i < 50; i++) {
-            final long id = 1L + i; // 상세와 정렬을 맞추기 위해 1~50 사용
-            final long requesterId = 123L + (i % 5);
+            final String id = String.valueOf(1 + i); // 상세와 정렬을 맞추기 위해 1~50 사용
+            final String requesterId = String.valueOf(123 + (i % 5));
             final String requesterNameVal = switch (i % 5) {
                 case 0 -> "홍길동";
                 case 1 -> "김민수";
@@ -212,8 +213,8 @@ public class MmController {
             row.put("prNumber", String.format("PR-2025-%03d", 1 + i));
             row.put("requesterId", requesterId);
             row.put("requesterName", requesterNameVal);
-            long deptId = (i % 2 == 0) ? 12L : 15L;
-            String deptName = (deptId == 12L) ? "영업1팀" : "경영지원팀";
+            String deptId = (i % 2 == 0) ? "12" : "15";
+            String deptName = "12".equals(deptId) ? "영업1팀" : "경영지원팀";
             row.put("departmentId", deptId);
             row.put("departmentName", deptName);
             // 요청일
@@ -242,10 +243,10 @@ public class MmController {
         }
         
         // 부서 ID 필터링
-        if (departmentId != null) {
-            final long did = departmentId;
+        if (departmentId != null && !departmentId.isEmpty()) {
+            final String did = departmentId;
             filtered = filtered.stream()
-                    .filter(m -> java.util.Objects.equals(((Number)m.get("departmentId")).longValue(), did))
+                    .filter(m -> did.equals(String.valueOf(m.get("departmentId"))))
                     .toList();
         }
         
@@ -347,9 +348,9 @@ public class MmController {
 
         // 성공 응답
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("purchaseRequisitionId", 202510120001L);
+        data.put("purchaseRequisitionId", String.valueOf(202510120001L));
         data.put("prNumber", "PR-NS-2025-00001");
-        data.put("departmentId", 12);
+        data.put("departmentId", String.valueOf(12));
         data.put("departmentName", "경영지원팀");
         data.put("requesterId", request.getRequesterId());
         data.put("requestDate", java.time.LocalDate.now().toString());
@@ -390,23 +391,23 @@ public class MmController {
     )
     public ResponseEntity<ApiResponse<Object>> getPurchaseRequisitionDetail(
             @Parameter(description = "구매요청 ID", example = "1")
-            @PathVariable("purchaseRequisitionId") Long purchaseRequisitionId
+            @PathVariable("purchaseRequisitionId") String purchaseRequisitionId
     ) {
         // 모킹된 에러 시나리오
-        if (Long.valueOf(403001L).equals(purchaseRequisitionId)) {
+        if ("403001".equals(purchaseRequisitionId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN_PURCHASE_ACCESS);
         }
-        // 1~50만 유효, 그 외는 404 처리
-        if (purchaseRequisitionId == null || purchaseRequisitionId < 1 || purchaseRequisitionId > 50) {
+        // ID가 비어있으면 404 처리
+        if (purchaseRequisitionId == null || purchaseRequisitionId.isEmpty()) {
             throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "purchaseId=" + purchaseRequisitionId);
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", purchaseRequisitionId);
         data.put("purchaseRequisitionNumber", "PR-2024-001");
-        data.put("requesterId", 123L);
+        data.put("requesterId", "123");
         data.put("requesterName", "김철수");
-        data.put("departmentId", 77L);
+        data.put("departmentId", "77");
         data.put("departmentName", "생산팀");
         // 요청일 추가 (createdAt의 날짜 기준)
         data.put("requestDate", java.time.LocalDate.parse("2024-01-15"));
@@ -416,7 +417,7 @@ public class MmController {
 
         java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
         items.add(new java.util.LinkedHashMap<>() {{
-            put("itemId", 40000123L);
+            put("itemId", "40000123");
             put("itemName", "강판");
             put("quantity", 500);
             put("uomCode", "EA");
@@ -424,7 +425,7 @@ public class MmController {
             put("amount", 2_500_000);
         }});
         items.add(new java.util.LinkedHashMap<>() {{
-            put("itemId", 987_654_321L);
+            put("itemId", "987654321");
             put("itemName", "볼트");
             put("quantity", 100);
             put("uomCode", "EA");
@@ -470,89 +471,87 @@ public class MmController {
     )
     public ResponseEntity<ApiResponse<Object>> updatePurchaseRequisition(
             @Parameter(description = "구매요청 ID", example = "102345")
-            @PathVariable("purchaseRequisitionId") Long purchaseRequisitionId,
+            @PathVariable("purchaseRequisitionId") String purchaseRequisitionId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(name = "request", value = "{\n  \"dueDate\": \"2025-10-25\",\n  \"items\": [\n    { \"operation\": \"ADD\", \"itemName\": \"화이트보드 마커\", \"quantity\": 50, \"uomName\": \"EA\", \"unitPrice\": 3000, \"supplierName\": \"문구나라\", \"purpose\": \"소모품 보충\", \"note\": \"색상 혼합\" },\n    { \"operation\": \"UPDATE\", \"itemId\": 900001, \"quantity\": 12, \"unitPrice\": 14000 }\n  ]\n}"))
+                            examples = @ExampleObject(name = "request", value = "{\n  \"dueDate\": \"2025-10-25\",\n  \"items\": [\n    { \"operation\": \"ADD\", \"itemName\": \"화이트보드 마커\", \"quantity\": 50, \"uomName\": \"EA\", \"unitPrice\": 3000, \"supplierName\": \"문구나라\", \"purpose\": \"소모품 보충\", \"note\": \"색상 혼합\" },\n    { \"operation\": \"UPDATE\", \"itemId\": \"900001\", \"quantity\": 12, \"unitPrice\": 14000 }\n  ]\n}"))
             )
             @RequestBody MmPurchaseRequisitionUpdateRequestDto request
     ) {
         // 목업에서는 항상 성공 응답 반환
-        if (!Long.valueOf(102345L).equals(purchaseRequisitionId)) {
+        if (!"102345".equals(purchaseRequisitionId)) {
             throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "purchaseId=" + purchaseRequisitionId);
         }
 
-        java.time.LocalDate baseDesiredDate = java.time.LocalDate.parse("2025-10-15");
-        java.time.LocalDate effectiveDesiredDate = (request != null && request.getDueDate() != null)
+        LocalDate baseDesiredDate = LocalDate.parse("2025-10-15");
+        LocalDate effectiveDesiredDate = (request != null && request.getDueDate() != null)
                 ? request.getDueDate()
                 : baseDesiredDate;
 
-        List<Map<String, String>> errors = new java.util.ArrayList<>();
-        if (request != null && request.getDueDate() != null && !request.getDueDate().isAfter(java.time.LocalDate.now())) {
+        List<Map<String, String>> errors = new ArrayList<>();
+        if (request != null && request.getDueDate() != null && !request.getDueDate().isAfter(LocalDate.now())) {
             errors.add(Map.of("field", "desiredDeliveryDate", "reason", "PAST_DATE"));
         }
 
-        java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
-        Map<String, Object> baseItem1 = new java.util.LinkedHashMap<>();
-        baseItem1.put("itemId",900001L);
+        // 초기 아이템
+        List<Map<String, Object>> items = new ArrayList<>();
+
+        Map<String, Object> baseItem1 = new LinkedHashMap<>();
+        baseItem1.put("itemId", "900001");
         baseItem1.put("itemName", "A4 복사용지");
         baseItem1.put("quantity", 10);
         baseItem1.put("uomName", "BOX");
-        baseItem1.put("unitPrice", 15_000L);
-        baseItem1.put("totalAmount", 150_000L);
-        baseItem1.put("SupplierName", "OO물산");
+        baseItem1.put("unitPrice", 15000L);
+        baseItem1.put("totalAmount", 150000L);
+        baseItem1.put("supplierName", "OO물산");
         baseItem1.put("purpose", "사무실 비품 보강");
         baseItem1.put("note", "긴급 구매");
         items.add(baseItem1);
 
-        Map<String, Object> baseItem2 = new java.util.LinkedHashMap<>();
-        baseItem2.put("itemId", 900002L);
+        Map<String, Object> baseItem2 = new LinkedHashMap<>();
+        baseItem2.put("itemId", "900002");
         baseItem2.put("itemName", "화이트보드 세정제");
         baseItem2.put("quantity", 5);
         baseItem2.put("uomName", "EA");
-        baseItem2.put("unitPrice", 12_000L);
-        baseItem2.put("totalAmount", 60_000L);
+        baseItem2.put("unitPrice", 12000L);
+        baseItem2.put("totalAmount", 60000L);
         baseItem2.put("supplierName", "청소나라");
         baseItem2.put("purpose", "사무실 유지보수");
         baseItem2.put("note", null);
         items.add(baseItem2);
 
-        java.util.Map<Long, Map<String, Object>> itemIndex = items.stream()
-                .filter(m -> m.get("itemId") != null) // itemId가 null인 항목 필터링
-                .collect(java.util.stream.Collectors.toMap(
-                        m -> {
-                            Object itemIdObj = m.get("itemId");
-                            if (itemIdObj instanceof Number) {
-                                return ((Number) itemIdObj).longValue();
-                            } else {
-                                // itemId가 Number 타입이 아니면 예외 처리하거나 기본값 반환
-                                throw new IllegalArgumentException("itemId is not a Number: " + itemIdObj);
-                            }
-                        },
+        // Map으로 빠르게 접근하기 위한 인덱스 생성
+        Map<String, Map<String, Object>> itemIndex = items.stream()
+                .filter(m -> m.get("itemId") != null)
+                .collect(Collectors.toMap(
+                        m -> (String) m.get("itemId"),
                         m -> m,
                         (a, b) -> a,
-                        java.util.LinkedHashMap::new));
+                        LinkedHashMap::new
+                ));
 
+        // 유효성 검증
         if (request != null && request.getItems() != null) {
             for (int i = 0; i < request.getItems().size(); i++) {
                 var incoming = request.getItems().get(i);
                 String fieldPrefix = "items[" + i + "]";
                 String op = incoming.getOperation() == null ? null : incoming.getOperation().trim().toUpperCase();
+
                 if (op == null || op.isEmpty()) {
                     errors.add(Map.of("field", fieldPrefix + ".op", "reason", "REQUIRED"));
                     continue;
                 }
-                if (!java.util.Set.of("ADD", "UPDATE", "REMOVE").contains(op)) {
+                if (!Set.of("ADD", "UPDATE", "REMOVE").contains(op)) {
                     errors.add(Map.of("field", fieldPrefix + ".op", "reason", "ALLOWED_VALUES: ADD, UPDATE, REMOVE"));
                     continue;
                 }
                 if ("ADD".equals(op) && (incoming.getQuantity() == null || incoming.getQuantity() <= 0)) {
                     errors.add(Map.of("field", fieldPrefix + ".quantity", "reason", "MUST_BE_POSITIVE"));
                 }
-                if (("UPDATE".equals(op) || "REMOVE".equals(op)) && incoming.getItemId() == null) {
+                if (("UPDATE".equals(op) || "REMOVE".equals(op)) && (incoming.getItemId() == null)) {
                     errors.add(Map.of("field", fieldPrefix + ".id", "reason", "REQUIRED"));
-                } 
+                }
                 if ("UPDATE".equals(op) && incoming.getQuantity() != null && incoming.getQuantity() <= 0) {
                     errors.add(Map.of("field", fieldPrefix + ".quantity", "reason", "MUST_BE_POSITIVE"));
                 }
@@ -563,87 +562,58 @@ public class MmController {
             throw new ValidationException(ErrorCode.BODY_VALIDATION_FAILED, errors);
         }
 
-        long nextItemId = 900003L;
+        long nextItemIdSeq = 900003L;
+
         if (request != null && request.getItems() != null) {
             for (var incoming : request.getItems()) {
                 String op = incoming.getOperation() == null ? null : incoming.getOperation().trim().toUpperCase();
-                if (op == null) {
-                    continue;
-                }
+                if (op == null) continue;
+
                 switch (op) {
                     case "ADD" -> {
-                        Map<String, Object> newItem = new java.util.LinkedHashMap<>();
-                        newItem.put("itemId", nextItemId++);
+                        Map<String, Object> newItem = new LinkedHashMap<>();
+                        String newItemId = String.valueOf(nextItemIdSeq++);
+                        newItem.put("itemId", newItemId);
                         newItem.put("itemName", incoming.getItemName());
                         newItem.put("quantity", incoming.getQuantity());
                         newItem.put("uomName", incoming.getUomName());
                         newItem.put("unitPrice", incoming.getUnitPrice());
-                        Long expectedTotal = (incoming.getQuantity() != null && incoming.getUnitPrice() != null)
+                        Long total = (incoming.getQuantity() != null && incoming.getUnitPrice() != null)
                                 ? incoming.getQuantity().longValue() * incoming.getUnitPrice()
                                 : null;
-                        newItem.put("totalAmount", expectedTotal);
+                        newItem.put("totalAmount", total);
                         newItem.put("supplierName", incoming.getSupplierName());
                         newItem.put("purpose", incoming.getPurpose());
                         newItem.put("note", incoming.getNote());
                         items.add(newItem);
+                        itemIndex.put(newItemId, newItem);
                     }
                     case "UPDATE" -> {
-                        if (incoming.getItemId() == null) {
-                            break;
-                        }
+                        if (incoming.getItemId() == null) break;
                         Map<String, Object> target = itemIndex.get(incoming.getItemId());
-                        if (target == null) {
-                            break;
-                        }
-                        if (incoming.getQuantity() != null) {
-                            target.put("quantity", incoming.getQuantity());
-                        }
-                        if (incoming.getUnitPrice() != null) {
-                            target.put("unitPrice", incoming.getUnitPrice());
-                        }
-                        if (incoming.getItemName() != null) {
-                            target.put("itemName", incoming.getItemName());
-                        }
-                        if (incoming.getUomName() != null) {
-                            target.put("uomName", incoming.getUomName());
-                        }
-                        if (incoming.getSupplierName() != null) {
-                            target.put("supplierName", incoming.getSupplierName());
-                        }
-                        if (incoming.getPurpose() != null) {
-                            target.put("purpose", incoming.getPurpose());
-                        }
-                        if (incoming.getNote() != null) {
-                            target.put("note", incoming.getNote());
-                        }
+                        if (target == null) break;
+
+                        if (incoming.getQuantity() != null) target.put("quantity", incoming.getQuantity());
+                        if (incoming.getUnitPrice() != null) target.put("unitPrice", incoming.getUnitPrice());
+                        if (incoming.getItemName() != null) target.put("itemName", incoming.getItemName());
+                        if (incoming.getUomName() != null) target.put("uomName", incoming.getUomName());
+                        if (incoming.getSupplierName() != null) target.put("supplierName", incoming.getSupplierName());
+                        if (incoming.getPurpose() != null) target.put("purpose", incoming.getPurpose());
+                        if (incoming.getNote() != null) target.put("note", incoming.getNote());
                     }
                     case "REMOVE" -> {
-                        if (incoming.getItemId() == null) {
-                            break;
-                        }
-                        long removeId = incoming.getItemId();
-                        items.removeIf(m -> ((Number) m.get("itemId")).longValue() == removeId);
+                        if (incoming.getItemId() == null) break;
+                        items.removeIf(m -> incoming.getItemId().equals(m.get("itemId")));
+                        itemIndex.remove(incoming.getItemId());
                     }
-                    default -> {
-                    }
+                    default -> {}
                 }
-                itemIndex = items.stream()
-                        .collect(java.util.stream.Collectors.toMap(m -> ((Number) m.get("itemId")).longValue(), m -> m, (a, b) -> a, java.util.LinkedHashMap::new));
             }
         }
 
-        items.forEach(it -> {
-            Integer quantity = (Integer) it.get("quantity");
-            Long unitPrice = (Long) it.get("unitPrice");
-            if (quantity != null && unitPrice != null) {
-                it.put("dueDate", quantity.longValue() * unitPrice);
-            }
-        });
-
-        long totalExpectedAmount = items.stream()
-                .map(m -> (Long) m.get("dueDate"))
-                .filter(java.util.Objects::nonNull)
-                .mapToLong(Long::longValue)
+        // 총 금액 계산
+        long totalAmount = items.stream()
+                .mapToLong(m -> ((Number) m.get("unitPrice")).longValue() * ((Number) m.get("quantity")).intValue())
                 .sum();
 
         Map<String, Object> data = new LinkedHashMap<>();
@@ -651,14 +621,15 @@ public class MmController {
         data.put("purchaseRequisitionNumber", "PR-2025-00001");
         data.put("purchaseRequisitionType", "NON_STOCK");
         data.put("statusCode", "PENDING");
-        data.put("departmentId", 12L);
+        data.put("departmentId", "12");
         data.put("departmentName", "경영지원팀");
         data.put("dueDate", effectiveDesiredDate);
-        data.put("totalAmount", totalExpectedAmount);
+        data.put("totalAmount", totalAmount);
         data.put("items", items);
 
         return ResponseEntity.ok(ApiResponse.success(data, "구매요청서가 수정되었습니다.", HttpStatus.OK));
     }
+
 
     @DeleteMapping("/purchase-requisitions/{purchaseRequisitionId}")
     @Operation(
@@ -691,7 +662,7 @@ public class MmController {
     )
     public ResponseEntity<ApiResponse<Object>> deletePurchaseRequisition(
             @Parameter(description = "구매요청 ID", example = "102345")
-            @PathVariable("purchaseRequisitionId") Long prId
+            @PathVariable("purchaseRequisitionId") String prId
     ) {
         // 목업에서는 항상 성공 응답 반환
 
@@ -749,24 +720,24 @@ public class MmController {
     )
     public ResponseEntity<ApiResponse<Object>> releasePurchaseRequisition(
             @Parameter(description = "구매요청 ID", example = "102345")
-            @PathVariable("purchaseRequisitionId") Long prId
+            @PathVariable("purchaseRequisitionId") String prId
     ) {
         // 목업에서는 인증 처리 생략 (항상 성공)
 
-        if (prId == null || prId < 100000L) {
+        if (prId == null || prId.length() < 6) {
             throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
         }
-        if (Long.valueOf(102347L).equals(prId)) {
+        if ("102347".equals(prId)) {
             List<Map<String, String>> errors = List.of(Map.of(
                     "field", "status",
                     "reason", "INVALID_TRANSITION: DRAFT/REJECTED/VOID/APPROVED → APPROVED 불가"
             ));
             throw new ValidationException(ErrorCode.PURCHASE_REQUEST_INVALID_TRANSITION, errors);
         }
-        if (Long.valueOf(102399L).equals(prId)) {
+        if ("102399".equals(prId)) {
             throw new BusinessException(ErrorCode.PURCHASE_REQUEST_APPROVAL_PROCESSING_ERROR);
         }
-        if (!Long.valueOf(102345L).equals(prId)) {
+        if (!"102345".equals(prId)) {
             throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
         }
 
@@ -775,12 +746,12 @@ public class MmController {
         data.put("purchaseRequisitionNumber", "PR-NS-2025-00001");
         data.put("type", "NON_STOCK");
         data.put("statusCode", "APPROVED");
-        data.put("requesterId", 123L);
+        data.put("requesterId", "123");
         data.put("requesterName", "홍길동");
-        data.put("departmentId", 12L);
+        data.put("departmentId", "12");
         data.put("departmentName", "영업1팀");
         data.put("approvedAt", java.time.Instant.parse("2025-10-07T09:15:00Z"));
-        data.put("approvedBy", 777L);
+        data.put("approvedBy", "777");
         data.put("approvedByName", "김관리자");
 
         return ResponseEntity.ok(ApiResponse.success(data, "구매요청서가 승인되었습니다.", HttpStatus.OK));
@@ -831,7 +802,7 @@ public class MmController {
     )
     public ResponseEntity<ApiResponse<Object>> rejectPurchaseRequisition(
             @Parameter(description = "구매요청 ID", example = "102345")
-            @PathVariable("purchaseRequisitionId") Long prId,
+            @PathVariable("purchaseRequisitionId") String prId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
@@ -849,20 +820,20 @@ public class MmController {
             throw new ValidationException(ErrorCode.BODY_VALIDATION_FAILED, errors);
         }
 
-        if (prId == null || prId < 100000L) {
+        if (prId == null || prId.length() < 6) {
             throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
         }
-        if (Long.valueOf(102347L).equals(prId)) {
+        if ("102347".equals(prId)) {
             List<Map<String, String>> transitionErrors = List.of(Map.of(
                     "field", "status",
                     "reason", "INVALID_TRANSITION: DRAFT/APPROVED/REJECTED/VOID → REJECTED 불가"
             ));
             throw new ValidationException(ErrorCode.PURCHASE_REQUEST_REJECTION_INVALID_TRANSITION, transitionErrors);
         }
-        if (Long.valueOf(102399L).equals(prId)) {
+        if ("102399".equals(prId)) {
             throw new BusinessException(ErrorCode.PURCHASE_REQUEST_REJECTION_PROCESSING_ERROR);
         }
-        if (!Long.valueOf(102345L).equals(prId)) {
+        if (!"102345".equals(prId)) {
             throw new BusinessException(ErrorCode.PURCHASE_REQUEST_NOT_FOUND, "prId=" + prId);
         }
 
@@ -870,12 +841,12 @@ public class MmController {
         data.put("purchaseRequisitionId", prId);
         data.put("purchaseRequisitionIdNumber", "PR-NS-2025-00001");
         data.put("statusCode", "REJECTED");
-        data.put("requesterId", 123L);
+        data.put("requesterId", "123");
         data.put("requesterName", "홍길동");
-        data.put("departmentId", 12L);
+        data.put("departmentId", "12");
         data.put("departmentName", "영업1팀");
         data.put("rejectedAt", java.time.Instant.parse("2025-10-07T10:30:00Z"));
-        data.put("rejectedBy", 777L);
+        data.put("rejectedBy", "777");
         data.put("rejectedByName", "김관리자");
         data.put("rejectReason", request.getComment());
 
@@ -990,7 +961,7 @@ public class MmController {
         for (int i = 0; i < 50; i++) {
             int idx = i % 10;
             Map<String, Object> row = new LinkedHashMap<>();
-            row.put("purchaseOrderId", 1001 + i);
+            row.put("purchaseOrderId", String.valueOf(1001 + i));
             row.put("purchaseOrderNumber", String.format("PO-2024-%03d", i + 1));
             row.put("supplierName", suppliers[idx]);
             row.put("itemsSummary", itemsSummary[idx]);
@@ -1098,28 +1069,34 @@ public class MmController {
     )
     public ResponseEntity<ApiResponse<Object>> getPurchaseOrderDetail(
             @Parameter(description = "발주서 ID", example = "1")
-            @PathVariable("purchaseOrderId") Long purchaseOrderId
+            @PathVariable("purchaseOrderId") String purchaseOrderId
     ) {
         if (purchaseOrderId == null) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + null);
         }
-        boolean poIdRange = purchaseOrderId >= 1001L && purchaseOrderId <= 1050L;
-        if (!poIdRange) {
+        
+        int poIdInt;
+        try {
+            poIdInt = Integer.parseInt(purchaseOrderId);
+            if (poIdInt < 1001 || poIdInt > 1050) {
+                throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + purchaseOrderId);
+            }
+        } catch (NumberFormatException e) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + purchaseOrderId);
         }
 
         // 목업 데이터 생성 (0~49 인덱스, 표시용 데이터는 10개 템플릿을 순환)
-        int idxFull = (int)(purchaseOrderId - 1001);
+        int idxFull = poIdInt - 1001;
         int idx = idxFull % 10;
         String[] suppliers = {"대한철강","한국알루미늄","포스코","효성중공업","현대제철","두산중공업","세아베스틸","KG동부제철","동국제강","티엠씨메탈"};
-        long[] supplierIds = {501,502,503,504,505,506,507,508,509,510};
+        String[] supplierIds = {"501","502","503","504","505","506","507","508","509","510"};
         String[] supplierCodes = {"SUP001","SUP002","SUP003","SUP004","SUP005","SUP006","SUP007","SUP008","SUP009","SUP010"};
         String[] orderDates = {"2024-01-18","2024-01-17","2024-01-16","2024-01-15","2024-01-14","2024-01-13","2024-01-12","2024-01-11","2024-01-10","2024-01-09"};
         String[] deliveryDates = {"2024-01-25","2024-01-24","2024-01-23","2024-01-22","2024-01-21","2024-01-20","2024-01-19","2024-01-18","2024-01-17","2024-01-16"};
         String[] statusCodes = {"APPROVED","PENDING","REJECTED","APPROVED","PENDING","APPROVED","REJECTED","PENDING","APPROVED","PENDING"};
 
         PoItemDto item1 = PoItemDto.builder()
-                .itemId(101L + idx)
+                .itemId(String.valueOf(101 + idx))
                 .itemName("강판")
                 .quantity(500)
                 .uomName("kg")
@@ -1128,7 +1105,7 @@ public class MmController {
                 .build();
 
         PoItemDto item2 = PoItemDto.builder()
-                .itemId(201L + idx)
+                .itemId(String.valueOf(201 + idx))
                 .itemName("알루미늄")
                 .quantity(300)
                 .uomName("kg")
@@ -1228,7 +1205,7 @@ public class MmController {
         var mInfo = (request == null) ? null : request.getManagerInfo();
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("supplierId", 101L);
+        data.put("supplierId", String.valueOf(101L));
         data.put("supplierNumber", "SUP-2025-0001");
         data.put("companyName", sInfo.getSupplierName());
         String managerName = (mInfo != null && mInfo.getManagerName() != null) ? mInfo.getManagerName() : null;
@@ -1411,20 +1388,27 @@ public class MmController {
     )
     public ResponseEntity<ApiResponse<Object>> getVendorDetail(
             @Parameter(description = "공급업체 ID", example = "1")
-            @PathVariable("supplierId") Long supplierId
+            @PathVariable("supplierId") String supplierId
     ) {
         // 모킹 트리거들
-        if (supplierId != null && supplierId == 403001L) {
+        if (supplierId != null && "403001".equals(supplierId)) {
             throw new BusinessException(ErrorCode.VENDOR_FORBIDDEN);
         }
-        if (supplierId != null && supplierId == 500001L) {
+        if (supplierId != null && "500001".equals(supplierId)) {
             throw new BusinessException(ErrorCode.VENDOR_PROCESSING_ERROR);
         }
-        if (supplierId == null || supplierId < 1 || supplierId > 50) {
+        
+        int supplierIdInt;
+        try {
+            supplierIdInt = Integer.parseInt(supplierId);
+            if (supplierIdInt < 1 || supplierIdInt > 50) {
+                throw new BusinessException(ErrorCode.VENDOR_NOT_FOUND);
+            }
+        } catch (NumberFormatException e) {
             throw new BusinessException(ErrorCode.VENDOR_NOT_FOUND);
         }
 
-        int idx = (int)((supplierId - 1) % 10);
+        int idx = (supplierIdInt - 1) % 10;
         String[] names = {"한국철강","대한전자부품","글로벌화학","한빛소재","스마트로지스틱스","태성테크","광명산업","한성전자","그린케미칼","아주금속"};
         String[] categories = {"MATERIAL","PARTS","MATERIAL","PARTS","ETC","PARTS","MATERIAL","PARTS","MATERIAL","MATERIAL"};
         int[] leadDays = {3,1,5,2,0,7,6,2,9,10};
@@ -1503,7 +1487,7 @@ public class MmController {
             }
     )
     public ResponseEntity<ApiResponse<Object>> updateVendor(
-            @PathVariable("supplierId") Long supplierId,
+            @PathVariable("supplierId") String supplierId,
 //            @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestBody(required = false) MmSupplierUpdateRequestDto request
     ) {
@@ -1541,11 +1525,19 @@ public class MmController {
                 errors.add(Map.of("field", "deliveryLeadTime", "reason", "MUST_BE_POSITIVE_OR_ZERO"));
             }
         }
-        if (!errors.isEmpty()) {
-            throw new ValidationException(ErrorCode.VENDOR_UPDATE_VALIDATION_FAILED, errors);
-        }
 
-        if (supplierId == null || supplierId < 1 || supplierId > 200) {
+
+        if (supplierId == null) {
+            throw new BusinessException(ErrorCode.VENDOR_UPDATE_NOT_FOUND);
+        }
+        
+        int supplierIdInt;
+        try {
+            supplierIdInt = Integer.parseInt(supplierId);
+            if (supplierIdInt < 1 || supplierIdInt > 200) {
+                throw new BusinessException(ErrorCode.VENDOR_UPDATE_NOT_FOUND);
+            }
+        } catch (NumberFormatException e) {
             throw new BusinessException(ErrorCode.VENDOR_UPDATE_NOT_FOUND);
         }
 
@@ -1627,24 +1619,35 @@ public class MmController {
     )
     public ResponseEntity<ApiResponse<Object>> approvePurchaseOrder(
             @Parameter(description = "발주서 ID", example = "1001")
-            @PathVariable("purchaseOrderId") Long poId
+            @PathVariable("purchaseOrderId") String poId
     ) {
         // 목업에서는 인증 처리 생략 (항상 성공)
 
         // 유효한 발주서 ID 범위 (목업 데이터 기준: 1001~1050)
-        if (poId == null || poId < 1001L || poId > 1050L) {
+        if (poId == null) {
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + poId);
+        }
+        
+        int poIdInt;
+        try {
+            poIdInt = Integer.parseInt(poId);
+            if (poIdInt < 1001 || poIdInt > 1050) {
+                throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + poId);
+            }
+        } catch (NumberFormatException e) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + poId);
         }
 
         // 현재 상태 확인: PENDING만 승인 가능
         // 규칙: (poId-1001) % 5 in {1,4} → PENDING (목록 생성 규칙과 일치)
-        int mod = (int)((poId - 1001) % 5);
+        int mod = (poIdInt - 1001) % 5;
         boolean isPending = (mod == 1 || mod == 4);
         if (!isPending) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_INVALID_TRANSITION);
         }
 
-        int idxFull = (int)(poId - 1001);
+        int poIdValue = Integer.parseInt(poId);
+        int idxFull = poIdValue - 1001;
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", poId);
@@ -1702,7 +1705,7 @@ public class MmController {
     )
     public ResponseEntity<ApiResponse<Object>> rejectPurchaseOrder(
             @Parameter(description = "발주서 ID", example = "1001")
-            @PathVariable("purchaseOrderId") Long poId,
+            @PathVariable("purchaseOrderId") String poId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
@@ -1711,7 +1714,17 @@ public class MmController {
             @RequestBody MmPurchaseOrderRejectRequestDto request
     ) {
 
-        if (poId == null || poId < 1001L || poId > 1050L) {
+        if (poId == null) {
+            throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + poId);
+        }
+        
+        int poIdInt;
+        try {
+            poIdInt = Integer.parseInt(poId);
+            if (poIdInt < 1001 || poIdInt > 1050) {
+                throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + poId);
+            }
+        } catch (NumberFormatException e) {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_NOT_FOUND, "poId=" + poId);
         }
 
@@ -1719,7 +1732,7 @@ public class MmController {
             throw new BusinessException(ErrorCode.PURCHASE_ORDER_REJECTION_REASON_REQUIRED);
         }
 
-        int idxFull = (int)(poId - 1001);
+        int idxFull = poIdInt - 1001;
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", poId);
@@ -1734,7 +1747,7 @@ public class MmController {
     }
 
     @RestController
-    @RequestMapping("/api/purchase-requisition")
+    @RequestMapping("/purchase-requisition")
     public class PurchaseRequisitionController {
 
         @GetMapping("/status-codes")

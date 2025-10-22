@@ -6,7 +6,7 @@ import java.util.List;
 
 @Getter
 public class MmPurchaseRequisitionCreateRequestDto {
-    private Long requesterId;
+    private String requesterId;
     private List<Item> items;
 
     @Getter
