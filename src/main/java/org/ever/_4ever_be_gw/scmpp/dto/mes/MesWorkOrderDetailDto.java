@@ -12,26 +12,17 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MesWorkOrderDetailDto {
-    private Long workOrderId;
-    private String workOrderCode;
-    private Long productId;
+    private String mesId;
+    private String mesNumber;
+    private String productId;
     private String productName;
     private Integer quantity;
-    private String unit;
+    private String uomName;
     private Integer progressPercent;
-    private StatusInfo status;
+    private String statusCode;
     private PlanInfo plan;
     private String currentOperation;
     private List<OperationDto> operations;
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class StatusInfo {
-        private String code;
-        private String label;
-    }
 
     @Data
     @Builder
@@ -47,14 +38,14 @@ public class MesWorkOrderDetailDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class OperationDto {
-        private String operationCode;
+        private String operationNumber;
         private String operationName;
         private Integer sequence;
-        private StatusInfo status;
+        private String statusCode;
         private String startedAt;
         private String finishedAt;
         private Double durationHours;
-        private AssigneeDto assignee;
+        private AssigneeDto manager;
     }
 
     @Data
