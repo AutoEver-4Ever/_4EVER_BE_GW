@@ -27,12 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -1737,6 +1732,27 @@ public class MmController {
 
         return ResponseEntity.ok(ApiResponse.success(data, "발주서를 반려했습니다.", HttpStatus.OK));
     }
+
+    @RestController
+    @RequestMapping("/api/purchase-requisition")
+    public class PurchaseRequisitionController {
+
+        @GetMapping("/status-codes")
+        @Operation(
+                summary = "구매요청 상태 코드 조회",
+                description = "구매요청서 상태 코드 목록(APPROVAL, PENDING, REJECTED)을 반환합니다."
+        )
+        public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getStatusCodes() {
+            List<Map<String, Object>> statusCodes = new ArrayList<>();
+
+            statusCodes.add(Map.of("id", 1, "code", "APPROVAL", "name", "승인됨"));
+            statusCodes.add(Map.of("id", 2, "code", "PENDING", "name", "대기 중"));
+            statusCodes.add(Map.of("id", 3, "code", "REJECTED", "name", "반려됨"));
+
+            return ResponseEntity.ok(ApiResponse.success(null, "구매요청 상태 코드 조회 성공",HttpStatus.OK));
+        }
+    }
+
 
 //    @PostMapping("/vendors/{supplierId}/account")
 //    @Operation(
