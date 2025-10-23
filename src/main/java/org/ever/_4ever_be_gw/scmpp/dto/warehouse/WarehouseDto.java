@@ -10,12 +10,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class WarehouseDto {
-    private Long warehouseId;
-    private String warehouseCode;
+    private String warehouseId;
+    private String warehouseNumber;
     private String warehouseName;
-    private String status;
+    private String statusCode;
     private String warehouseType;
     private String location;
     private String manager;
-    private String phone;
+    private String managerPhone;
 }

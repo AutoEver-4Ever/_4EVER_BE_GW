@@ -19,9 +19,9 @@ public class WarehouseDetailDto {
     @AllArgsConstructor
     public static class WarehouseInfoDto {
         private String warehouseName;
-        private String warehouseCode;
+        private String warehouseNumber;
         private String warehouseType;
-        private String warehouseStatus;
+        private String statusCode;
         private String location;
         private String description;
     }
@@ -31,8 +31,8 @@ public class WarehouseDetailDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class WarehouseManagerDto {
-        private String name;
-        private String phoneNumber;
-        private String email;
+        private String managerName;
+        private String managerPhoneNumber;
+        private String managerEmail;
     }
 }

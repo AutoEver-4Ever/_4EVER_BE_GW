@@ -12,12 +12,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlannedOrderDetailDto {
-    private Long plannedId;
-    private Long quotationId;
+    private String mrpId;
+    private String quotationId;
     private String quotationCode;
-    private Long requestId;
-    private String requester;
-    private String department;
+    private String requesterId;
+    private String requesterName;
+    private String departmentName;
     private String requestDate;
     private String desiredDueDate;
     private String status;
@@ -29,10 +29,10 @@ public class PlannedOrderDetailDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class OrderItemDto {
-        private Long itemId;
+        private String itemId;
         private String itemName;
         private int quantity;
-        private String unit;
+        private String uomName;
         private int unitPrice;
     }
 }

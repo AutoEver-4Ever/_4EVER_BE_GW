@@ -13,22 +13,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PoDetailDto {
-    private Long invoiceId;
-    private String invoiceCode;
     private String statusCode;
-    private LocalDate issueDate;
     private LocalDate dueDate;
-    private Long purchaseOrderId;
-    private String purchaseOrderCode;
+    private String purchaseOrderId;
+    private String purchaseOrderNumber;
     private LocalDate orderDate;
     private LocalDate requestedDeliveryDate;
-    private Long supplierId;
-    private String supplierCode;
+    private String supplierId;
+    private String supplierNumber;
     private String supplierName;
     private String managerPhone;
     private String managerEmail;
     private String deliveryAddress;
-    private ReferenceInfo reference;
     private List<PoItemDto> items;
     private long totalAmount;
     private String note;
@@ -41,8 +37,8 @@ public class PoDetailDto {
     @AllArgsConstructor
     public static class ReferenceInfo {
         private String type;
-        private Long purchaseOrderId;
-        private String purchaseOrderCode;
+        private String purchaseOrderId;
+        private String purchaseOrderNumber;
         private LocalDate orderDate;
         private LocalDate requestedDeliveryDate;
     }

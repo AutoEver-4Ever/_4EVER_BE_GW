@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @RestController
@@ -39,15 +40,7 @@ public class FcmController {
 	@GetMapping("/statictics")
 	@Operation(
 		summary = "FCM 통계 조회",
-		description = "기간별 재무 관리 통계를 조회합니다.",
-		responses = {
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(
-					responseCode = "200",
-					description = "성공",
-						content = @Content(mediaType = "application/json",
-							examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재무 통계 데이터를 성공적으로 조회했습니다.\",\n  \"data\": {\n    \"week\": {\n      \"total_sales\": { \"value\": 68500000, \"delta_rate\": 0.082 },\n      \"total_purchases\": { \"value\": 43200000, \"delta_rate\": 0.054 },\n      \"net_profit\": { \"value\": 21000000, \"delta_rate\": 0.097 },\n      \"accounts_receivable\": { \"value\": 12500000, \"delta_rate\": -0.012 }\n    },\n    \"month\": {\n      \"total_sales\": { \"value\": 275000000, \"delta_rate\": 0.125 },\n      \"total_purchases\": { \"value\": 189000000, \"delta_rate\": 0.083 },\n      \"net_profit\": { \"value\": 86000000, \"delta_rate\": 0.153 },\n      \"accounts_receivable\": { \"value\": 25000000, \"delta_rate\": -0.032 }\n    }\n  }\n}"))
-				)
-		}
+		description = "기간별 재무 관리 통계를 조회합니다."
 	)
 	public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getStatistics(
 		@Parameter(description = "조회 기간 목록(콤마 구분)")
@@ -96,10 +89,10 @@ public class FcmController {
 		BigDecimal accountsReceivableChange
 	) {
 		return StatsMetricsDto.builder()
-			.put("total_sales", PeriodStatDto.builder().value(totalSales).deltaRate(totalSalesChange).build())
-			.put("total_purchases", PeriodStatDto.builder().value(totalPurchases).deltaRate(totalPurchasesChange).build())
-			.put("net_profit", PeriodStatDto.builder().value(netProfit).deltaRate(netProfitChange).build())
-			.put("accounts_receivable", PeriodStatDto.builder().value(accountsReceivable).deltaRate(accountsReceivableChange).build())
+			.put("totalSales", PeriodStatDto.builder().value(totalSales).deltaRate(totalSalesChange).build())
+			.put("totalPurchases", PeriodStatDto.builder().value(totalPurchases).deltaRate(totalPurchasesChange).build())
+			.put("netProfit", PeriodStatDto.builder().value(netProfit).deltaRate(netProfitChange).build())
+			.put("accountsReceivable", PeriodStatDto.builder().value(accountsReceivable).deltaRate(accountsReceivableChange).build())
 			.build();
 	}
 
@@ -108,15 +101,7 @@ public class FcmController {
 	@GetMapping("/invoice/ap")
 	@Operation(
 		summary = "매입 전표 목록 조회",
-		description = "매입(AP) 전표 목록을 조회합니다.",
-		responses = {
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(
-					responseCode = "200",
-					description = "성공",
-						content = @Content(mediaType = "application/json",
-							examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매입 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"invoiceId\": 1,\n        \"invoiceCode\": \"AP-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14\",\n        \"dueDate\": \"2025-11-14\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"PO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
-			)
-		}
+		description = "매입(AP) 전표 목록을 조회합니다."
 	)
 	public ResponseEntity<ApiResponse<Object>> getApinvoices(
 		@Parameter(description = "거래처 명") @RequestParam(name = "company", required = false) String company,
@@ -135,15 +120,7 @@ public class FcmController {
     @GetMapping("/invoice/ar")
 	@Operation(
 		summary = "매출 전표 목록 조회",
-		description = "매출(AR) 전표 목록을 조회합니다.",
-		responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 목록 조회에 성공했습니다.\",\n  \"data\": {\n    \"content\": [\n      {\n        \"invoiceId\": 1,\n        \"invoiceCode\": \"AR-2024-001\",\n        \"connection\": {\n          \"connectionId\": 1,\n          \"connectionCode\": \"C-001\",\n          \"connectionName\": \"현대자동차\"\n        },\n        \"totalAmount\": 10000000,\n        \"issueDate\": \"2025-10-14\",\n        \"dueDate\": \"2025-11-14\",\n        \"status\": \"UNPAID\",\n        \"referenceCode\": \"SO-2024-001\"\n      }\n    ],\n    \"page\": {\n      \"number\": 0,\n      \"size\": 10,\n      \"totalElements\": 15,\n      \"totalPages\": 2,\n      \"hasNext\": true\n    }\n  }\n}"))
-			)
-		}
+		description = "매출(AR) 전표 목록을 조회합니다."
 	)
 	public ResponseEntity<ApiResponse<Object>> getAsinvoices(
 		@Parameter(description = "거래처 명") @RequestParam(name = "company", required = false) String company,
@@ -163,18 +140,10 @@ public class FcmController {
     @GetMapping("/invoice/ap/{invoiceId}")
 	@Operation(
 		summary = "매입 전표 상세 조회",
-		description = "매입(AP) 전표 상세 정보를 조회합니다.",
-		responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매입 전표 상세 조회에 성공했습니다.\",\n  \"data\": {\n    \"invoiceId\": 2001,\n    \"invoiceCode\": \"AP2025-001\",\n    \"invoiceType\": \"AP\",\n    \"statusCode\": \"UNPAID\",\n    \"issueDate\": \"2025-01-20\",\n    \"dueDate\": \"2025-02-19\",\n    \"name\": \"대한철강\",\n    \"referenceCode\": \"PO2025-001\",\n    \"items\": [{\n      \"itemId\": 101,\n      \"itemName\": \"강판\",\n      \"quantity\": 500,\n      \"uomName\": \"kg\",\n      \"unitPrice\": 8000,\n      \"totalPrice\": 4000000\n    },{\n      \"itemId\": 201,\n      \"itemName\": \"알루미늄\",\n      \"quantity\": 300,\n      \"uomName\": \"kg\",\n      \"unitPrice\": 3333,\n      \"totalPrice\": 1000000\n    }],\n    \"totalAmount\": 5000000,\n    \"note\": \"1월 생산용 원자재 매입 분\"\n  }\n}"))
-			)
-		}
+		description = "매입(AP) 전표 상세 정보를 조회합니다."
 	)
 	public ResponseEntity<ApiResponse<InvoiceDetailDto>> getApinvoiceDetail(
-		@Parameter(description = "전표 ID", example = "1") @PathVariable("invoiceId") Long invoiceId
+		@Parameter(description = "전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab") @PathVariable("invoiceId") String invoiceId
 	) {
 		InvoiceDetailDto detail = generatePurchaseInvoiceDetailMock(invoiceId);
 		return ResponseEntity.ok(ApiResponse.success(detail, "매입 전표 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
@@ -183,18 +152,10 @@ public class FcmController {
     @GetMapping("/invoice/ar/{invoiceId}")
 	@Operation(
 		summary = "매출 전표 상세 조회",
-		description = "매출(AR) 전표 상세 정보를 조회합니다.",
-		responses = {
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(
-					responseCode = "200",
-					description = "성공",
-					content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"매출 전표 상세 정보 조회에 성공했습니다.\",\n  \"data\": {\n    \"invoiceId\": 1001,\n    \"invoiceCode\": \"AR2025-001\",\n    \"invoiceType\": \"AR\",\n    \"statusCode\": \"UNPAID\",\n    \"issueDate\": \"2025-10-14\",\n    \"dueDate\": \"2025-11-14\",\n    \"name\": \"삼성전자\",\n    \"referenceCode\": \"SO2025-001\",\n    \"items\": [{\n      \"itemId\": 900001,\n      \"itemName\": \"제품 A\",\n      \"quantity\": 10,\n      \"uomName\": \"EA\",\n      \"unitPrice\": 1000000,\n      \"totalPrice\": 10000000\n    },{\n      \"itemId\": 900011,\n      \"itemName\": \"제품 B\",\n      \"quantity\": 5,\n      \"uomName\": \"EA\",\n      \"unitPrice\": 1000000,\n      \"totalPrice\": 5000000\n    }],\n    \"totalAmount\": 15000000,\n    \"note\": \"도어 패널 100개 납품\"\n  }\n}"))
-			)
-		}
+		description = "매출(AR) 전표 상세 정보를 조회합니다."
 	)
 	public ResponseEntity<ApiResponse<InvoiceDetailDto>> getAsinvoiceDetail(
-		@Parameter(description = "전표 ID", example = "1") @PathVariable("invoiceId") Long invoiceId
+		@Parameter(description = "전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab") @PathVariable("invoiceId") String invoiceId
 	) {
 		InvoiceDetailDto detail = generateSalesInvoiceDetailMock(invoiceId);
 		return ResponseEntity.ok(ApiResponse.success(detail, "매출 전표 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
@@ -205,7 +166,7 @@ public class FcmController {
     @PatchMapping("/invoice/ap/{invoiceId}")
     @Operation(summary = "매입 전표 수정", description = "매입(AP) 전표를 수정합니다. 데이터만 받고 200 반환")
     public ResponseEntity<ApiResponse<Object>> patchApinvoice(
-        @Parameter(description = "전표 ID") @PathVariable("invoiceId") Long invoiceId,
+        @Parameter(description = "전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab") @PathVariable("invoiceId") String invoiceId,
         @Valid @RequestBody InvoiceUpdateRequestDto request
     ) {
         System.out.println("매입 전표 수정 요청 - ID: " + invoiceId + ", 데이터: " + request);
@@ -215,7 +176,7 @@ public class FcmController {
     @PatchMapping("/invoice/ar/{invoiceId}")
     @Operation(summary = "매출 전표 수정", description = "매출(AR) 전표를 수정합니다. 데이터만 받고 200 반환")
     public ResponseEntity<ApiResponse<Object>> patchAsinvoice(
-        @Parameter(description = "전표 ID") @PathVariable("invoiceId") Long invoiceId,
+        @Parameter(description = "전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab") @PathVariable("invoiceId") String invoiceId,
         @Valid @RequestBody InvoiceUpdateRequestDto request
     ) {
         System.out.println("매출 전표 수정 요청 - ID: " + invoiceId + ", 데이터: " + request);
@@ -227,18 +188,10 @@ public class FcmController {
     @PostMapping("/invoice/ar/{invoiceId}/receivable/complete")
     @Operation(
         summary = "매출 전표 미수 처리 완료",
-        description = "미납/확인요청 상태의 매출(AR) 전표에 대해 미수 처리를 완료합니다. (모의 처리: 항상 성공 반환)",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"미수 처리 완료되었습니다.\",\n  \"data\": null\n}"))
-            )
-        }
+        description = "미납/확인요청 상태의 매출(AR) 전표에 대해 미수 처리를 완료합니다. (모의 처리: 항상 성공 반환)"
     )
     public ResponseEntity<ApiResponse<Object>> completeReceivable(
-        @Parameter(description = "매출 전표 ID") @PathVariable("invoiceId") Long invoiceId
+        @Parameter(description = "매출 전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab") @PathVariable("invoiceId") String invoiceId
     ) {
         System.out.println("미수 처리 완료 요청(모의) - ID: " + invoiceId);
         return ResponseEntity.ok(ApiResponse.success(null, "미수 처리 완료되었습니다.", HttpStatus.OK));
@@ -249,18 +202,10 @@ public class FcmController {
     @PostMapping("/invoice/ap/receivable/request")
     @Operation(
         summary = "매입 전표 미수 처리 요청",
-        description = "매입(AP) 전표에 대해 공급사에 미수 처리 요청을 발송합니다. (모의 처리: 항상 성공 반환)",
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "성공",
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"미수 처리 요청을 공급사에 발송했습니다.\",\n  \"data\": null\n}"))
-            )
-        }
+        description = "매입(AP) 전표에 대해 공급사에 미수 처리 요청을 발송합니다. (모의 처리: 항상 성공 반환)"
     )
     public ResponseEntity<ApiResponse<Object>> requestApReceivable(
-        @Parameter(description = "매입 전표 ID", required = true) @RequestParam("invoiceId") Long invoiceId
+        @Parameter(description = "매입 전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab", required = true) @RequestParam("invoiceId") String invoiceId
     ) {
         System.out.println("매입 전표 미수 처리 요청(모의) - ID: " + invoiceId);
         return ResponseEntity.ok(ApiResponse.success(null, "미수 처리 요청을 공급사에 발송했습니다.", HttpStatus.OK));
@@ -309,7 +254,7 @@ public class FcmController {
 			long referenceId = referenceBase + (i % 50);
 			String referenceCode = String.format("%s-2024-%03d", isAp ? "PO" : "SO", (i % 50) + 1);
 
-			all.add(buildinvoiceRow(invoiceId, invoiceCode, connectionId, connectionCode, connectionName, totalAmount, issueDate, dueDate, status, referenceId, referenceCode));
+			all.add(buildinvoiceRow(invoiceId, invoiceCode, connectionId, connectionCode, connectionName, totalAmount, issueDate, dueDate, status, referenceId, referenceCode, type));
 		}
 
 		int totalElements = all.size();
@@ -343,53 +288,57 @@ public class FcmController {
 	}
 
 	private Map<String, Object> buildinvoiceRow(
-			Long invoiceId,
+			Long invoiceId,  // unused - mock only
 			String invoiceCode,
-			Long connectionId,
+			Long connectionId,  // unused - mock only
 			String connectionCode,
 			String connectionName,
 			int totalAmount,
 			LocalDate issueDate,
 			LocalDate dueDate,
 			String status,
-			Long referenceId,
-			String referenceCode
+			Long referenceId,  // unused - mock only
+			String referenceCode,
+			String type
 		) {
 		Map<String, Object> row = new LinkedHashMap<>();
-		row.put("invoiceId", invoiceId);
-		row.put("invoiceCode", invoiceCode);
-		Map<String, Object> connection = new LinkedHashMap<>();
-		connection.put("connectionId", connectionId);
-		connection.put("connectionCode", connectionCode);
-		connection.put("connectionName", connectionName);
-		row.put("connection", connection);
+		row.put("invoiceId", uuidV7());
+		row.put("invoiceNumber", invoiceCode);
+		Map<String, Object> supply = new LinkedHashMap<>();
+		supply.put("supplierId", uuidV7());
+		// Both AP and AR use supplierNumber
+		supply.put("supplierNumber", connectionCode);
+		supply.put("supplierName", connectionName);
+		row.put("supply", supply);
 		row.put("totalAmount", totalAmount);
 		row.put("issueDate", issueDate);
 		row.put("dueDate", dueDate);
-		row.put("status", status);
-		row.put("referenceCode", referenceCode);
+		row.put("statusCode", status);
+		row.put("referenceNumber", referenceCode);
 		Map<String, Object> reference = new LinkedHashMap<>();
-		reference.put("referenceId", referenceId);
-		reference.put("referenceCode", referenceCode);
+		reference.put("referenceId", uuidV7());  // Generate UUID instead of using Long referenceId
+		reference.put("referenceNumber", referenceCode);  // Changed from referenceCode to referenceNumber
 		row.put("reference", reference);
 		return row;
 	}
 
-    private InvoiceDetailDto generatePurchaseInvoiceDetailMock(Long invoiceId) {
-        long resolvedId = invoiceId == null ? 2001L : invoiceId;
+    private InvoiceDetailDto generatePurchaseInvoiceDetailMock(String invoiceId) {
+        long resolvedId = 2001L;
 
         PurchaseInvoiceItemDto item1 = PurchaseInvoiceItemDto.builder()
+                .itemId(uuidV7())
                 .itemName("강판")
                 .quantity(500)
-                .uomName("kg")
+                .unitOfMaterialName("kg")
                 .unitPrice(8_000L)
                 .totalPrice(4_000_000L)
                 .build();
 
         PurchaseInvoiceItemDto item2 = PurchaseInvoiceItemDto.builder()
+                .itemId(uuidV7())
                 .itemName("알루미늄")
                 .quantity(300)
-                .uomName("kg")
+                .unitOfMaterialName("kg")
                 .unitPrice(3_333L)
                 .totalPrice(1_000_000L)
                 .build();
@@ -397,35 +346,37 @@ public class FcmController {
         String invoiceCode = String.format("AP2025-%03d", Math.toIntExact(resolvedId % 1000));
 
         return InvoiceDetailDto.builder()
-                .invoiceId(resolvedId)
-                .invoiceCode(invoiceCode)
+                .invoiceId(uuidV7())
+                .invoiceNumber(invoiceCode)
                 .invoiceType("AP")
                 .statusCode("UNPAID")
                 .issueDate(LocalDate.parse("2025-01-20"))
                 .dueDate(LocalDate.parse("2025-02-19"))
                 .name("대한철강")
-                .referenceCode("PO2025-001")
+                .referenceNumber("PO2025-001")
                 .totalAmount(item1.getTotalPrice() + item2.getTotalPrice())
                 .items(List.of(item1, item2))
                 .note("1월 생산용 원자재 매입 분")
                 .build();
     }
 
-    private InvoiceDetailDto generateSalesInvoiceDetailMock(Long invoiceId) {
-        long resolvedId = invoiceId == null ? 1001L : invoiceId;
+    private InvoiceDetailDto generateSalesInvoiceDetailMock(String invoiceId) {
+        long resolvedId = 1001L;
 
         PurchaseInvoiceItemDto item1 = PurchaseInvoiceItemDto.builder()
+                .itemId(uuidV7())
                 .itemName("제품 A")
                 .quantity(10)
-                .uomName("EA")
+                .unitOfMaterialName("EA")
                 .unitPrice(1_000_000L)
                 .totalPrice(10_000_000L)
                 .build();
 
         PurchaseInvoiceItemDto item2 = PurchaseInvoiceItemDto.builder()
+                .itemId(uuidV7())
                 .itemName("제품 B")
                 .quantity(5)
-                .uomName("EA")
+                .unitOfMaterialName("EA")
                 .unitPrice(1_000_000L)
                 .totalPrice(5_000_000L)
                 .build();
@@ -433,17 +384,33 @@ public class FcmController {
         String invoiceCode = String.format("AR2025-%03d", Math.toIntExact(resolvedId % 1000));
 
         return InvoiceDetailDto.builder()
-                .invoiceId(resolvedId)
-                .invoiceCode(invoiceCode)
+                .invoiceId(uuidV7())
+                .invoiceNumber(invoiceCode)
                 .invoiceType("AR")
                 .statusCode("UNPAID")
                 .issueDate(LocalDate.parse("2025-10-14"))
                 .dueDate(LocalDate.parse("2025-11-14"))
                 .name("삼성전자")
-                .referenceCode("SO2025-001")
+                .referenceNumber("SO2025-001")
                 .totalAmount(item1.getTotalPrice() + item2.getTotalPrice())
                 .items(List.of(item1, item2))
                 .note("도어 패널 100개 납품")
                 .build();
     }
+
+	private String uuidV7() {
+		long ms = System.currentTimeMillis();
+		String timeHex = String.format("%012x", ms);
+		String timeLow = timeHex.substring(4);
+		String timeMid = timeHex.substring(0, 4);
+		String randA = String.format("%03x", ThreadLocalRandom.current().nextInt(0x1000));
+		String timeHiAndVersion = "7" + randA;
+		int rnd = ThreadLocalRandom.current().nextInt(0, 256);
+		int variant = (rnd & 0x3F) | 0x80;
+		String clockSeqHiAndReserved = String.format("%02x", variant);
+		String clockSeqLow = String.format("%02x", ThreadLocalRandom.current().nextInt(0, 256));
+		long nodeRand = ThreadLocalRandom.current().nextLong(0, 1L << 48);
+		String node = String.format("%012x", nodeRand);
+		return timeLow + "-" + timeMid + "-" + timeHiAndVersion + "-" + clockSeqHiAndReserved + clockSeqLow + "-" + node;
+	}
 }

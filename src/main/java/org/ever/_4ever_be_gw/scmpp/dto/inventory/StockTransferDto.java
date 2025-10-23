@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -14,8 +15,8 @@ import java.time.LocalDate;
 public class StockTransferDto {
     private String type;
     private int quantity;
-    private String unit;
+    private String uomName;
     private String itemName;
-    private LocalDate workDate;
-    private String manager;
+    private LocalDateTime workDate;
+    private String managerName;
 }

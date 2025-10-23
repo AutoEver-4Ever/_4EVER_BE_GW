@@ -12,18 +12,18 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MesWorkOrderDto {
-    private Long workOrderId;
-    private String workOrderCode;
-    private Long productId;
+    private String mesId;
+    private String mesNumber;
+    private String productId;
     private String productName;
     private Integer quantity;
-    private String unit;
-    private Long quotationId;
-    private String quotationCode;
+    private String uomName;
+    private String quotationId;
+    private String quotationNumber;
     private String status;
     private String currentOperation;
     private String startDate;
     private String endDate;
     private Integer progressRate;
-    private List<String> operationSequence;
+    private List<String> sequence;
 }

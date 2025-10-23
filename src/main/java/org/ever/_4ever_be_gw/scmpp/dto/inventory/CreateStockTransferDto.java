@@ -13,7 +13,7 @@ public class CreateStockTransferDto {
     private Long fromWarehouseId;
     private Long toWarehouseId;
     private Long stockId;
-    private Integer stockCount;
-    private String stockUnit;
+    private Integer stockQuantity;
+    private String uomName;
     private String reason;
 }

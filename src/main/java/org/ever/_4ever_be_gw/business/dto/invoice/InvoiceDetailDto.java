@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InvoiceDetailDto {
-    private Long invoiceId;              // 전표 ID (미발생 시 null)
-    private String invoiceCode;          // 전표 코드 (미발생 시 null)
+    private String invoiceId;            // 전표 ID (UUID)
+    private String invoiceNumber;        // 전표 코드
     private String invoiceType;          // 전표 타입(AR/AP)
     private String statusCode;           // 전표 상태 코드 (예: UNPAID, PENDING, PAID)
     private LocalDate issueDate;         // 전표 발행일
@@ -23,7 +23,7 @@ public class InvoiceDetailDto {
     private String name;                 // 공급사/고객사 거래처
 
     // 참조 정보 및 품목
-    private String referenceCode;        // 참조 정보 (구매 주문서)
+    private String referenceNumber;      // 참조 정보 (구매 주문서)
 
     // 합계 및 비고
     private Long totalAmount;            // 합계 금액

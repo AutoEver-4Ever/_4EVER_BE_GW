@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class BomCreateRequestDto {
     private String productName;
-    private String productCode;
+    private String productUomName;
     private String version;
     private List<ComponentDto> components;
     private List<RoutingDto> routing;
@@ -23,14 +23,14 @@ public class BomCreateRequestDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ComponentDto {
-        private Long id;
-        private String code;
-        private String name;
+        private String itemId;
+        private String itemNumber;
+        private String itemName;
         private Integer quantity;
-        private String unit;
+        private String uomName;
         private String level;
-        private String supplier;
-        private Integer operationId;
+        private String supplierCompanyName;
+        private String operationId;
         private String operationName;
     }
     
@@ -40,9 +40,8 @@ public class BomCreateRequestDto {
     @AllArgsConstructor
     public static class RoutingDto {
         private Integer sequence;
-        private Integer operationId;
+        private String operationId;
         private String operationName;
-        private Integer setupTime;
         private Integer runTime;
     }
 }
