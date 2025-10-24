@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.ever._4ever_be_gw.business.dto.alarm.response.NotificationCountResponseDto;
 import org.ever._4ever_be_gw.business.dto.alarm.response.NotificationListResponseDto;
 import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.dto.PageResponseDto;
@@ -146,9 +147,22 @@ public class AlarmController {
     // ===== 알림 갯수 조회 =====
     @GetMapping("/count")
     @Operation(summary = "알림 갯수 조회", description = "상태별(READ/UNREAD) 알림 갯수를 조회합니다.")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getNotificationCount(
-        @RequestParam(name = "status", required = false) String status) {
+    public ResponseEntity<ApiResponse<NotificationCountResponseDto>> getNotificationCount(
+        @RequestParam(name = "status", required = false) String status
+    ) {
         // 단순 목업: status가 UNREAD면 3, READ면 12, 미지정이면 총 15로 가정
+        final List<String> ALLOWED_STATUS = List.of("READ", "UNREAD");
+        if (status != null && !status.isBlank()) {
+            status = status.trim().toUpperCase();
+            if (!ALLOWED_STATUS.contains(status)) {
+                throw new IllegalArgumentException("유효하지 않은 status 값입니다. 허용값: READ, UNREAD");
+            }
+        } else {
+            status = null; // 빈값은 null로 통일
+        }
+
+        // TODO ALARM 서버와 연동하여 실제 데이터 조회
+
         int count;
         if ("UNREAD".equalsIgnoreCase(status)) {
             count = 3;
@@ -158,11 +172,13 @@ public class AlarmController {
             count = 15;
         }
 
-        Map<String, Object> data = Map.of("count", count);
+        NotificationCountResponseDto responseDto = NotificationCountResponseDto.builder()
+            .count(count)
+            .build();
         String msg = (status == null || status.isBlank()) ? "전체 알림 갯수를 성공적으로 조회했습니다."
             : ("UNREAD".equalsIgnoreCase(status) ? "안 읽은 알림 갯수를 성공적으로 조회했습니다."
                 : "읽은 알림 갯수를 성공적으로 조회했습니다.");
-        return ResponseEntity.ok(ApiResponse.success(data, msg, HttpStatus.OK));
+        return ResponseEntity.ok(ApiResponse.success(responseDto, msg, HttpStatus.OK));
     }
 
     // ===== 알림 구독 요청 =====
