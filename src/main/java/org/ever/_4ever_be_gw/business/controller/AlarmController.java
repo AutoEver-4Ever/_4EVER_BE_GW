@@ -2,6 +2,7 @@ package org.ever._4ever_be_gw.business.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.time.LocalDateTime;
@@ -10,10 +11,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.ever._4ever_be_gw.business.dto.alarm.request.NotificationMarkReadRequestDto;
 import org.ever._4ever_be_gw.business.dto.alarm.response.NotificationCountResponseDto;
 import org.ever._4ever_be_gw.business.dto.alarm.response.NotificationListResponseDto;
+import org.ever._4ever_be_gw.business.dto.alarm.response.NotificationReadResponseDto;
 import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.dto.PageResponseDto;
+import org.ever._4ever_be_gw.common.dto.ValidUuidV7;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.common.util.UuidV7;
 import org.springframework.http.HttpStatus;
@@ -185,7 +189,11 @@ public class AlarmController {
     @PostMapping("/subscribe/{userId}")
     @Operation(summary = "알림 구독 요청", description = "사용자 구독을 등록합니다. (목업: data 없음)")
     public ResponseEntity<ApiResponse<Map<String, Object>>> subscribe(
-        @PathVariable("userId") String userId) {
+        @PathVariable("userId") String userId
+    ) {
+
+        // TODO Service단에서 ConcurrentHashMap 등을 이용해 실제 구독 관리 필요 (목업 구현)
+
         Map<String, Object> data = Map.of("userId", userId, "subscribed", true);
         return ResponseEntity.ok(ApiResponse.success(data, "알림 구독이 성공적으로 등록되었습니다.", HttpStatus.OK));
     }
@@ -193,31 +201,53 @@ public class AlarmController {
     // ===== 알림 읽음 처리 (목록) =====
     @PatchMapping("/list/read")
     @Operation(summary = "알림 읽음 처리(목록)", description = "주어진 알림 ID 목록을 읽음 처리합니다. (목업)")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> markReadList(
-        @RequestBody Map<String, List<String>> body) {
-        List<String> ids =
-            body == null ? List.of() : body.getOrDefault("notificationId", List.of());
-        Map<String, Object> data = Map.of("processedCount", ids.size());
-        String msg = ids.isEmpty() ? "읽음 처리할 알림이 없습니다." : "알림을 성공적으로 읽음 처리했습니다.";
-        return ResponseEntity.ok(ApiResponse.success(data, msg, HttpStatus.OK));
+    public ResponseEntity<ApiResponse<NotificationReadResponseDto>> markReadList(
+        @Valid @RequestBody NotificationMarkReadRequestDto notificationMarkReadRequestDto
+    ) {
+
+        List<String> ids = notificationMarkReadRequestDto.getNotificationId();
+
+        // TODO ALARM 서버와 연동하여 실제 읽음 처리
+
+        NotificationReadResponseDto responseDto = NotificationReadResponseDto.builder()
+            .processedCount(ids.size())
+            .build();
+
+        String msg =
+            ids.isEmpty() ? "읽음 처리할 알림이 없습니다." : (long) ids.size() + "개의 알림을 성공적으로 읽음 처리했습니다.";
+
+        return ResponseEntity.ok(ApiResponse.success(responseDto, msg, HttpStatus.OK));
     }
 
     // ===== 알림 읽음 처리 (전체) =====
     @PatchMapping("/all/read")
     @Operation(summary = "알림 읽음 처리(전체)", description = "모든 알림을 읽음 처리합니다. (목업)")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> markReadAll() {
-        Map<String, Object> data = Map.of("processedCount", 15);
+    public ResponseEntity<ApiResponse<NotificationReadResponseDto>> markReadAll() {
+
+        NotificationReadResponseDto responseDto = NotificationReadResponseDto.builder()
+            .processedCount(15)
+            .build();
+
         return ResponseEntity.ok(
-            ApiResponse.success(data, "모든 알림을 성공적으로 읽음 처리했습니다.", HttpStatus.OK));
+            ApiResponse.success(responseDto, "모든 알림을 성공적으로 읽음 처리했습니다.", HttpStatus.OK)
+        );
     }
 
     // ===== 알림 읽음 처리 (단일) =====
     @PatchMapping("/{notificationId}/read")
     @Operation(summary = "알림 읽음 처리(단일)", description = "특정 알림을 읽음 처리합니다. (목업)")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> markReadOne(
-        @PathVariable("notificationId") String notificationId) {
+    public ResponseEntity<ApiResponse<Void>> markReadOne(
+        @PathVariable("notificationId")
+        @ValidUuidV7
+        String notificationId
+    ) {
         Map<String, Object> data = Map.of("notificationId", notificationId, "status", "READ");
-        return ResponseEntity.ok(ApiResponse.success(data, "알림을 성공적으로 읽음 처리했습니다.", HttpStatus.OK));
+
+        // TODO ALARM 서버와 연동하여 실제 읽음 처리
+
+        return ResponseEntity.ok(
+            ApiResponse.success(null, notificationId + "알림을 성공적으로 읽음 처리했습니다.", HttpStatus.OK)
+        );
     }
 
     private List<NotificationListResponseDto> generateMockNotifications(int size) {
