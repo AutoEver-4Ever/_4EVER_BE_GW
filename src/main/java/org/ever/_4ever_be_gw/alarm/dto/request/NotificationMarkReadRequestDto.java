@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.business.dto.alarm.request;
+package org.ever._4ever_be_gw.alarm.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;

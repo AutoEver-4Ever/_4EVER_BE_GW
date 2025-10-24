@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.business.dto.alarm.response;
+package org.ever._4ever_be_gw.alarm.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;

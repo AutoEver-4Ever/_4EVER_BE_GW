@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.business.controller;
+package org.ever._4ever_be_gw.alarm.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,10 +11,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.ever._4ever_be_gw.business.dto.alarm.request.NotificationMarkReadRequestDto;
-import org.ever._4ever_be_gw.business.dto.alarm.response.NotificationCountResponseDto;
-import org.ever._4ever_be_gw.business.dto.alarm.response.NotificationListResponseDto;
-import org.ever._4ever_be_gw.business.dto.alarm.response.NotificationReadResponseDto;
+import org.ever._4ever_be_gw.alarm.dto.request.NotificationMarkReadRequestDto;
+import org.ever._4ever_be_gw.alarm.dto.response.NotificationCountResponseDto;
+import org.ever._4ever_be_gw.alarm.dto.response.NotificationListResponseDto;
+import org.ever._4ever_be_gw.alarm.dto.response.NotificationReadResponseDto;
 import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.dto.PageResponseDto;
 import org.ever._4ever_be_gw.common.dto.ValidUuidV7;
