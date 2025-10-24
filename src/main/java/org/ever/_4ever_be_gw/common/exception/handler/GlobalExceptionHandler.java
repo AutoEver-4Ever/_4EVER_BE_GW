@@ -1,10 +1,13 @@
 package org.ever._4ever_be_gw.common.exception.handler;
 
+import jakarta.validation.ConstraintViolationException;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
-import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
+import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,9 +21,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @RestControllerAdvice
@@ -43,7 +43,11 @@ public class GlobalExceptionHandler {
 
         String msg = errorCode.getMessage();
         if (e.getDetail() != null && !e.getDetail().isBlank()) {
-            if (errorCode == ErrorCode.PURCHASE_REQUEST_NOT_FOUND || errorCode == ErrorCode.PURCHASE_ORDER_NOT_FOUND || errorCode == ErrorCode.QUOTATION_NOT_FOUND || errorCode == ErrorCode.CUSTOMER_NOT_FOUND || errorCode == ErrorCode.ORDER_NOT_FOUND) {
+            if (errorCode == ErrorCode.PURCHASE_REQUEST_NOT_FOUND
+                || errorCode == ErrorCode.PURCHASE_ORDER_NOT_FOUND
+                || errorCode == ErrorCode.QUOTATION_NOT_FOUND
+                || errorCode == ErrorCode.CUSTOMER_NOT_FOUND
+                || errorCode == ErrorCode.ORDER_NOT_FOUND) {
                 // 메시지 끝의 마침표를 제거하고 콜론으로 상세를 이어 붙임
                 if (msg.endsWith(".")) {
                     msg = msg.substring(0, msg.length() - 1);
@@ -70,9 +74,9 @@ public class GlobalExceptionHandler {
         log.error("도메인 검증 실패: {}", e.getMessage(), e);
 
         ApiResponse<Object> response = ApiResponse.fail(
-                e.getErrorCode().getMessage(),
-                e.getErrorCode().getHttpStatus(),
-                e.getErrors()
+            e.getErrorCode().getMessage(),
+            e.getErrorCode().getHttpStatus(),
+            e.getErrors()
         );
         return new ResponseEntity<>(response, e.getErrorCode().getHttpStatus());
     }
@@ -83,7 +87,8 @@ public class GlobalExceptionHandler {
      * @Valid 검증 실패 (MethodArgumentNotValidException)
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    protected ResponseEntity<ApiResponse<Object>> handleMethodArgumentNotValidException(
+        MethodArgumentNotValidException e) {
         log.error("메서드 인자 검증 실패: {}", e.getMessage(), e);
 
         Map<String, String> errors = new HashMap<>();
@@ -105,6 +110,26 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleConstraintViolation(
+        ConstraintViolationException ex
+    ) {
+        log.error("제약 조건 위반 예외 발생: {}", ex.getMessage(), ex);
+
+        Map<String, Object> errorDetails = new HashMap<>();
+        errorDetails.put("code", ErrorCode.INVALID_INPUT_VALUE.getCode());
+        errorDetails.put("errors", ex.getConstraintViolations());
+
+        ApiResponse<Object> response = ApiResponse.fail(
+            "요청 본문 형식이 올바르지 않습니다.",
+            HttpStatus.BAD_REQUEST,
+            errorDetails
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
 
     /**
      * @ModelAttribute 검증 실패 (BindException)
@@ -137,14 +162,16 @@ public class GlobalExceptionHandler {
      * 타입 불일치 (MethodArgumentTypeMismatchException)
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+    protected ResponseEntity<ApiResponse<Object>> handleMethodArgumentTypeMismatchException(
+        MethodArgumentTypeMismatchException e) {
         log.error("메서드 인자 타입 불일치: {}", e.getMessage(), e);
 
         Map<String, Object> errorDetails = new HashMap<>();
         errorDetails.put("code", ErrorCode.INVALID_TYPE_VALUE.getCode());
         errorDetails.put("field", e.getName());
         errorDetails.put("rejectedValue", e.getValue());
-        errorDetails.put("requiredType", e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown");
+        errorDetails.put("requiredType",
+            e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown");
 
         ApiResponse<Object> response = ApiResponse.fail(
             ErrorCode.INVALID_TYPE_VALUE.getMessage(),
@@ -159,7 +186,8 @@ public class GlobalExceptionHandler {
      * 필수 파라미터 누락 (MissingServletRequestParameterException)
      */
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
+    protected ResponseEntity<ApiResponse<Object>> handleMissingServletRequestParameterException(
+        MissingServletRequestParameterException e) {
         log.error("필수 요청 파라미터 누락: {}", e.getMessage(), e);
 
         Map<String, Object> errorDetails = new HashMap<>();
@@ -180,7 +208,8 @@ public class GlobalExceptionHandler {
      * JSON 파싱 오류 (HttpMessageNotReadableException)
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+    protected ResponseEntity<ApiResponse<Object>> handleHttpMessageNotReadableException(
+        HttpMessageNotReadableException e) {
         log.error("HTTP 메시지 읽기 실패: {}", e.getMessage(), e);
 
         Map<String, Object> errorDetails = new HashMap<>();
@@ -200,7 +229,8 @@ public class GlobalExceptionHandler {
      * 지원하지 않는 HTTP 메서드 (HttpRequestMethodNotSupportedException)
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
+    protected ResponseEntity<ApiResponse<Object>> handleHttpRequestMethodNotSupportedException(
+        HttpRequestMethodNotSupportedException e) {
         log.error("지원하지 않는 HTTP 메서드: {}", e.getMessage(), e);
 
         Map<String, Object> errorDetails = new HashMap<>();
@@ -221,7 +251,8 @@ public class GlobalExceptionHandler {
      * 404 Not Found
      */
     @ExceptionHandler(NoHandlerFoundException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleNoHandlerFoundException(NoHandlerFoundException e) {
+    protected ResponseEntity<ApiResponse<Object>> handleNoHandlerFoundException(
+        NoHandlerFoundException e) {
         log.error("핸들러를 찾을 수 없음: {}", e.getMessage(), e);
 
         Map<String, Object> errorDetails = new HashMap<>();
@@ -242,7 +273,8 @@ public class GlobalExceptionHandler {
      * 정적 리소스 404 (Resource chain)
      */
     @ExceptionHandler(NoResourceFoundException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleNoResourceFoundException(NoResourceFoundException e) {
+    protected ResponseEntity<ApiResponse<Object>> handleNoResourceFoundException(
+        NoResourceFoundException e) {
         log.error("정적 리소스를 찾을 수 없음: {}", e.getMessage());
 
         Map<String, Object> errorDetails = new HashMap<>();
@@ -250,9 +282,9 @@ public class GlobalExceptionHandler {
         errorDetails.put("resourcePath", e.getResourcePath());
 
         ApiResponse<Object> response = ApiResponse.fail(
-                "요청한 리소스를 찾을 수 없습니다.",
-                HttpStatus.NOT_FOUND,
-                errorDetails
+            "요청한 리소스를 찾을 수 없습니다.",
+            HttpStatus.NOT_FOUND,
+            errorDetails
         );
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
