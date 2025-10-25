@@ -17,7 +17,7 @@ public class MrpOrderDto {
     private int safetyStock;
     private int availableStock;
     private String availableStatusCode;
-    private Integer shortageQty;
+    private Integer shortageQuantity;
     private String itemType;
     private String procurementStartDate;
     private String expectedArrivalDate;
