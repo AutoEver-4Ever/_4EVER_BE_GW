@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.common.dto;
+package org.ever._4ever_be_gw.common.dto.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

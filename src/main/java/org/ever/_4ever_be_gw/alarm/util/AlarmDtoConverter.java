@@ -9,7 +9,7 @@ import org.ever._4ever_be_gw.alarm.dto.response.NotificationCountResponseDto;
 import org.ever._4ever_be_gw.alarm.dto.response.NotificationListResponseDto;
 import org.ever._4ever_be_gw.alarm.dto.response.NotificationReadResponseDto;
 import org.ever._4ever_be_gw.common.dto.PageDto;
-import org.ever._4ever_be_gw.common.dto.PageResponseDto;
+import org.ever._4ever_be_gw.common.dto.pagable.PageResponseDto;
 
 public class AlarmDtoConverter {
 

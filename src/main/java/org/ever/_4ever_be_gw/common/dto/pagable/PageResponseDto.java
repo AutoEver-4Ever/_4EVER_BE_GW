@@ -1,11 +1,9 @@
-package org.ever._4ever_be_gw.common.dto;
+package org.ever._4ever_be_gw.common.dto.pagable;
 
 import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import lombok.Builder;
 import lombok.Data;
+import org.ever._4ever_be_gw.common.dto.PageDto;
 
 
 @Data

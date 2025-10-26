@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.ever._4ever_be_gw.common.dto.ValidUuidV7;
+import org.ever._4ever_be_gw.common.dto.validation.ValidUuidV7;
 
 @Getter
 @Builder
