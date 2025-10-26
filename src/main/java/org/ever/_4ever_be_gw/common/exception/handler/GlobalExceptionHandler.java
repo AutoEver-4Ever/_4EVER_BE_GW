@@ -19,8 +19,11 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @RestControllerAdvice
@@ -111,8 +114,11 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * @Validated 제약 조건 위반 (ConstraintViolationException)
+     */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResponse<Object>> handleConstraintViolation(
+    public Mono<ResponseEntity<ApiResponse<Object>>> handleConstraintViolation(
         ConstraintViolationException ex
     ) {
         log.error("제약 조건 위반 예외 발생: {}", ex.getMessage(), ex);
@@ -127,7 +133,38 @@ public class GlobalExceptionHandler {
             errorDetails
         );
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return Mono.just(
+            ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response)
+        );
+    }
+
+    /**
+     * WebClient 응답 예외 처리 (WebClientResponseException)
+     */
+    @ExceptionHandler(WebClientResponseException.class)
+    public Mono<ResponseEntity<ApiResponse<Void>>> handleWebClientResponseException(
+        WebClientResponseException e,
+        ServerWebExchange exchange
+    ) {
+        log.error("WebClient 응답 예외 발생: {}", e.getMessage(), e);
+
+        Map<String, Object> errorDetails = new HashMap<>();
+        errorDetails.put("code", e.getStatusCode());
+        errorDetails.put("detail", e.getResponseBodyAsString());
+
+        ApiResponse<Void> response = ApiResponse.fail(
+            "외부 서비스 호출 중 오류가 발생했습니다.",
+            HttpStatus.valueOf(e.getStatusCode().value()),
+            errorDetails
+        );
+
+        return Mono.just(
+            ResponseEntity
+                .status(HttpStatus.valueOf(e.getStatusCode().value()))
+                .body(response)
+        );
     }
 
 
