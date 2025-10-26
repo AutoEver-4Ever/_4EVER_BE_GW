@@ -10,14 +10,21 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_gw.alarm.dto.request.AlarmServerRequestDto;
 import org.ever._4ever_be_gw.alarm.dto.request.NotificationMarkReadRequestDto;
 import org.ever._4ever_be_gw.alarm.dto.response.NotificationCountResponseDto;
 import org.ever._4ever_be_gw.alarm.dto.response.NotificationListResponseDto;
 import org.ever._4ever_be_gw.alarm.dto.response.NotificationReadResponseDto;
+import org.ever._4ever_be_gw.alarm.service.AlarmHttpService;
+import org.ever._4ever_be_gw.alarm.util.AlarmDtoConverter;
 import org.ever._4ever_be_gw.common.dto.PageDto;
-import org.ever._4ever_be_gw.common.dto.PageResponseDto;
-import org.ever._4ever_be_gw.common.dto.ValidUuidV7;
+import org.ever._4ever_be_gw.common.dto.pagable.PageResponseDto;
+import org.ever._4ever_be_gw.common.dto.validation.AllowedValues;
+import org.ever._4ever_be_gw.common.dto.validation.ValidUuidV7;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.common.util.UuidV7;
 import org.springframework.http.HttpStatus;
@@ -31,10 +38,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/alarm/notifications")
-@Validated
+@Validated // RequestParam 등의 유효성 검사용
+@RequiredArgsConstructor
+@Slf4j
 @Tag(name = "알림", description = "알림(Notification) API")
 public class AlarmController {
 
@@ -49,17 +60,29 @@ public class AlarmController {
         "HRM_ETC",
         "ESTIMATE", "INSUFFICIENT_STOCK", "PP_ETC");
 
+    private final AlarmHttpService alarmHttpService;
+    private final UUID tempUuid = UuidV7.randomUuidV7(); // 임시 사용자 UUID // TODO : 인증 연동 후 수정
+
     // ===== 알림 목록 조회 =====
     @GetMapping("/list")
     @Operation(
         summary = "알림 목록 조회",
         description = "알림 목록을 페이징/정렬/필터와 함께 조회합니다."
     )
-    public ResponseEntity<ApiResponse<PageResponseDto<NotificationListResponseDto>>> getNotificationList(
+    public Mono<ResponseEntity<ApiResponse<PageResponseDto<NotificationListResponseDto>>>> getNotificationList(
+        @AllowedValues(allowedValues = {
+            "createdAt"}, ignoreCase = true, message = "sortBy는 createdAt만 허용됩니다.")
         @RequestParam(name = "sortBy", required = false, defaultValue = "createdAt")
         String sortBy,
+        @AllowedValues(allowedValues = {"asc",
+            "desc"}, ignoreCase = true, message = "order는 asc 또는 desc만 허용됩니다.")
         @RequestParam(name = "order", required = false, defaultValue = "desc")
         String order,
+        @AllowedValues(
+            allowedValues = {"PR", "SD", "IM", "FCM", "HRM", "PP", "CUS", "SUP"},
+            ignoreCase = true,
+            message = "유효하지 않은 source 값입니다."
+        )
         @RequestParam(name = "source", required = false)
         String source,
         @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다.")
@@ -71,34 +94,216 @@ public class AlarmController {
         Integer size
     ) {
 
-        // sortBy 화이트리스트 (지원하지 않는 값은 기본값으로)
-        final List<String> ALLOWED_SORTS = List.of("createdAt");
-        if (!ALLOWED_SORTS.contains(sortBy)) {
-            sortBy = "createdAt";
-        }
+        // 외부 서버로 요청 전송
+        AlarmServerRequestDto.NotificationListRequest request = AlarmDtoConverter.toServerRequest(
+            tempUuid,
+            sortBy,
+            order,
+            source,
+            page,
+            size
+        );
 
-        // order 화이트리스트 (지원하지 않는 값은 기본값으로)
-        final List<String> ALLOWED_ORDERS = List.of("asc", "desc");
-        if (!ALLOWED_ORDERS.contains(order.toLowerCase())) {
-            order = "desc";
-        }
-
-        // 2. source 필터 → 예외 발생 (개선)
-        if (source != null && !source.isBlank()) {
-            source = source.trim().toUpperCase();
-            if (!SOURCES.contains(source)) {
-                throw new IllegalArgumentException(
-                    "유효하지 않은 source 값입니다. 허용값: " + String.join(", ", SOURCES)
+        return alarmHttpService.getNotificationList(request)
+            .map(serverResponse -> {
+                PageResponseDto<NotificationListResponseDto> clientResponse =
+                    AlarmDtoConverter.toClientResponse(serverResponse);
+                return ResponseEntity.ok(
+                    ApiResponse.success(clientResponse, "알림 목록을 성공적으로 조회했습니다.", HttpStatus.OK)
                 );
-            }
-        } else {
-            source = null; // 빈값은 null로 통일
-        }
+            })
+            .onErrorResume(error -> {
+                // TODO 에러 코드에 따른 세분화된 처리 필요
 
-        // TODO ALARM 서버와 연동하여 실제 데이터 조회
+                if (error instanceof WebClientResponseException clientError) {
+                    if (clientError.getStatusCode().is4xxClientError()) {
+                        log.error(
+                            "[AlarmController] 알림 목록 조회 중 클라이언트 오류 발생: {}",
+                            clientError.getMessage()
+                        );
+
+                        ApiResponse<PageResponseDto<NotificationListResponseDto>> apiResponse =
+                            ApiResponse.fail(
+                                "잘못된 요청입니다. 요청 파라미터를 확인해주세요.",
+                                HttpStatus.valueOf(clientError.getStatusCode().value()),
+                                null
+                            );
+
+                        return Mono.just(
+                            ResponseEntity
+                                .status(clientError.getStatusCode())
+                                .body(apiResponse)
+                        );
+                    }
+                }
+
+                log.error("[AlarmController] 알림 목록 조회 중 서버 오류 발생: {}", error.getMessage());
+
+                // 외부 서버 오류 시 목업 데이터 반환 (fallback)
+                PageResponseDto<NotificationListResponseDto> fallbackResponse =
+                    createFallbackNotificationList(sortBy, order, source, page,
+                        size);
+                return Mono.just(ResponseEntity.ok(
+                    ApiResponse.success(fallbackResponse, "알림 목록을 성공적으로 조회했습니다. (목업 데이터)",
+                        HttpStatus.OK)
+                ));
+            });
+    }
+
+    // ===== 알림 갯수 조회 =====
+    @GetMapping("/count")
+    @Operation(summary = "알림 갯수 조회", description = "상태별(READ/UNREAD) 알림 갯수를 조회합니다.")
+    public Mono<ResponseEntity<ApiResponse<NotificationCountResponseDto>>> getNotificationCount(
+        @AllowedValues(
+            allowedValues = {"READ", "UNREAD"},
+            ignoreCase = true,
+            message = "유효하지 않은 status 값입니다. 허용값: READ, UNREAD"
+        )
+        @RequestParam(name = "status", required = false, defaultValue = "UNREAD")
+        String status
+    ) {
+        // 외부 서버로 요청 전송
+        AlarmServerRequestDto.NotificationCountRequest request = AlarmDtoConverter.toCountServerRequest(
+            tempUuid,
+            status
+        );
+
+        return alarmHttpService.getNotificationCount(request)
+            .map(serverResponse -> {
+                NotificationCountResponseDto clientResponse = AlarmDtoConverter.toClientResponse(
+                    serverResponse);
+                String msg =
+                    (status == null || status.isBlank()) ? "전체 알림 갯수를 성공적으로 조회했습니다."
+                        : ("UNREAD".equalsIgnoreCase(status) ? "안 읽은 알림 갯수를 성공적으로 조회했습니다."
+                            : "읽은 알림 갯수를 성공적으로 조회했습니다.");
+                return ResponseEntity.ok(ApiResponse.success(clientResponse, msg, HttpStatus.OK));
+            })
+            .onErrorResume(error -> {
+                // 외부 서버 오류 시 목업 데이터 반환 (fallback)
+                NotificationCountResponseDto fallbackResponse = createFallbackNotificationCount(
+                    status);
+                String msg = (status == null || status.isBlank())
+                    ? "전체 알림 갯수를 성공적으로 조회했습니다. (목업 데이터)"
+                    : ("UNREAD".equalsIgnoreCase(status) ? "안 읽은 알림 갯수를 성공적으로 조회했습니다. (목업 데이터)"
+                        : "읽은 알림 갯수를 성공적으로 조회했습니다. (목업 데이터)");
+                return Mono.just(
+                    ResponseEntity.ok(ApiResponse.success(fallbackResponse, msg, HttpStatus.OK)));
+            });
+    }
+
+    // ===== 알림 구독 요청 =====
+    @PostMapping("/subscribe/{userId}")
+    @Operation(summary = "알림 구독 요청", description = "사용자 구독을 등록합니다. (목업: data 없음)")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> subscribe(
+        @ValidUuidV7
+        @PathVariable("userId")
+        String userId
+    ) {
+        // 구독 요청은 외부 서버로 전송하지 않고 로컬에서 처리
+        Map<String, Object> data = Map.of("userId", userId, "subscribed", true);
+        return ResponseEntity.ok(ApiResponse.success(data, "알림 구독이 성공적으로 등록되었습니다.", HttpStatus.OK));
+    }
+
+    // ===== 알림 읽음 처리 (목록) =====
+    @PatchMapping("/list/read")
+    @Operation(summary = "알림 읽음 처리(목록)", description = "주어진 알림 ID 목록을 읽음 처리합니다.")
+    public Mono<ResponseEntity<ApiResponse<NotificationReadResponseDto>>> markReadList(
+        @Valid
+        @RequestBody
+        NotificationMarkReadRequestDto notificationMarkReadRequestDto
+    ) {
+
+        List<String> ids = notificationMarkReadRequestDto.getNotificationId();
+
+        // 외부 서버로 요청 전송
+        AlarmServerRequestDto.NotificationMarkReadRequest request = AlarmDtoConverter.toMarkReadServerRequest(
+            tempUuid,
+            ids
+        );
+
+        return alarmHttpService.markReadList(request)
+            .map(serverResponse -> {
+                NotificationReadResponseDto clientResponse = AlarmDtoConverter.toClientResponse(
+                    serverResponse);
+                String msg = ids.isEmpty() ? "읽음 처리할 알림이 없습니다." :
+                    (long) ids.size() + "개의 알림을 성공적으로 읽음 처리했습니다.";
+                return ResponseEntity.ok(ApiResponse.success(clientResponse, msg, HttpStatus.OK));
+            })
+            .onErrorResume(error -> {
+                // 외부 서버 오류 시 목업 응답 반환 (fallback)
+                NotificationReadResponseDto fallbackResponse = NotificationReadResponseDto.builder()
+                    .processedCount(ids.size())
+                    .build();
+                String msg = ids.isEmpty() ? "읽음 처리할 알림이 없습니다. (목업 데이터)" :
+                    (long) ids.size() + "개의 알림을 성공적으로 읽음 처리했습니다. (목업 데이터)";
+                return Mono.just(
+                    ResponseEntity.ok(ApiResponse.success(fallbackResponse, msg, HttpStatus.OK)));
+            });
+    }
+
+    // ===== 알림 읽음 처리 (전체) =====
+    @PatchMapping("/all/read")
+    @Operation(summary = "알림 읽음 처리(전체)", description = "모든 알림을 읽음 처리합니다.")
+    public Mono<ResponseEntity<ApiResponse<NotificationReadResponseDto>>> markReadAll() {
+
+        return alarmHttpService.markReadAll()
+            .map(serverResponse -> {
+                NotificationReadResponseDto clientResponse = AlarmDtoConverter.toClientResponse(
+                    serverResponse);
+                return ResponseEntity.ok(
+                    ApiResponse.success(clientResponse, "모든 알림을 성공적으로 읽음 처리했습니다.", HttpStatus.OK)
+                );
+            })
+            .onErrorResume(error -> {
+                // 외부 서버 오류 시 목업 응답 반환 (fallback)
+                NotificationReadResponseDto fallbackResponse = NotificationReadResponseDto.builder()
+                    .processedCount(15)
+                    .build();
+                return Mono.just(ResponseEntity.ok(
+                    ApiResponse.success(fallbackResponse, "모든 알림을 성공적으로 읽음 처리했습니다. (목업 데이터)",
+                        HttpStatus.OK)
+                ));
+            });
+    }
+
+    // ===== 알림 읽음 처리 (단일) =====
+    @PatchMapping("/{notificationId}/read")
+    @Operation(summary = "알림 읽음 처리(단일)", description = "특정 알림을 읽음 처리합니다.")
+    public Mono<ResponseEntity<ApiResponse<Void>>> markReadOne(
+        @PathVariable("notificationId")
+        @ValidUuidV7
+        String notificationId
+    ) {
+        // 외부 서버로 요청 전송
+        AlarmServerRequestDto.NotificationMarkReadOneRequest request = AlarmDtoConverter.toMarkReadOneServerRequest(
+            tempUuid,
+            notificationId
+        );
+
+        return alarmHttpService.markReadOne(request)
+            .map(serverResponse -> {
+                return ResponseEntity.ok(
+                    ApiResponse.success((Void) null, notificationId + " 알림을 성공적으로 읽음 처리했습니다.",
+                        HttpStatus.OK)
+                );
+            })
+            .onErrorResume(error -> {
+                // 외부 서버 오류 시 목업 응답 반환 (fallback)
+                return Mono.just(ResponseEntity.ok(
+                    ApiResponse.success(null,
+                        notificationId + " 알림을 성공적으로 읽음 처리했습니다. (목업 데이터)", HttpStatus.OK)
+                ));
+            });
+    }
+
+    // ===== Fallback 메서드들 (외부 서버 오류 시 사용) =====
+
+    private PageResponseDto<NotificationListResponseDto> createFallbackNotificationList(
+        String sortBy, String order, String source, Integer page, Integer size
+    ) {
         List<NotificationListResponseDto> all = generateMockNotifications(60);
 
-        // source 필터: 허용된 값만 적용
+        // source 필터 적용
         if (source != null && !source.isBlank()) {
             String src = source.trim();
             boolean validSource = SOURCES.stream().anyMatch(sv -> sv.equalsIgnoreCase(src));
@@ -106,14 +311,10 @@ public class AlarmController {
                 all = all.stream()
                     .filter(n -> src.equalsIgnoreCase(String.valueOf(n.getSource())))
                     .collect(Collectors.toList());
-            } else {
-                source = null; // 유효하지 않은 값은 null로 통일
             }
-        } else {
-            source = null; // 빈값은 null로 통일
         }
 
-        // 정렬 (createdAt만 지원) - null-safe comparator
+        // 정렬 적용
         if ("createdAt".equalsIgnoreCase(sortBy)) {
             Comparator<NotificationListResponseDto> cmp = Comparator.comparing(
                 NotificationListResponseDto::getCreatedAt,
@@ -124,6 +325,7 @@ public class AlarmController {
             all = all.stream().sorted(cmp).collect(Collectors.toList());
         }
 
+        // 페이지네이션 적용
         int total = all.size();
         int fromIdx = Math.min(page * size, total);
         int toIdx = Math.min(fromIdx + size, total);
@@ -139,34 +341,13 @@ public class AlarmController {
         PageDto pageDto = PageDto.builder().number(page).size(size).totalElements(total)
             .totalPages(totalPages).hasNext(hasNext).build();
 
-        PageResponseDto<NotificationListResponseDto> payload = PageResponseDto.<NotificationListResponseDto>builder()
+        return PageResponseDto.<NotificationListResponseDto>builder()
             .items(pageItems)
             .page(pageDto)
             .build();
-
-        return ResponseEntity.ok(
-            ApiResponse.success(payload, "알림 목록을 성공적으로 조회했습니다.", HttpStatus.OK));
     }
 
-    // ===== 알림 갯수 조회 =====
-    @GetMapping("/count")
-    @Operation(summary = "알림 갯수 조회", description = "상태별(READ/UNREAD) 알림 갯수를 조회합니다.")
-    public ResponseEntity<ApiResponse<NotificationCountResponseDto>> getNotificationCount(
-        @RequestParam(name = "status", required = false) String status
-    ) {
-        // 단순 목업: status가 UNREAD면 3, READ면 12, 미지정이면 총 15로 가정
-        final List<String> ALLOWED_STATUS = List.of("READ", "UNREAD");
-        if (status != null && !status.isBlank()) {
-            status = status.trim().toUpperCase();
-            if (!ALLOWED_STATUS.contains(status)) {
-                throw new IllegalArgumentException("유효하지 않은 status 값입니다. 허용값: READ, UNREAD");
-            }
-        } else {
-            status = null; // 빈값은 null로 통일
-        }
-
-        // TODO ALARM 서버와 연동하여 실제 데이터 조회
-
+    private NotificationCountResponseDto createFallbackNotificationCount(String status) {
         int count;
         if ("UNREAD".equalsIgnoreCase(status)) {
             count = 3;
@@ -176,78 +357,9 @@ public class AlarmController {
             count = 15;
         }
 
-        NotificationCountResponseDto responseDto = NotificationCountResponseDto.builder()
+        return NotificationCountResponseDto.builder()
             .count(count)
             .build();
-        String msg = (status == null || status.isBlank()) ? "전체 알림 갯수를 성공적으로 조회했습니다."
-            : ("UNREAD".equalsIgnoreCase(status) ? "안 읽은 알림 갯수를 성공적으로 조회했습니다."
-                : "읽은 알림 갯수를 성공적으로 조회했습니다.");
-        return ResponseEntity.ok(ApiResponse.success(responseDto, msg, HttpStatus.OK));
-    }
-
-    // ===== 알림 구독 요청 =====
-    @PostMapping("/subscribe/{userId}")
-    @Operation(summary = "알림 구독 요청", description = "사용자 구독을 등록합니다. (목업: data 없음)")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> subscribe(
-        @PathVariable("userId") String userId
-    ) {
-
-        // TODO Service단에서 ConcurrentHashMap 등을 이용해 실제 구독 관리 필요 (목업 구현)
-
-        Map<String, Object> data = Map.of("userId", userId, "subscribed", true);
-        return ResponseEntity.ok(ApiResponse.success(data, "알림 구독이 성공적으로 등록되었습니다.", HttpStatus.OK));
-    }
-
-    // ===== 알림 읽음 처리 (목록) =====
-    @PatchMapping("/list/read")
-    @Operation(summary = "알림 읽음 처리(목록)", description = "주어진 알림 ID 목록을 읽음 처리합니다. (목업)")
-    public ResponseEntity<ApiResponse<NotificationReadResponseDto>> markReadList(
-        @Valid @RequestBody NotificationMarkReadRequestDto notificationMarkReadRequestDto
-    ) {
-
-        List<String> ids = notificationMarkReadRequestDto.getNotificationId();
-
-        // TODO ALARM 서버와 연동하여 실제 읽음 처리
-
-        NotificationReadResponseDto responseDto = NotificationReadResponseDto.builder()
-            .processedCount(ids.size())
-            .build();
-
-        String msg =
-            ids.isEmpty() ? "읽음 처리할 알림이 없습니다." : (long) ids.size() + "개의 알림을 성공적으로 읽음 처리했습니다.";
-
-        return ResponseEntity.ok(ApiResponse.success(responseDto, msg, HttpStatus.OK));
-    }
-
-    // ===== 알림 읽음 처리 (전체) =====
-    @PatchMapping("/all/read")
-    @Operation(summary = "알림 읽음 처리(전체)", description = "모든 알림을 읽음 처리합니다. (목업)")
-    public ResponseEntity<ApiResponse<NotificationReadResponseDto>> markReadAll() {
-
-        NotificationReadResponseDto responseDto = NotificationReadResponseDto.builder()
-            .processedCount(15)
-            .build();
-
-        return ResponseEntity.ok(
-            ApiResponse.success(responseDto, "모든 알림을 성공적으로 읽음 처리했습니다.", HttpStatus.OK)
-        );
-    }
-
-    // ===== 알림 읽음 처리 (단일) =====
-    @PatchMapping("/{notificationId}/read")
-    @Operation(summary = "알림 읽음 처리(단일)", description = "특정 알림을 읽음 처리합니다. (목업)")
-    public ResponseEntity<ApiResponse<Void>> markReadOne(
-        @PathVariable("notificationId")
-        @ValidUuidV7
-        String notificationId
-    ) {
-        Map<String, Object> data = Map.of("notificationId", notificationId, "status", "READ");
-
-        // TODO ALARM 서버와 연동하여 실제 읽음 처리
-
-        return ResponseEntity.ok(
-            ApiResponse.success(null, notificationId + "알림을 성공적으로 읽음 처리했습니다.", HttpStatus.OK)
-        );
     }
 
     private List<NotificationListResponseDto> generateMockNotifications(int size) {
@@ -277,4 +389,3 @@ public class AlarmController {
         return list;
     }
 }
-
