@@ -1,5 +1,6 @@
 package org.ever._4ever_be_gw.alarm.controller;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -26,7 +27,6 @@ import org.ever._4ever_be_gw.common.dto.pagable.PageResponseDto;
 import org.ever._4ever_be_gw.common.dto.validation.AllowedValues;
 import org.ever._4ever_be_gw.common.dto.validation.ValidUuidV7;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
-import org.ever._4ever_be_gw.common.util.UuidV7;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -61,7 +61,7 @@ public class AlarmController {
         "ESTIMATE", "INSUFFICIENT_STOCK", "PP_ETC");
 
     private final AlarmHttpService alarmHttpService;
-    private final UUID tempUuid = UuidV7.randomUuidV7(); // 임시 사용자 UUID // TODO : 인증 연동 후 수정
+    private final UUID tempUuid = UuidCreator.getTimeOrderedEpoch(); // 임시 사용자 UUID // TODO : 인증 연동 후 수정
 
     // ===== 알림 목록 조회 =====
     @GetMapping("/list")
@@ -371,7 +371,7 @@ public class AlarmController {
             String source = SOURCES.get(i % SOURCES.size());
             String linkType = LINK_TYPES.get(i % LINK_TYPES.size());
             NotificationListResponseDto m = NotificationListResponseDto.builder()
-                .notificationId(UuidV7.randomUuidV7())
+                .notificationId(UuidCreator.getTimeOrderedEpoch())
                 .notificationTitle(
                     source.equals("SD") ? "판매 오더 SO-2024-%03d가 생성되었습니다".formatted(100 + i)
                         : "생산 오더 PO-2024-%03d이 승인되었습니다".formatted(100 + i))
@@ -379,7 +379,7 @@ public class AlarmController {
                     source.equals("SD") ? "판매 오더 SO-2024-%03d가 생성되었습니다".formatted(100 + i)
                         : "생산 오더 PO-2024-%03d이 승인되었습니다".formatted(100 + i))
                 .linkType(linkType)
-                .linkId(UuidV7.randomUuidV7())
+                .linkId(UuidCreator.getTimeOrderedEpoch())
                 .source(source)
                 .createdAt(base.plusMinutes(i * 3L))
                 .build();
