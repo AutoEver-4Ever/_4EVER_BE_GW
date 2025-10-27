@@ -5,9 +5,11 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 import org.springframework.http.HttpStatus;
 
 @Getter
+@ToString
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -38,11 +40,11 @@ public class ApiResponse<T> {
      */
     public static <T> ApiResponse<T> fail(String message, HttpStatus status, Object errors) {
         return new ApiResponse<>(
-                status.value(),
-                false,
-                message,
-                null,
-                errors
+            status.value(),
+            false,
+            message,
+            null,
+            errors
         );
     }
 }

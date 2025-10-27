@@ -13,7 +13,6 @@ import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.scmpp.dto.*;
-import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.ever._4ever_be_gw.scmpp.dto.bom.BomCreateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.bom.BomDetailDto;
 import org.ever._4ever_be_gw.scmpp.dto.bom.BomListItemDto;
@@ -28,7 +27,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.WeekFields;
 import java.util.*;
 
 @RestController
@@ -416,88 +417,69 @@ public class PpController {
                     )
             }
     )
-    public ResponseEntity<ApiResponse<List<MrpOrderDto>>> getMrpOrders(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMrpOrders(
             @Parameter(name = "productId", description = "제품 ID")
             @RequestParam(required = false) String productId,
             @Parameter(name = "quotationId", description = "견적 ID")
             @RequestParam(required = false) String quotationId,
+            @Parameter(name = "availableStatusCode", description = "가용 상태 코드 (ALL, INSUFFICIENT, SUFFICIENT)")
+            @RequestParam(required = false) String availableStatusCode,
             @Parameter(name = "page", description = "페이지 번호")
             @RequestParam(required = false, defaultValue = "0") int page,
             @Parameter(name = "size", description = "페이지 크기")
             @RequestParam(required = false, defaultValue = "10") int size
     ) {
-        List<MrpOrderDto> response = Arrays.asList(
-                MrpOrderDto.builder()
-                        .itemId("1")
-                        .itemName("스테인리스 스틸")
-                        .requiredQuantity(500)
-                        .currentStock(200)
-                        .safetyStock(50)
-                        .availableStock(150)
-                        .availableStatusCode("INSUFFICIENT")
-                        .shortageQty(350)
-                        .itemType("구매품")
-                        .procurementStartDate("2024-02-01")
-                        .expectedArrivalDate("2024-02-08")
-                        .supplierCompanyName("포스코")
-                        .build(),
-                MrpOrderDto.builder()
-                        .itemId("2")
-                        .itemName("구리선")
-                        .requiredQuantity(800)
-                        .currentStock(300)
-                        .safetyStock(100)
-                        .availableStock(200)
-                        .availableStatusCode("INSUFFICIENT")
-                        .shortageQty(600)
-                        .itemType("구매품")
-                        .procurementStartDate("2024-02-02")
-                        .expectedArrivalDate("2024-02-09")
-                        .supplierCompanyName("LS전선")
-                        .build(),
-                MrpOrderDto.builder()
-                        .itemId("3")
-                        .itemName("베어링 6205")
-                        .requiredQuantity(200)
-                        .currentStock(150)
-                        .safetyStock(30)
-                        .availableStock(120)
-                        .availableStatusCode("INSUFFICIENT")
-                        .shortageQty(80)
-                        .itemType("구매품")
-                        .procurementStartDate("2024-02-03")
-                        .expectedArrivalDate("2024-02-07")
-                        .supplierCompanyName("SKF코리아")
-                        .build(),
-                MrpOrderDto.builder()
-                        .itemId("4")
-                        .itemName("볼트 M8x20")
-                        .requiredQuantity(1000)
-                        .currentStock(1200)
-                        .safetyStock(200)
-                        .availableStock(1000)
-                        .availableStatusCode("SUFFICIENT")
-                        .shortageQty(null)
-                        .itemType("구매품")
-                        .procurementStartDate(null)
-                        .expectedArrivalDate(null)
-                        .supplierCompanyName("동양볼트")
-                        .build(),
-                MrpOrderDto.builder()
-                        .itemId("5")
-                        .itemName("알루미늄 프로파일")
-                        .requiredQuantity(300)
-                        .currentStock(100)
-                        .safetyStock(50)
-                        .availableStock(50)
-                        .availableStatusCode("INSUFFICIENT")
-                        .shortageQty(250)
-                        .itemType("구매품")
-                        .procurementStartDate("2024-02-01")
-                        .expectedArrivalDate("2024-02-10")
-                        .supplierCompanyName("한국알루미늄")
-                        .build()
-        );
+        List<MrpOrderDto> items = new ArrayList<>();
+        String[] itemNames = {"스테인리스 스틸", "구리선", "베어링 6205", "볼트 M8x20", "알루미늄 프로파일"};
+        String[] suppliers = {"포스코", "LS전선", "SKF코리아", "동양볼트", "한국알루미늄"};
+        String[] availableCodes = {"INSUFFICIENT", "SUFFICIENT"};
+
+        for (int i = 0; i < 30; i++) {
+            items.add(
+                    MrpOrderDto.builder()
+                            .itemId(String.valueOf(i + 1))
+                            .itemName(itemNames[i % itemNames.length])
+                            .requiredQuantity(100 + i * 10)
+                            .currentStock(50 + i * 5)
+                            .safetyStock(20 + i % 10)
+                            .availableStock(30 + i * 3)
+                            .availableStatusCode(availableCodes[i % availableCodes.length])
+                            .shortageQuantity((i % 2 == 0) ? (50 + i * 2) : null)
+                            .itemType("구매품")
+                            .procurementStartDate("2024-02-" + String.format("%02d", (i % 28) + 1))
+                            .expectedArrivalDate("2024-02-" + String.format("%02d", ((i + 5) % 28) + 1))
+                            .supplierCompanyName(suppliers[i % suppliers.length])
+                            .build()
+            );
+        }
+
+        if(availableStatusCode.equals("ALL")) {
+            availableStatusCode = "";
+        }
+
+        // availableStatusCode 필터링
+        if (availableStatusCode != null && !availableStatusCode.isBlank()) {
+            String code = availableStatusCode.toUpperCase();
+            items.removeIf(item -> !code.equals(item.getAvailableStatusCode()));
+        }
+
+        // 페이징
+        int total = items.size();
+        int fromIdx = page * size;
+        int toIdx = Math.min(fromIdx + size, total);
+        List<MrpOrderDto> pageContent = fromIdx < total ? items.subList(fromIdx, toIdx) : Collections.emptyList();
+
+        PageDto pageInfo = PageDto.builder()
+                .number(page)
+                .size(size)
+                .totalElements(total)
+                .totalPages((int) Math.ceil((double) total / size))
+                .hasNext(toIdx < total)
+                .build();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pageContent);
+        response.put("page", pageInfo);
 
         return ResponseEntity.ok(ApiResponse.success(response, "자재 조달 계획을 조회했습니다.", HttpStatus.OK));
     }
@@ -567,64 +549,53 @@ public class PpController {
             }
     )
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPlannedOrderList(
+            @Parameter(name = "statusCode", description = "계획 주문 상태 (ALL, PENDING, PLANNED, APPROVED, REJECTED)")
+            @RequestParam(required = false) String statusCode,
             @Parameter(name = "page", description = "페이지 번호")
             @RequestParam(required = false, defaultValue = "0") int page,
             @Parameter(name = "size", description = "페이지 크기")
             @RequestParam(required = false, defaultValue = "10") int size
     ) {
-        List<PlannedOrderListItemDto> items = Arrays.asList(
-                PlannedOrderListItemDto.builder()
-                        .mrpId("1")
-                        .quotationId("1")
-                        .quotationNumber("Q-2024-001")
-                        .itemId("1")
-                        .itemName("스테인리스 스틸")
-                        .quantity(400)
-                        .procurementStartDate("2024-02-01")
-                        .statusCode("PLANNING")
-                        .build(),
-                PlannedOrderListItemDto.builder()
-                        .mrpId("2")
-                        .quotationId("2")
-                        .quotationNumber("Q-2024-002")
-                        .itemId("2")
-                        .itemName("구리선")
-                        .quantity(600)
-                        .procurementStartDate("2024-02-02")
-                        .statusCode("PENDING")
-                        .build(),
-                PlannedOrderListItemDto.builder()
-                        .mrpId("3")
-                        .quotationId("3")
-                        .quotationNumber("Q-2024-003")
-                        .itemId("3")
-                        .itemName("베어링 6205")
-                        .quantity(100)
-                        .procurementStartDate("2024-02-03")
-                        .statusCode("APPROVAL")
-                        .build(),
-                PlannedOrderListItemDto.builder()
-                        .mrpId("4")
-                        .quotationId("1")
-                        .quotationNumber("Q-2024-001")
-                        .itemId("4")
-                        .itemName("알루미늄 프로파일")
-                        .quantity(300)
-                        .procurementStartDate("2024-02-01")
-                        .statusCode("REJECTED")
-                        .build()
-        );
+        String[] statusCodes = {"PENDING", "PLANNED", "APPROVED", "REJECTED"};
+        String[] itemNames = {"스테인리스 스틸", "구리선", "베어링 6205", "볼트 M8x20", "알루미늄 프로파일"};
+        String[] quotationNumbers = {"Q-2024-001", "Q-2024-002", "Q-2024-003", "Q-2024-004"};
+        List<PlannedOrderListItemDto> items = new ArrayList<>();
+
+        for (int i = 0; i < 30; i++) {
+            items.add(
+                    PlannedOrderListItemDto.builder()
+                            .mrpId(String.valueOf(i + 1))
+                            .quotationId(String.valueOf((i % 4) + 1))
+                            .quotationNumber(quotationNumbers[i % quotationNumbers.length])
+                            .itemId(String.valueOf((i % 5) + 1))
+                            .itemName(itemNames[i % itemNames.length])
+                            .quantity(100 + i * 10)
+                            .procurementStartDate("2024-02-" + String.format("%02d", (i % 28) + 1))
+                            .statusCode(statusCodes[i % statusCodes.length])
+                            .build()
+            );
+        }
+
+        if (statusCode != null && !statusCode.equalsIgnoreCase("ALL")) {
+            String filterCode = statusCode.toUpperCase();
+            items.removeIf(item -> !filterCode.equals(item.getStatusCode()));
+        }
+
+        int total = items.size();
+        int fromIdx = page * size;
+        int toIdx = Math.min(fromIdx + size, total);
+        List<PlannedOrderListItemDto> pageContent = fromIdx < total ? items.subList(fromIdx, toIdx) : Collections.emptyList();
 
         PageDto pageInfo = PageDto.builder()
                 .number(page)
                 .size(size)
-                .totalElements(4)
-                .totalPages(1)
-                .hasNext(false)
+                .totalElements(total)
+                .totalPages((int) Math.ceil((double) total / size))
+                .hasNext(toIdx < total)
                 .build();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("content", items);
+        response.put("content", pageContent);
         response.put("page", pageInfo);
 
         return ResponseEntity.ok(ApiResponse.success(response, "계획 주문 요청 목록을 조회했습니다.", HttpStatus.OK));
@@ -632,114 +603,176 @@ public class PpController {
 
     @GetMapping("/mps/plans")
     @Operation(
-            summary = "제품별 MPS 조회",
-            description = "제품별 Master Production Schedule(MPS) 정보를 조회합니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공"
-                    )
-            }
+            summary = "제품별 MPS 계획 조회",
+            description = "단일 제품에 대해 MPS(주간 생산계획) 정보를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<MpsProductPlanDto>> getMpsPlans(
-            @Parameter(name = "itemId", description = "제품 ID")
-            @RequestParam(required = false) String itemId,
-            @Parameter(name = "startdate", description = "시작일")
-            @RequestParam(required = false) String startdate,
-            @Parameter(name = "enddate", description = "종료일")
-            @RequestParam(required = false) String enddate
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMpsPlan(
+            @Parameter(name = "productId", description = "제품 ID")
+            @RequestParam String productId,
+            @Parameter(name = "startDate", description = "시작일(yyyy-MM-dd)")
+            @RequestParam String startDate,
+            @Parameter(name = "endDate", description = "종료일(yyyy-MM-dd)")
+            @RequestParam String endDate,
+            @Parameter(name = "page", description = "페이지 번호")
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @Parameter(name = "size", description = "페이지 크기")
+            @RequestParam(required = false, defaultValue = "7") int size
     ) {
-        List<String> periods = Arrays.asList("9월 1주차", "9월 2주차", "9월 3주차", "9월 4주차", "10월 1주차", "10월 2주차");
+        LocalDate start = LocalDate.parse(startDate);
+        LocalDate end = LocalDate.parse(endDate);
 
-        List<Integer> demand = Arrays.asList(null, null, null, null, 20, 15);
-        List<Integer> requiredInventory = Arrays.asList(null, null, 20, 15, 20, 15);
-        List<Integer> productionNeeded = Arrays.asList(null, null, 20, 15, null, null);
-        List<Integer> plannedProduction = Arrays.asList(null, null, 20, 15, 20, 15);
+        List<String> weeks = new ArrayList<>();
+        LocalDate firstWeekStart = start.minusWeeks(3);
+        LocalDate current = firstWeekStart;
+        while (!current.isAfter(end)) {
+            int weekOfMonth = current.get(WeekFields.ISO.weekOfMonth());
+            int month = current.getMonthValue();
+            weeks.add(month + "월 " + weekOfMonth + "주차");
+            current = current.plusWeeks(1);
+        }
 
-        MpsProductPlanDto response = MpsProductPlanDto.builder()
-                .productId("1")
-                .productName("도어패널")
-                .startDate(startdate)
-                .endDate(enddate)
-                .periods(periods)
-                .demand(demand)
-                .requiredInventory(requiredInventory)
-                .productionNeeded(productionNeeded)
-                .plannedProduction(plannedProduction)
-                .totalPlannedProduction(70)
-                .totalDemand(35)
-                .productionWeeks(2)
-                .averageWeeklyProduction(2)
+        int totalWeeks = weeks.size();
+        int fromIdx = page * size;
+        int toIdx = Math.min(fromIdx + size, totalWeeks);
+        List<String> pageWeeks = fromIdx < totalWeeks ? weeks.subList(fromIdx, toIdx) : Collections.emptyList();
+
+        List<Integer> demand = new ArrayList<>();
+        List<Integer> requiredInventory = new ArrayList<>();
+        List<Integer> productionNeeded = new ArrayList<>();
+        List<Integer> plannedProduction = new ArrayList<>();
+
+        for (int i = 0; i < pageWeeks.size(); i++) {
+            if (pageWeeks.get(i).equals("null")) {
+                demand.add(null);
+                requiredInventory.add(null);
+                productionNeeded.add(null);
+                plannedProduction.add(null);
+            } else {
+                if (i < 3) {
+                    demand.add(null);
+                    requiredInventory.add(null);
+                    productionNeeded.add(null);
+                    plannedProduction.add(null);
+                } else {
+                    demand.add(13 + i);
+                    requiredInventory.add(8 + i);
+                    productionNeeded.add(11 + i);
+                    plannedProduction.add(11 + i);
+                }
+            }
+        }
+
+        while (demand.size() < size) {
+            demand.add(null);
+            requiredInventory.add(null);
+            productionNeeded.add(null);
+            plannedProduction.add(null);
+            pageWeeks.add("null");
+        }
+
+        // 순서 보장: LinkedHashMap 사용
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("productId", productId);
+        result.put("startDate", startDate);
+        result.put("endDate", endDate);
+        result.put("periods", pageWeeks);
+        result.put("demand", demand);
+        result.put("requiredInventory", requiredInventory);
+        result.put("productionNeeded", productionNeeded);
+        result.put("plannedProduction", plannedProduction);
+
+        PageDto pageInfo = PageDto.builder()
+                .number(page)
+                .size(size)
+                .totalElements(totalWeeks)
+                .totalPages((int) Math.ceil((double) totalWeeks / size))
+                .hasNext(toIdx < totalWeeks)
                 .build();
 
-        return ResponseEntity.ok(ApiResponse.success(response, "제품별 MPS 조회에 성공했습니다.", HttpStatus.OK));
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", result);
+        response.put("page", pageInfo);
+
+        return ResponseEntity.ok(ApiResponse.success(response, "제품별 MPS 계획을 조회했습니다.", HttpStatus.OK));
     }
 
-    @GetMapping("/quotations/{quotationId}/simulate")
+    @PostMapping("/quotations/simulate")
     @Operation(
-            summary = "견적에 대한 ATP + MPS + MRP 시뮬레이션 실행",
-            description = "견적에 대한 ATP(Available to Promise), MPS, MRP 시뮬레이션을 실행합니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공"
-                    )
-            }
+            summary = "여러 견적에 대한 ATP + MPS + MRP 시뮬레이션 실행",
+            description = "여러 견적 ID를 받아 각 견적에 대한 ATP, MPS, MRP 시뮬레이션을 실행합니다."
     )
-    public ResponseEntity<ApiResponse<QuotationSimulationDto>> simulateQuotation(
-            @Parameter(name = "quotationId", description = "견적 ID")
-            @PathVariable String quotationId,
-            @RequestParam(required = false) Boolean forceRecalculate
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getQuotationSimulationList(
+            @RequestBody List<String> quotationIds,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size
     ) {
-        List<QuotationSimulationDto.ShortageItemDto> shortages = Arrays.asList(
-                QuotationSimulationDto.ShortageItemDto.builder()
-                        .itemId("1")
-                        .itemName("스테인리스 스틸")
-                        .requiredQuantity(100)
-                        .currentStock(50)
-                        .shortQuantity(50)
-                        .build(),
-                QuotationSimulationDto.ShortageItemDto.builder()
-                        .itemId("2")
-                        .itemName("구리선")
-                        .requiredQuantity(200)
-                        .currentStock(150)
-                        .shortQuantity(50)
-                        .build(),
-                QuotationSimulationDto.ShortageItemDto.builder()
-                        .itemId("3")
-                        .itemName("베어링")
-                        .requiredQuantity(50)
-                        .currentStock(30)
-                        .shortQuantity(20)
-                        .build()
-        );
+        List<QuotationSimulationDto> simulations = new ArrayList<>();
 
-        QuotationSimulationDto response = QuotationSimulationDto.builder()
-                .quotationId(quotationId)
-                .quotationCode("Q-2024-001")
-                .customerCompanyId("1")
-                .customerCompanyId("현대자동차")
-                .productId("1")
-                .productName("도어패널")
-                .requestQuantity(500)
-                .requestDueDate("2024-02-15")
-                .simulation(QuotationSimulationDto.SimulationResultDto.builder()
-                        .status("FAIL")
-                        .availableQty(130)
-                        .suggestedDueDate("2024-03-10")
-                        .generatedAt("2025-10-08T12:00:00Z")
-                        .build())
-                .shortages(shortages)
+        // 목업 데이터 3개 생성
+        for (int i = 1; i <= 3; i++) {
+
+            // ✅ shortage 2개 생성
+            List<QuotationSimulationDto.ShortageItemDto> shortages = new ArrayList<>();
+            for (int j = 1; j <= 2; j++) {
+                shortages.add(
+                        QuotationSimulationDto.ShortageItemDto.builder()
+                                .itemId(i + "-" + j)
+                                .itemName("자재" + j)
+                                .requiredQuantity(100 * j)
+                                .currentStock(40 * j)
+                                .shortQuantity(60 * j)
+                                .build()
+                );
+            }
+
+            simulations.add(
+                    QuotationSimulationDto.builder()
+                            .quotationId("Q-2024-00" + i)
+                            .quotationNumber("Q-2024-00" + i)
+                            .customerCompanyId(String.valueOf(i))
+                            .customerCompanyName(i == 1 ? "현대자동차" : i == 2 ? "기아자동차" : "삼성전자")
+                            .productId(String.valueOf(i))
+                            .productName(i == 1 ? "도어패널" : i == 2 ? "Hood Panel" : "Fender Panel")
+                            .requestQuantity(500 * i)
+                            .requestDueDate("2024-02-" + (10 + i))
+                            .simulation(QuotationSimulationDto.SimulationResultDto.builder()
+                                    .status(i % 2 == 0 ? "SUCCESS" : "FAIL")
+                                    .availableQuantity(130 * i)
+                                    .shortageQuantity(370 * i)
+                                    .suggestedDueDate("2024-03-" + (10 + i))
+                                    .generatedAt("2025-10-08T12:00:00Z")
+                                    .build())
+                            .shortages(shortages)
+                            .build()
+            );
+        }
+
+        // 페이징
+        int total = simulations.size();
+        int fromIdx = page * size;
+        int toIdx = Math.min(fromIdx + size, total);
+        List<QuotationSimulationDto> pageContent = fromIdx < total ? simulations.subList(fromIdx, toIdx) : Collections.emptyList();
+
+        PageDto pageInfo = PageDto.builder()
+                .number(page)
+                .size(size)
+                .totalElements(total)
+                .totalPages((int) Math.ceil((double) total / size))
+                .hasNext(toIdx < total)
                 .build();
 
-        return ResponseEntity.ok(ApiResponse.success(response, "견적 시뮬레이션이 성공적으로 완료되었습니다.", HttpStatus.OK));
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pageContent);
+        response.put("page", pageInfo);
+
+        return ResponseEntity.ok(ApiResponse.success(response, "견적 시뮬레이션 목록을 조회했습니다.", HttpStatus.OK));
     }
 
-    @GetMapping("/quotations/{quotationId}/preview")
+
+    @PostMapping("/quotations/preview")
     @Operation(
-            summary = "제안납기 확정 프리뷰",
-            description = "제안 납기 계획 프리뷰를 조회합니다.",
+            summary = "견적 제안납기 프리뷰 목록 조회",
+            description = "여러 견적 ID에 대한 제안 납기 계획 프리뷰를 조회합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
@@ -747,50 +780,81 @@ public class PpController {
                     )
             }
     )
-    public ResponseEntity<ApiResponse<DueDatePreviewDto>> getQuotationPreview(
-            @Parameter(name = "quotationId", description = "견적 ID")
-            @PathVariable String quotationId
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getQuotationPreviewList(
+            @RequestBody List<String> quotationIds,
+            @Parameter(name = "page", description = "페이지 번호")
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @Parameter(name = "size", description = "페이지 크기")
+            @RequestParam(required = false, defaultValue = "10") int size
     ) {
-        List<DueDatePreviewDto.WeekPlanDto> weeks = Arrays.asList(
-                DueDatePreviewDto.WeekPlanDto.builder()
-                        .week("2024-02-3W")
-                        .demand(0)
-                        .requiredQuantity(0)
-                        .productionQuantity(300)
-                        .mps(300)
-                        .build(),
-                DueDatePreviewDto.WeekPlanDto.builder()
-                        .week("2024-02-4W")
-                        .demand(500)
-                        .requiredQuantity(500)
-                        .productionQuantity(200)
-                        .mps(200)
-                        .build(),
-                DueDatePreviewDto.WeekPlanDto.builder()
-                        .week("2024-03-1W")
-                        .demand(0)
-                        .requiredQuantity(0)
-                        .productionQuantity(0)
-                        .mps(0)
-                        .build(),
-                DueDatePreviewDto.WeekPlanDto.builder()
-                        .week("2024-03-2W")
-                        .demand(0)
-                        .requiredQuantity(0)
-                        .productionQuantity(0)
-                        .mps(0)
-                        .build()
-        );
+        List<DueDatePreviewDto> previews = new ArrayList<>();
 
-        DueDatePreviewDto response = DueDatePreviewDto.builder()
-                .quotationNumber("Q-2024-001")
-                .customerCompanyName("현대자동차")
-                .productName("도어패널")
-                .confirmedDueDate("2024-03-10")
-                .weeks(weeks)
+        String[] customers = {"현대자동차", "기아자동차", "삼성전자"};
+        String[] products = {"도어패널", "Hood Panel", "Fender Panel"};
+        String[] dueDates = {"2024-03-10", "2024-03-15", "2024-03-20"};
+
+        for (int i = 0; i < 3; i++) {
+            List<DueDatePreviewDto.WeekPlanDto> weeks = Arrays.asList(
+                    DueDatePreviewDto.WeekPlanDto.builder()
+                            .week("2024-02-3W")
+                            .demand(0)
+                            .requiredQuantity(0)
+                            .productionQuantity(300 + i * 10)
+                            .mps(300 + i * 10)
+                            .build(),
+                    DueDatePreviewDto.WeekPlanDto.builder()
+                            .week("2024-02-4W")
+                            .demand(500 + i * 10)
+                            .requiredQuantity(500 + i * 10)
+                            .productionQuantity(200 + i * 10)
+                            .mps(200 + i * 10)
+                            .build(),
+                    DueDatePreviewDto.WeekPlanDto.builder()
+                            .week("2024-03-1W")
+                            .demand(0)
+                            .requiredQuantity(0)
+                            .productionQuantity(0)
+                            .mps(0)
+                            .build(),
+                    DueDatePreviewDto.WeekPlanDto.builder()
+                            .week("2024-03-2W")
+                            .demand(0)
+                            .requiredQuantity(0)
+                            .productionQuantity(0)
+                            .mps(0)
+                            .build()
+            );
+
+            previews.add(
+                    DueDatePreviewDto.builder()
+                            .quotationNumber("Q-2024-00" + (i + 1))
+                            .customerCompanyName(customers[i])
+                            .productName(products[i])
+                            .confirmedDueDate(dueDates[i])
+                            .weeks(weeks)
+                            .build()
+            );
+        }
+
+        // 페이징
+        int total = previews.size();
+        int fromIdx = page * size;
+        int toIdx = Math.min(fromIdx + size, total);
+        List<DueDatePreviewDto> pageContent = fromIdx < total ? previews.subList(fromIdx, toIdx) : Collections.emptyList();
+
+        PageDto pageInfo = PageDto.builder()
+                .number(page)
+                .size(size)
+                .totalElements(total)
+                .totalPages((int) Math.ceil((double) total / size))
+                .hasNext(toIdx < total)
                 .build();
 
-        return ResponseEntity.ok(ApiResponse.success(response, "제안 납기 계획을 조회했습니다.", HttpStatus.OK));
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pageContent);
+        response.put("page", pageInfo);
+
+        return ResponseEntity.ok(ApiResponse.success(response, "견적 제안납기 프리뷰 목록을 조회했습니다.", HttpStatus.OK));
     }
 
     @GetMapping("/mes/work-orders")
@@ -934,4 +998,162 @@ public class PpController {
         return ResponseEntity.ok(ApiResponse.success(response, "작업 지시 상세를 조회했습니다.", HttpStatus.OK));
     }
 
+    @GetMapping("/quotations")
+@Operation(
+    summary = "견적 목록 조회",
+    description = "견적 목록을 조회합니다.",
+    responses = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "성공"
+        )
+    }
+)
+public ResponseEntity<ApiResponse<Map<String, Object>>> getQuotationList(
+    @Parameter(name = "startDate", description = "요청일자 시작(yyyy-MM-dd)")
+    @RequestParam(required = false) String startDate,
+    @Parameter(name = "endDate", description = "요청일자 종료(yyyy-MM-dd)")
+    @RequestParam(required = false) String endDate,
+    @Parameter(name = "stockStatusCode", description = "가용재고 상태 (ALL, UNCHECKED, CHECKED)")
+    @RequestParam(required = false) String stockStatusCode,
+    @Parameter(name = "statusCode", description = "견적 상태 (ALL, NEW, CONFIRMED)")
+    @RequestParam(required = false) String statusCode,
+    @Parameter(name = "page", description = "페이지 번호")
+    @RequestParam(required = false, defaultValue = "0") int page,
+    @Parameter(name = "size", description = "페이지 크기")
+    @RequestParam(required = false, defaultValue = "10") int size
+) {
+    // 목데이터 생성
+    List<Map<String, Object>> quotations = new ArrayList<>();
+    String[] customers = {"현대자동차", "기아자동차", "삼성전자", "LG전자"};
+    String[] products = {"도어패널", "Hood Panel", "Fender Panel", "Trunk Lid"};
+    String[] statuses = {"NEW", "CONFIRMED"};
+    String[] stockStatuses = {"UNCHECKED", "CHECKED"};
+
+    for (int i = 0; i < 50; i++) {
+        Map<String, Object> q = new LinkedHashMap<>();
+        q.put("quotationNumber", String.format("Q-2024-%03d", i + 1));
+        q.put("customerCompanyName", customers[i % customers.length]);
+        q.put("product", products[i % products.length]);
+        q.put("requestQuantity", ((i + 1) * 10) + "EA");
+        LocalDateTime reqDate = LocalDateTime.of(2024, 2, 10, 0, 0).plusDays(i % 20);
+        q.put("requestDate", reqDate.toLocalDate().toString());
+        q.put("stockStatusCode", stockStatuses[i % stockStatuses.length]);
+        q.put("suggestedDueDate", (i % 2 == 0) ? reqDate.plusDays(5).toLocalDate().toString() : "-");
+        q.put("statusCode", statuses[i % statuses.length]);
+        quotations.add(q);
+    }
+        if(stockStatusCode.equals("ALL"))
+            stockStatusCode = null;
+
+        if(statusCode.equals("ALL"))
+            statusCode = null;
+    // 필터링
+    if (startDate != null) {
+        quotations.removeIf(q -> LocalDateTime.parse(q.get("requestDate").toString() + "T00:00:00")
+            .isBefore(LocalDateTime.parse(startDate + "T00:00:00")));
+    }
+    if (endDate != null) {
+        quotations.removeIf(q -> LocalDateTime.parse(q.get("requestDate").toString() + "T00:00:00")
+            .isAfter(LocalDateTime.parse(endDate + "T00:00:00")));
+    }
+    if (stockStatusCode!= null) {
+        String finalStockStatusCode = stockStatusCode;
+        quotations.removeIf(q -> !finalStockStatusCode.equalsIgnoreCase(q.get("stockStatusCode").toString()));
+    }
+    if (statusCode != null) {
+        String finalStatusCode = statusCode;
+        quotations.removeIf(q -> !finalStatusCode.equalsIgnoreCase(q.get("statusCode").toString()));
+    }
+
+    // 페이징
+    int total = quotations.size();
+    int fromIdx = page * size;
+    int toIdx = Math.min(fromIdx + size, total);
+    List<Map<String, Object>> pageContent = fromIdx < total ? quotations.subList(fromIdx, toIdx) : Collections.emptyList();
+
+    PageDto pageInfo = PageDto.builder()
+        .number(page)
+        .size(size)
+        .totalElements(total)
+        .totalPages((int) Math.ceil((double) total / size))
+        .hasNext(toIdx < total)
+        .build();
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("content", pageContent);
+    response.put("page", pageInfo);
+
+    return ResponseEntity.ok(ApiResponse.success(response, "견적 목록을 조회했습니다.", HttpStatus.OK));
+}
+
+    @GetMapping("mps/toggle/products")
+    @Operation(
+            summary = "MPS 드롭다운용 아이템 목록 조회",
+            description = "MPS 화면의 제품 선택 드롭다운에 사용될 아이템 목록을 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getMpsItemList() {
+        List<Map<String, String>> items = new ArrayList<>();
+
+        items.add(Map.of("productId", "1", "productName", "도어패널"));
+        items.add(Map.of("productId", "2", "productName", "Hood Panel"));
+        items.add(Map.of("productId", "3", "productName", "Fender Panel"));
+        items.add(Map.of("productId", "4", "productName", "Trunk Lid"));
+        items.add(Map.of("productId", "5", "productName", "Roof Panel"));
+
+        return ResponseEntity.ok(ApiResponse.success(items, "MPS 드롭다운 아이템 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
+
+    //  제품 목록 (Product)
+    @GetMapping("/mrp/toggle/products")
+    @Operation(summary = "MPS 제품 토글 목록", description = "MPS 화면에서 사용할 제품 목록(토글)을 반환합니다.")
+    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getMpsProductToggles() {
+        List<Map<String, String>> products = List.of(
+                Map.of("id", "P-001", "name", "도어패널"),
+                Map.of("id", "P-002", "name", "Hood Panel"),
+                Map.of("id", "P-003", "name", "Fender Panel"),
+                Map.of("id", "P-004", "name", "Trunk Lid"),
+                Map.of("id", "P-005", "name", "Roof Panel")
+        );
+        return ResponseEntity.ok(ApiResponse.success(products, "MPS 제품 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
+    // 견적 목록 (Quotation)
+    @GetMapping("/mrp/toggle/quotations")
+    @Operation(summary = "MPS 견적 토글 목록", description = "MPS 화면에서 사용할 견적 목록(토글)을 반환합니다.")
+    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getMpsQuotationToggles() {
+        List<Map<String, String>> quotations = List.of(
+                Map.of("id", "Q-2024-001", "name", "현대자동차"),
+                Map.of("id", "Q-2024-002", "name", "기아자동차"),
+                Map.of("id", "Q-2024-003", "name", "삼성전자"),
+                Map.of("id", "Q-2024-004", "name", "LG전자")
+        );
+        return ResponseEntity.ok(ApiResponse.success(quotations, "MPS 견적 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
+    //가용 상태 코드 (Available Status)
+    @GetMapping("/mrp/toggle/status-codes")
+    @Operation(summary = "MPS 가용 상태 코드 목록", description = "MPS 화면에서 사용할 가용 상태 코드 목록(ALL, INSUFFICIENT, SUFFICIENT)을 반환합니다.")
+    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getMpsAvailableStatusCodes() {
+        List<Map<String, String>> availableStatuses = List.of(
+                Map.of("전체", "ALL"),
+                Map.of("부족", "INSUFFICIENT"),
+                Map.of("충족", "SUFFICIENT")
+        );
+        return ResponseEntity.ok(ApiResponse.success(availableStatuses, "MPS 가용 상태 코드 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
+    @GetMapping("/mrp/toggle/planned-order-list-status-codes")
+    @Operation(summary = "MRP 계획 주문 상태 코드 목록", description = "MRP 계획 주문 상태 코드(ALL, PENDING, PLANNED, APPROVED, REJECTED) 목록을 반환합니다.")
+    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getPlannedOrderStatusCodes() {
+        List<Map<String, String>> statusCodes = List.of(
+                Map.of("전체","ALL"),
+                Map.of("대기", "PENDING"),
+                Map.of("계획", "PLANNED"),
+                Map.of("승인", "APPROVED"),
+                Map.of("반려", "REJECTED")
+        );
+        return ResponseEntity.ok(ApiResponse.success(statusCodes, "MRP 계획 주문 상태 코드 목록을 조회했습니다.", HttpStatus.OK));
+    }
 }
