@@ -1096,26 +1096,29 @@ public class ImController {
     }
 
     //창고 드롭다운 API 추가
-    @GetMapping("/iv/warehouses/dropdown/{itemId}")
+    @GetMapping("/iv/warehouses/dropdown")
     @Operation(
             summary = "창고 드롭다운 목록 조회",
             description = "창고 드롭다운용 목록을 반환합니다."
     )
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getWarehouseDropdown(
-            @PathVariable String itemId
-    ) {
+    public ResponseEntity<ApiResponse> getWarehouses(@RequestParam(required = false) String warehouseId) {
         List<Map<String, String>> warehouses = Arrays.asList(
-                Map.of("warehouseId", "1", "warehouseName", "제1창고 (원자재)","warehouseCode","A-01-01"),
-                Map.of("warehouseId", "2", "warehouseName", "제2창고 (완제품)","warehouseCode","B-01-01"),
-                Map.of("warehouseId", "3", "warehouseName", "제3창고 (부품)","warehouseCode","C-01-01"),
-                Map.of("warehouseId", "4", "warehouseName", "냉동창고 (특수보관)","warehouseCode","A-03-02"),
-                Map.of("warehouseId", "5", "warehouseName", "임시창고 (임시보관)","warehouseCode","C-03-04")
+                Map.of("warehouseId", "1", "warehouseName", "제1창고 (원자재)","warehouseNumber","A-01-01"),
+                Map.of("warehouseId", "2", "warehouseName", "제2창고 (완제품)","warehouseNumber","B-01-01"),
+                Map.of("warehouseId", "3", "warehouseName", "제3창고 (부품)","warehouseNumber","C-01-01"),
+                Map.of("warehouseId", "4", "warehouseName", "냉동창고 (특수보관)","warehouseNumber","A-03-02"),
+                Map.of("warehouseId", "5", "warehouseName", "임시창고 (임시보관)","warehouseNumber","C-03-04")
         );
 
+        List<Map<String, String>> filtered = warehouses.stream()
+                .filter(w -> !w.get("warehouseId").equals(warehouseId))
+                .collect(Collectors.toList());
+
         Map<String, Object> response = new HashMap<>();
-        response.put("warehouses", warehouses);
+        response.put("warehouses", filtered);
         return ResponseEntity.ok(ApiResponse.success(response, "창고 드롭다운 목록을 조회했습니다.", HttpStatus.OK));
     }
+
 
     @PatchMapping("/iv/items/{itemId}/safety-stock")
     @Operation(
