@@ -749,25 +749,21 @@ public class HrmController {
     }
 
     // 급여 지급 완료 처리
-    // POST /api/business/hrm/payroll/complete/{employeeId}
-    @PostMapping("/payroll/complete/{employeeId}")
+    // POST /api/business/hrm/payroll/complete
+    @PostMapping("/payroll/complete")
     @Operation(
         summary = "급여 지급 완료 처리",
-        description = "직원의 급여 지급을 완료 처리합니다."
+        description = "급여 지급을 완료 처리합니다."
     )
     public ResponseEntity<ApiResponse<Object>> completePayroll(
-        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
-        @PathVariable("employeeId") String employeeId
+        @Valid @RequestBody PayrollCompleteRequestDto requestDto
     ) {
-        if (employeeId == null || employeeId.isBlank()) {
-            throw new ValidationException(ErrorCode.VALIDATION_FAILED,
-                List.of(Map.of("field", "employeeId", "reason", "REQUIRED")));
-        }
+        // 요청 데이터 로깅
+        System.out.println("급여 지급 완료 처리 요청: " + requestDto);
 
         // Mock 데이터 생성
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("employeeId", employeeId);
-        data.put("payrollId", uuidV7());
+        data.put("payrollId", requestDto.getPayrollId());
         data.put("statusCode", "COMPLETED");
         data.put("completedAt", LocalDateTime.now());
 
@@ -1399,20 +1395,27 @@ public class HrmController {
         ));
     }
 
-    @PatchMapping("/program/modify")
+    @PatchMapping("/program/{programId}")
     @Operation(
         summary = "교육 프로그램 수정",
         description = "기존 교육 프로그램 정보를 수정합니다."
     )
     public ResponseEntity<ApiResponse<Object>> modifyProgram(
+        @Parameter(description = "프로그램 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("programId") String programId,
         @Valid @RequestBody ProgramModifyRequestDto requestDto
     ) {
+        if (programId == null || programId.isBlank()) {
+            throw new ValidationException(ErrorCode.VALIDATION_FAILED,
+                List.of(Map.of("field", "programId", "reason", "REQUIRED")));
+        }
+
         // 요청 데이터 로깅
-        System.out.println("교육 프로그램 수정 요청: " + requestDto);
+        System.out.println("교육 프로그램 수정 요청 - ID: " + programId + ", 데이터: " + requestDto);
 
         // Mock 데이터 생성
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("programId", requestDto.getProgramId());
+        data.put("programId", programId);
         data.put("programName", requestDto.getProgramName());
         data.put("statusCode", requestDto.getStatusCode());
         data.put("updatedAt", LocalDateTime.now());

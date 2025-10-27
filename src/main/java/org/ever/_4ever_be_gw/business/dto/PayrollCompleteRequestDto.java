@@ -12,12 +12,9 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class ProgramModifyRequestDto {
+public class PayrollCompleteRequestDto {
 
-    @NotBlank(message = "프로그램 이름은 필수입니다")
-    private String programName;
-
-    @NotBlank(message = "상태 코드는 필수입니다")
-    private String statusCode;
+    @NotBlank(message = "급여 ID는 필수입니다")
+    private String payrollId;
 
 }
