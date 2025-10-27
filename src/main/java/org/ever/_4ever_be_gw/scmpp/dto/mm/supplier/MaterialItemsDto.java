@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.scmpp.dto.mm;
+package org.ever._4ever_be_gw.scmpp.dto.mm.supplier;
 
 import lombok.Getter;
 

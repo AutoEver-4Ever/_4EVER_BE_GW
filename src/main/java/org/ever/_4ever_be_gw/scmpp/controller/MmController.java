@@ -31,12 +31,11 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionCreateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionUpdateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionRejectRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierCreateRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierUpdateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierCreateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierUpdateRequestDto;
 
 @RestController
 @RequestMapping("/scm-pp/mm")
@@ -1285,7 +1284,7 @@ public class MmController {
             throw new BusinessException(ErrorCode.VENDOR_FORBIDDEN);
         }
 
-        java.util.List<org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierListResponseDto> allVendors = new java.util.ArrayList<>();
+        java.util.List<org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierListResponseDto> allVendors = new java.util.ArrayList<>();
         String[] names = {"한국철강","대한전자부품","글로벌화학","한빛소재","스마트로지스틱스","태성테크","광명산업","한성전자","그린케미칼","아주금속"};
         String[] categories = {"MATERIAL","PARTS","MATERIAL","PARTS","ETC","PARTS","MATERIAL","PARTS","MATERIAL","MATERIAL"};
         int[] deliveryLeadDays = {3,1,5,2,0,7,6,2,9,10};
@@ -1308,9 +1307,9 @@ public class MmController {
                     || catParam.equalsIgnoreCase(cat);
             if (!statusOk || !categoryOk) continue;
 
-            var dto = new org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierListResponseDto();
+            var dto = new org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierListResponseDto();
             dto.setStatusCode(st);
-            var sInfo = new org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierListResponseDto.SupplierInfo();
+            var sInfo = new org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierListResponseDto.SupplierInfo();
             sInfo.setSupplierId(String.valueOf(1 + i));
             sInfo.setSupplierName(names[idx]);
             sInfo.setSupplierCode(String.format("SUP%03d", idx + 1));
@@ -1330,7 +1329,7 @@ public class MmController {
         int s = (size == null || size < 1) ? 10 : size;
         int fromIdx = Math.min(pageIndex * s, total);
         int toIdx = Math.min(fromIdx + s, total);
-        java.util.List<org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierListResponseDto> content = allVendors.subList(fromIdx, toIdx);
+        java.util.List<org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierListResponseDto> content = allVendors.subList(fromIdx, toIdx);
 
         org.ever._4ever_be_gw.common.dto.PageDto pageDto = org.ever._4ever_be_gw.common.dto.PageDto.builder()
                 .number(pageIndex)
@@ -1416,10 +1415,10 @@ public class MmController {
         String[] emails = {"contact@koreasteel.com","sales@dahanelec.com","info@globalchem.co.kr","info@hanbits.com","service@smartlogistics.kr","sales@taesung.com","contact@kwangmyung.co.kr","info@hanseong.com","sales@greenchem.co.kr","contact@ajumetal.co.kr"};
         String[] statusCodeArr = {"ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE"};
 
-        var dto = new org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierDetailResponseDto();
+        var dto = new org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierDetailResponseDto();
         String st = statusCodeArr[idx];
         dto.setStatusCode(st);
-        var sInfo = new org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierDetailResponseDto.SupplierInfo();
+        var sInfo = new org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierDetailResponseDto.SupplierInfo();
         sInfo.setSupplierId(String.valueOf(supplierId));
         sInfo.setSupplierCode(String.format("SUP%03d", idx + 1));
         sInfo.setSupplierName(names[idx]);
@@ -1432,7 +1431,7 @@ public class MmController {
         sInfo.setDeliveryLeadTime(leadDays[idx]);
         dto.setSupplierInfo(sInfo);
 
-        var mInfo = new org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierDetailResponseDto.ManagerInfo();
+        var mInfo = new org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierDetailResponseDto.ManagerInfo();
         mInfo.setManagerName("담당자" + (idx + 1));
         mInfo.setManagerPhone(phones[idx]);
         mInfo.setManagerEmail(emails[idx]);

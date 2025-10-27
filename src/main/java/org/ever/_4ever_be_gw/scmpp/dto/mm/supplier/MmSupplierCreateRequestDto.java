@@ -1,10 +1,8 @@
-package org.ever._4ever_be_gw.scmpp.dto.supplier;
+package org.ever._4ever_be_gw.scmpp.dto.mm.supplier;
 
 import java.util.List;
 import lombok.Getter;
 import org.ever._4ever_be_gw.business.dto.order.ManagerDto;
-import org.ever._4ever_be_gw.scmpp.dto.mm.MaterialItemsDto;
-import org.ever._4ever_be_gw.scmpp.dto.mm.SupplierInfoDto;
 
 @Getter
 public class MmSupplierCreateRequestDto {

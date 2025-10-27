@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.scmpp.dto.supplier;
+package org.ever._4ever_be_gw.scmpp.dto.mm.supplier;
 
 import java.util.List;
 import lombok.Getter;
