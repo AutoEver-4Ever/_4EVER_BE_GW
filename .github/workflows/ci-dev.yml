@@ -54,6 +54,7 @@ jobs:
           fi
 
       - name: 테스트 리포트 생성
+        continue-on-error: true
         if: always() && steps.test-results.outputs.exists == 'true'
         uses: dorny/test-reporter@v1
         with:
