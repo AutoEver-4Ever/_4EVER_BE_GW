@@ -8,7 +8,8 @@ public enum ApiClientKey {
     AUTH("auth"),
     ALARM("alarm"),
     PAYMENT("payment"),
-    BUSINESS("business");
+    BUSINESS("business"),
+    SCM_PP("scm");
 
     private final String propertyKey;
 
