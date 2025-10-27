@@ -25,6 +25,7 @@ public class ItemDetailDto {
     private String uomName;
     private int unitPrice;
     private int totalAmount;
+    private String warehouseId;
     private String warehouseName;
     private String warehouseNumber;
     private LocalDateTime lastModified;

@@ -9,4 +9,5 @@ public class UpdateWarehouseRequestDto {
     private String location;
     private String managerId;
     private String warehouseStatusCode;
+    private String note;
 }
