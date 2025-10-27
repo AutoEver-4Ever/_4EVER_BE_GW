@@ -748,6 +748,34 @@ public class HrmController {
         ));
     }
 
+    // 급여 지급 완료 처리
+    // POST /api/business/hrm/payroll/complete/{employeeId}
+    @PostMapping("/payroll/complete/{employeeId}")
+    @Operation(
+        summary = "급여 지급 완료 처리",
+        description = "직원의 급여 지급을 완료 처리합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> completePayroll(
+        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("employeeId") String employeeId
+    ) {
+        if (employeeId == null || employeeId.isBlank()) {
+            throw new ValidationException(ErrorCode.VALIDATION_FAILED,
+                List.of(Map.of("field", "employeeId", "reason", "REQUIRED")));
+        }
+
+        // Mock 데이터 생성
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("employeeId", employeeId);
+        data.put("payrollId", uuidV7());
+        data.put("statusCode", "COMPLETED");
+        data.put("completedAt", LocalDateTime.now());
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "급여 지급 완료 처리되었습니다.", HttpStatus.OK
+        ));
+    }
+
     // 월별 사내 급여 상세 조회
     // GET /api/business/hrm/payroll/{payrollId}
     @GetMapping("/payroll/{payrollId}")
@@ -934,9 +962,9 @@ public class HrmController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("timerecordId", timerecordId);
         data.put("employeeId", 1L);
-        data.put("inTime", requestDto.getInTime());
-        data.put("outTime", requestDto.getOutTime());
-        data.put("attendanceStatus", requestDto.getAttendanceStatus());
+        data.put("checkInTime", requestDto.getCheckInTime());
+        data.put("checkOutTime", requestDto.getCheckOutTime());
+        data.put("statusCode", requestDto.getStatusCode());
 
         return ResponseEntity.ok(ApiResponse.success(
             data, "출퇴근 기록 수정이 완료되었습니다.", HttpStatus.OK
@@ -1311,6 +1339,36 @@ public class HrmController {
         ));
     }
 
+    @PostMapping("/program/{employeeId}")
+    @Operation(
+        summary = "직원에게 교육 프로그램 추가",
+        description = "특정 직원에게 교육 프로그램을 할당합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> assignProgramToEmployee(
+        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("employeeId") String employeeId,
+        @Valid @RequestBody ProgramAssignRequestDto requestDto
+    ) {
+        if (employeeId == null || employeeId.isBlank()) {
+            throw new ValidationException(ErrorCode.VALIDATION_FAILED,
+                List.of(Map.of("field", "employeeId", "reason", "REQUIRED")));
+        }
+
+        // 요청 데이터 로깅
+        System.out.println("직원 교육 프로그램 추가 요청 - 직원 ID: " + employeeId + ", 데이터: " + requestDto);
+
+        // Mock 데이터 생성
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("employeeId", employeeId);
+        data.put("programId", requestDto.getProgramId());
+        data.put("assignedAt", LocalDateTime.now());
+        data.put("statusCode", "ASSIGNED");
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "직원에게 교육 프로그램이 추가되었습니다.", HttpStatus.OK
+        ));
+    }
+
     @PostMapping("/program")
     @Operation(
         summary = "교육 프로그램 추가",
@@ -1338,6 +1396,29 @@ public class HrmController {
 
         return ResponseEntity.ok(ApiResponse.success(
             data, "교육 프로그램이 추가되었습니다.", HttpStatus.OK
+        ));
+    }
+
+    @PatchMapping("/program/modify")
+    @Operation(
+        summary = "교육 프로그램 수정",
+        description = "기존 교육 프로그램 정보를 수정합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> modifyProgram(
+        @Valid @RequestBody ProgramModifyRequestDto requestDto
+    ) {
+        // 요청 데이터 로깅
+        System.out.println("교육 프로그램 수정 요청: " + requestDto);
+
+        // Mock 데이터 생성
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("programId", requestDto.getProgramId());
+        data.put("programName", requestDto.getProgramName());
+        data.put("statusCode", requestDto.getStatusCode());
+        data.put("updatedAt", LocalDateTime.now());
+
+        return ResponseEntity.ok(ApiResponse.success(
+            data, "교육 프로그램이 수정되었습니다.", HttpStatus.OK
         ));
     }
 
