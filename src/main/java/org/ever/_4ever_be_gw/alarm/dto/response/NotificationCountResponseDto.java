@@ -7,6 +7,6 @@ import lombok.Data;
 @Builder
 public class NotificationCountResponseDto {
 
-    private Integer count;
+    private int count;
 
 }

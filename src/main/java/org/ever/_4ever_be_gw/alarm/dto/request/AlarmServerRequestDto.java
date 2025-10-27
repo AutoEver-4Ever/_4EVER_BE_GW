@@ -20,8 +20,8 @@ public class AlarmServerRequestDto {
         private String sortBy;
         private String order;
         private String source;
-        private Integer page;
-        private Integer size;
+        private int page;
+        private int size;
     }
 
     // 알림 갯수 조회 요청
