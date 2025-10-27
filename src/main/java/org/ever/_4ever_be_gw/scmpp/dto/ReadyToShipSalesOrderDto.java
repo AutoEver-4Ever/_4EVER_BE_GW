@@ -21,7 +21,7 @@ public class ReadyToShipSalesOrderDto {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime productionCompletionDate;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
-    private LocalDateTime readyToShipDate;
+    private LocalDateTime dueDate;
     private int totalAmount;
     private String statusCode;
 }

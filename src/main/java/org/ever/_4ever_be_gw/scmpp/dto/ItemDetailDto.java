@@ -21,6 +21,7 @@ public class ItemDetailDto {
     private String supplierCompanyName;
     private String statusCode;
     private int currentStock;
+    private int safetyStock;
     private String uomName;
     private int unitPrice;
     private int totalAmount;

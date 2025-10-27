@@ -19,7 +19,7 @@ public class ReceivedPurchaseOrderDto {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime orderDate;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
-    private LocalDateTime receivedDate;
+    private LocalDateTime dueDate;
     private int totalAmount;
     private String statusCode;
 }
