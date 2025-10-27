@@ -18,6 +18,7 @@ import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.ever._4ever_be_gw.scmpp.dto.inventory.*;
+import org.ever._4ever_be_gw.scmpp.dto.warehouse.UpdateWarehouseRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.warehouse.WarehouseDetailDto;
 import org.ever._4ever_be_gw.scmpp.dto.warehouse.WarehouseDto;
 import org.ever._4ever_be_gw.scmpp.dto.warehouse.WarehouseStatisticDto;
@@ -130,53 +131,14 @@ public class ImController {
                         .build()
         );
 
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("content", items);
 
         return ResponseEntity.ok(ApiResponse.success(response, "재고 부족 목록을 조회했습니다.", HttpStatus.OK));
     }
-    
-    @GetMapping("/iv/stock-transfers/statistics")
-    @Operation(
-            summary = "오늘 총 이동량 통계",
-            description = "오늘 재고이동 통계를 조회합니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공"
-                    )
-            }
-    )
-    public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getStockTransferStatistics(
-    ) {
-        String period = "today";
-        String normalized = period == null ? "" : period.trim().toLowerCase(Locale.ROOT);
-        Set<String> allowedPeriods = Set.of("today", "week", "month");
-        if (!allowedPeriods.contains(normalized)) {
-            throw new BusinessException(ErrorCode.INVALID_PERIODS);
-        }
 
-        StatsMetricsDto metrics = StatsMetricsDto.builder()
-                .put("inbound_total", PeriodStatDto.builder().value(695L).deltaRate(BigDecimal.ZERO).build())
-                .put("inbound_period_count", PeriodStatDto.builder().value(120L).deltaRate(BigDecimal.ZERO).build())
-                .put("outbound_total", PeriodStatDto.builder().value(610L).deltaRate(BigDecimal.ZERO).build())
-                .put("outbound_period_count", PeriodStatDto.builder().value(105L).deltaRate(BigDecimal.ZERO).build())
-                .build();
 
-        StatsResponseDto.StatsResponseDtoBuilder<StatsMetricsDto> builder = StatsResponseDto.<StatsMetricsDto>builder();
-        switch (normalized) {
-            case "today" -> builder.today(metrics);
-            case "week" -> builder.week(metrics);
-            case "month" -> builder.month(metrics);
-            default -> throw new BusinessException(ErrorCode.INVALID_PERIODS);
-        }
-
-        StatsResponseDto<StatsMetricsDto> response = builder.build();
-        return ResponseEntity.ok(ApiResponse.success(response, "재고 이력 통계를 조회했습니다.", HttpStatus.OK));
-    }
-
-    
     @GetMapping("/iv/stock-transfers")
     @Operation(
             summary = "재고이동 목록 조회",
@@ -226,9 +188,17 @@ public class ImController {
                         .itemName("베어링 6205")
                         .workDate(LocalDateTime.parse("2024-01-15T09:15"))
                         .managerName("이생산")
+                        .build(),
+                StockTransferDto.builder()
+                        .type("입고")
+                        .quantity(50)
+                        .uomName("EA")
+                        .itemName("박우진")
+                        .workDate(LocalDateTime.parse("2024-01-15T09:15"))
+                        .managerName("권오윤")
                         .build()
         );
-        
+
         PageDto pageInfo = PageDto.builder()
                 .number(page)
                 .size(size)
@@ -236,14 +206,14 @@ public class ImController {
                 .totalPages(1)
                 .hasNext(false)
                 .build();
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("content", items);
         response.put("page", pageInfo);
-        
+
         return ResponseEntity.ok(ApiResponse.success(response, "재고 이력 목록을 조회했습니다.", HttpStatus.OK));
     }
-    
+
     @PostMapping("/iv/stock-transfers")
     @Operation(
             summary = "창고간 재고 이동 생성",
@@ -280,11 +250,11 @@ public class ImController {
         builder.week(WarehouseStatisticDto.builder()
                 .totalWarehouse(WarehouseStatisticDto.TotalWarehouseDto.builder()
                         .value("15")
-                        .comparedPrev(1)
+                        .delta_rate(1)
                         .build())
                 .inOperationWarehouse(WarehouseStatisticDto.InOperationWarehouseDto.builder()
                         .value(13)
-                        .comparedPrev(1)
+                        .delta_rate(1)
                         .build())
                 .build());
 
@@ -292,11 +262,11 @@ public class ImController {
         builder.month(WarehouseStatisticDto.builder()
                 .totalWarehouse(WarehouseStatisticDto.TotalWarehouseDto.builder()
                         .value("16")
-                        .comparedPrev(1)
+                        .delta_rate(1)
                         .build())
                 .inOperationWarehouse(WarehouseStatisticDto.InOperationWarehouseDto.builder()
                         .value(14)
-                        .comparedPrev(1)
+                        .delta_rate(1)
                         .build())
                 .build());
 
@@ -304,11 +274,11 @@ public class ImController {
         builder.quarter(WarehouseStatisticDto.builder()
                 .totalWarehouse(WarehouseStatisticDto.TotalWarehouseDto.builder()
                         .value("17")
-                        .comparedPrev(1)
+                        .delta_rate(1)
                         .build())
                 .inOperationWarehouse(WarehouseStatisticDto.InOperationWarehouseDto.builder()
                         .value(15)
-                        .comparedPrev(1)
+                        .delta_rate(1)
                         .build())
                 .build());
 
@@ -316,11 +286,11 @@ public class ImController {
         builder.year(WarehouseStatisticDto.builder()
                 .totalWarehouse(WarehouseStatisticDto.TotalWarehouseDto.builder()
                         .value("18")
-                        .comparedPrev(1)
+                        .delta_rate(1)
                         .build())
                 .inOperationWarehouse(WarehouseStatisticDto.InOperationWarehouseDto.builder()
                         .value(16)
-                        .comparedPrev(1)
+                        .delta_rate(1)
                         .build())
                 .build());
 
@@ -329,7 +299,7 @@ public class ImController {
         return ResponseEntity.ok(ApiResponse.success(response, "창고 현황을 조회했습니다.", HttpStatus.OK));
     }
 
-    
+
     @GetMapping("/iv/warehouses/{warehouseId}")
     @Operation(
             summary = "창고 상세 조회",
@@ -360,65 +330,55 @@ public class ImController {
                         .managerEmail("kim@example.com")
                         .build())
                 .build();
-                
+
         return ResponseEntity.ok(ApiResponse.success(response, "창고 상세 정보를 조회했습니다.", HttpStatus.OK));
     }
-    
+
     @GetMapping("/iv/warehouses")
     @Operation(
             summary = "창고 목록 조회",
-            description = "창고 목록을 조회합니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "성공"
-                    )
-            }
+            description = "창고 목록을 조회합니다. (페이징 지원)"
     )
     public ResponseEntity<ApiResponse<Map<String, Object>>> getWarehouseList(
             @Parameter(name = "page", description = "페이지 번호")
             @RequestParam(required = false, defaultValue = "0") int page,
             @Parameter(name = "size", description = "페이지 크기")
-            @RequestParam(required = false, defaultValue = "20") int size
+            @RequestParam(required = false, defaultValue = "10") int size
     ) {
-        List<WarehouseDto> items = Arrays.asList(
-                WarehouseDto.builder()
-                        .warehouseId("1")
-                        .warehouseNumber("WH-A")
-                        .warehouseName("제1창고")
-                        .statusCode("ACTIVE")
-                        .warehouseType("원자재")
-                        .location("경기도 안산시 단원구 중앙대로 123")
-                        .manager("김창고")
-                        .managerPhone("031-123-4567")
-                        .build(),
-                WarehouseDto.builder()
-                        .warehouseId("2")
-                        .warehouseNumber("WH-B")
-                        .warehouseName("제2창고")
-                        .statusCode("ACTIVE")
-                        .warehouseType("완제품")
-                        .location("경기도 안산시 상록구 산업로 456")
-                        .manager("이관리")
-                        .managerPhone("031-234-5678")
-                        .build()
-        );
-        
+        List<WarehouseDto> items = new ArrayList<>();
+        for (int i = 1; i <= 20; i++) {
+            items.add(WarehouseDto.builder()
+                    .warehouseId(String.valueOf(i))
+                    .warehouseNumber("WH-" + (char)('A' + (i % 5)))
+                    .warehouseName("창고" + i)
+                    .statusCode(i % 2 == 0 ? "ACTIVE" : "INACTIVE")
+                    .warehouseType(i % 3 == 0 ? "원자재" : i % 3 == 1 ? "완제품" : "부품")
+                    .location("경기도 안산시 단원구 중앙대로 " + (100 + i))
+                    .manager("담당자" + i)
+                    .managerPhone("010-1000-" + String.format("%04d", i))
+                    .build());
+        }
+
+        int total = items.size();
+        int fromIdx = Math.min(page * size, total);
+        int toIdx = Math.min(fromIdx + size, total);
+        List<WarehouseDto> pageContent = items.subList(fromIdx, toIdx);
+
         PageDto pageInfo = PageDto.builder()
                 .number(page)
                 .size(size)
-                .totalElements(257)
-                .totalPages(13)
-                .hasNext(true)
+                .totalElements(total)
+                .totalPages((int) Math.ceil((double) total / size))
+                .hasNext(toIdx < total)
                 .build();
-        
+
         Map<String, Object> response = new HashMap<>();
-        response.put("content", items);
+        response.put("content", pageContent);
         response.put("page", pageInfo);
-        
+
         return ResponseEntity.ok(ApiResponse.success(response, "창고 목록을 조회했습니다.", HttpStatus.OK));
     }
-    
+
     @PostMapping("/iv/warehouses")
     @Operation(
             summary = "창고 추가",
@@ -435,7 +395,7 @@ public class ImController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(null, "창고가 추가되었습니다.", HttpStatus.OK));
     }
-    
+
     @GetMapping("/iv/items/{itemId}")
     @Operation(
             summary = "재고 상세 조회",
@@ -486,7 +446,7 @@ public class ImController {
                         .note("제품 생산을 위한 출고")
                         .build()
         );
-        
+
         ItemDetailDto response = ItemDetailDto.builder()
                 .itemId(itemId)
                 .itemNumber("SS-PIPE-001")
@@ -495,6 +455,7 @@ public class ImController {
                 .supplierCompanyName("스테인리스코리아")
                 .statusCode("NORMAL")
                 .currentStock(150)
+                .safetyStock(30)
                 .uomName("EA")
                 .unitPrice(25000)
                 .totalAmount(3750000)
@@ -504,10 +465,10 @@ public class ImController {
                 .description("고품질 스테인리스 스틸 파이프, 내식성 우수")
                 .stockMovements(stockMovements)
                 .build();
-        
+
         return ResponseEntity.ok(ApiResponse.success(response, "재고 상세 정보를 조회했습니다.", HttpStatus.OK));
     }
-    
+
     @GetMapping("/iv/statistic")
     @Operation(
             summary = "IM 통계 조회",
@@ -515,24 +476,14 @@ public class ImController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"재고 및 입출고 현황을 조회했습니다.\",\n  \"data\": {\n    \"week\": {\n      \"total_stock\": { \"value\": 240000000, \"delta_rate\": 0.082 },\n      \"store_complete\": { \"value\": 156, \"delta_rate\": 0.12 },\n      \"store_pending\": { \"value\": 23, \"delta_rate\": 0.05 },\n      \"delivery_complete\": { \"value\": 89, \"delta_rate\": 0.07 },\n      \"delivery_pending\": { \"value\": 14, \"delta_rate\": -0.03 }\n    },\n    \"month\": {\n      \"total_stock\": { \"value\": 955000000, \"delta_rate\": 0.096 },\n      \"store_complete\": { \"value\": 612, \"delta_rate\": 0.087 },\n      \"store_pending\": { \"value\": 88, \"delta_rate\": 0.042 },\n      \"delivery_complete\": { \"value\": 374, \"delta_rate\": 0.058 },\n      \"delivery_pending\": { \"value\": 57, \"delta_rate\": -0.021 }\n    }\n  }\n}" )
-                            )
+                            description = "성공"
                     )
             }
     )
     public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getInventoryStatistic(
-            @Parameter(description = "조회 기간 목록(콤마 구분)")
-            @RequestParam(name = "periods", required = false) String periods
     ) {
-        List<String> requested = periods == null || periods.isBlank()
-                ? List.of("week", "month", "quarter", "year")
-                : Arrays.stream(periods.split(","))
-                .map(String::trim)
-                .map(String::toLowerCase)
-                .toList();
+        String periods = null;
+        List<String> requested = List.of("week", "month", "quarter", "year");
 
         List<String> invalid = requested.stream().filter(p -> !INVENTORY_STAT_PERIODS.contains(p)).toList();
         if (periods != null && !periods.isBlank() && (!invalid.isEmpty() || requested.stream().noneMatch(INVENTORY_STAT_PERIODS::contains))) {
@@ -586,8 +537,8 @@ public class ImController {
 
     @PatchMapping("/sales-orders/{salesOrderId}/status")
     @Operation(
-            summary = "출고 준비 완료로 상태 변경",
-            description = "주문 상태를 출고 준비 완료로 변경합니다.",
+            summary ="배송중으로 상태 변경",
+            description = "출고 준비완료를 배송중 상태로 변경합니다.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
@@ -602,10 +553,10 @@ public class ImController {
         SalesOrderStatusDto response = SalesOrderStatusDto.builder()
                 .salesOrderId(salesOrderId)
                 .salesOrderCode("SO-2024-001")
-                .status("출고준비완료")
+                .status("DELIVERING")
                 .build();
 
-        return ResponseEntity.ok(ApiResponse.success(response, "주문 상태가 출고준비완료로 변경되었습니다.", HttpStatus.OK));
+        return ResponseEntity.ok(ApiResponse.success(response, "주문 상태가 배송중 변경되었습니다.", HttpStatus.OK));
     }
 
     @GetMapping("/sales-orders/ready-to-ship/{salesOrderId}")
@@ -639,7 +590,7 @@ public class ImController {
         ReadyToShipDetailDto response = ReadyToShipDetailDto.builder()
                 .salesOrderId(salesOrderId)
                 .salesOrderNumber("SO-2024-002")
-                .customerComapnyName("현대건설")
+                .customerCompanyName("현대건설")
                 .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
                 .statusCode("READY_FOR_SHIPMENT")
                 .orderItems(orderItems)
@@ -679,7 +630,7 @@ public class ImController {
         ReadyToShipDetailDto response = ReadyToShipDetailDto.builder()
                 .salesOrderId(salesOrderId)
                 .salesOrderNumber("SO-2024-001")
-                .customerComapnyName("대한제철")
+                .customerCompanyName("대한제철")
                 .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
                 .statusCode("IN_PRODUCTION")
                 .orderItems(orderItems)
@@ -688,181 +639,23 @@ public class ImController {
         return ResponseEntity.ok(ApiResponse.success(response, "주문 상세 정보를 조회했습니다.", HttpStatus.OK));
     }
 
-//    @GetMapping("/sales-orders/production")
-//    @Operation(
-//            summary = "생산중 목록조회",
-//            description = "생산 중인 주문 목록을 조회합니다.",
-//            responses = {
-//                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-//                            responseCode = "200",
-//                            description = "성공"
-//                    )
-//            }
-//    )
-//    public ResponseEntity<ApiResponse<Map<String, Object>>> getProductionOrderList(
-//            @Parameter(name = "page", description = "페이지 번호")
-//            @RequestParam(required = false, defaultValue = "0") int page,
-//            @Parameter(name = "size", description = "페이지 크기")
-//            @RequestParam(required = false, defaultValue = "10") int size
-//    ) {
-//        List<ProductionOrderDto> items = Arrays.asList(
-//                ProductionOrderDto.builder()
-//                        .salesOrderId("1")
-//                        .salesOrderNumber("SO-2024-001")
-//                        .customerCompanyName("대한제철")
-//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .orderAmount(15750000)
-//                        .statusCode("IN_PRODUCTION")
-//                        .build(),
-//                ProductionOrderDto.builder()
-//                        .salesOrderId("3")
-//                        .salesOrderNumber("SO-2024-003")
-//                        .customerCompanyName("삼성물산")
-//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .orderAmount(8900000)
-//                        .statusCode("IN_PRODUCTION")
-//                        .build()
-//        );
-//
-//        PageDto pageInfo = PageDto.builder()
-//                .number(page)
-//                .size(size)
-//                .totalElements(2)
-//                .totalPages(1)
-//                .hasNext(false)
-//                .build();
-//
-//        Map<String, Object> response = new HashMap<>();
-//        response.put("content", items);
-//        response.put("page", pageInfo);
-//
-//        return ResponseEntity.ok(ApiResponse.success(response, "생산중 주문 목록을 조회했습니다.", HttpStatus.OK));
-//    }
-
-//    @GetMapping("/purchase-orders/received")
-//    @Operation(
-//            summary = "입고완료 목록 조회",
-//            description = "입고 완료된 발주 목록을 조회합니다.",
-//            responses = {
-//                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-//                            responseCode = "200",
-//                            description = "성공"
-//                    )
-//            }
-//    )
-//    public ResponseEntity<ApiResponse<Map<String, Object>>> getReceivedPurchaseOrders(
-//            @Parameter(name = "page", description = "페이지 번호(0-base)")
-//            @RequestParam(required = false, defaultValue = "0") int page,
-//            @Parameter(name = "size", description = "페이지 크기")
-//            @RequestParam(required = false, defaultValue = "10") int size
-//    ) {
-//        List<ReceivedPurchaseOrderDto> items = Arrays.asList(
-//                ReceivedPurchaseOrderDto.builder()
-//                        .purchaseOrderId("1")
-//                        .purchaseOrderNumber("PO-2024-003")
-//                        .supplierCompanyName("부산금속상사")
-//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .receivedDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .totalAmount(3120000)
-//                        .statusCode("RECEIVED")
-//                        .build(),
-//                ReceivedPurchaseOrderDto.builder()
-//                        .purchaseOrderId("4")
-//                        .purchaseOrderNumber("PO-2024-004")
-//                        .supplierCompanyName("강남기계")
-//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .receivedDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .totalAmount(975000)
-//                        .statusCode("RECEIVED")
-//                        .build()
-//        );
-//
-//        PageDto pageInfo = PageDto.builder()
-//                .number(page)
-//                .size(size)
-//                .totalElements(2)
-//                .totalPages(1)
-//                .hasNext(false)
-//                .build();
-//
-//        Map<String, Object> response = new HashMap<>();
-//        response.put("content", items);
-//        response.put("page", pageInfo);
-//
-//        return ResponseEntity.ok(ApiResponse.success(response, "입고 완료 목록을 조회했습니다.", HttpStatus.OK));
-//    }
-
-//    @GetMapping("/purchase-orders/pending")
-//    @Operation(
-//            summary = "입고대기 목록 조회",
-//            description = "입고 대기 중인 발주 목록을 조회합니다.",
-//            responses = {
-//                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-//                            responseCode = "200",
-//                            description = "성공"
-//                    )
-//            }
-//    )
-//    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPurchaseOrders(
-//            @Parameter(name = "page", description = "페이지 번호(0-base)")
-//            @RequestParam(required = false, defaultValue = "0") int page,
-//            @Parameter(name = "size", description = "페이지 크기")
-//            @RequestParam(required = false, defaultValue = "10") int size
-//    ) {
-//        List<PendingPurchaseOrderDto> items = Arrays.asList(
-//                PendingPurchaseOrderDto.builder()
-//                        .purchaseOrderId("1")
-//                        .purchaseOrderNumber("PO-2024-001")
-//                        .supplierCompanyName("스테인리스코리아")
-//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .totalAmount(4250000)
-//                        .statusCode("RECEIVING")
-//                        .build(),
-//                PendingPurchaseOrderDto.builder()
-//                        .purchaseOrderId("2")
-//                        .purchaseOrderNumber("PO-2024-002")
-//                        .supplierCompanyName("금속유통")
-//                        .orderDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .dueDate(LocalDateTime.parse("2024-01-15T09:15"))
-//                        .totalAmount(1860000)
-//                        .statusCode("RECEIVING")
-//                        .build()
-//        );
-//
-//        PageDto pageInfo = PageDto.builder()
-//                .number(page)
-//                .size(size)
-//                .totalElements(2)
-//                .totalPages(1)
-//                .hasNext(false)
-//                .build();
-//
-//        Map<String, Object> response = new HashMap<>();
-//        response.put("content", items);
-//        response.put("page", pageInfo);
-//
-//        return ResponseEntity.ok(ApiResponse.success(response, "입고 대기 목록을 조회했습니다.", HttpStatus.OK));
-//    }
-
     @GetMapping("/inventory-items")
+    @Operation(
+            summary = "재고 목록 조회",
+            description = "재고 목록을 조회합니다. 타입(WAREHOUSE_NAME, ITEM_NAME)과 키워드로 검색, 상태코드(ALL, NORMAL, CAUTION, URGENT) 필터링 가능"
+    )
     public ResponseEntity<ApiResponse<Object>> getInventoryItems(
-            @Parameter(description = "카테고리: 원자재, 부품")
-            @RequestParam(name = "category", required = false) String category,
-            @Parameter(description = "창고명")
-            @RequestParam(name = "warehouseName", required = false) String warehouseName,
-            @Parameter(description = "재고 상태: NORMAL, CAUTION, URGENT")
-            @RequestParam(name = "statusCode", required = false) String statusCode,
-            @Parameter(description = "품목명 (부분 검색 가능)")
-            @RequestParam(name = "itemName", required = false) String itemName,
+            @Parameter(description = "검색 타입: WAREHOUSE_NAME 또는 ITEM_NAME")
+            @RequestParam(name = "type", required = false) String type,
+            @Parameter(description = "검색 키워드")
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @Parameter(description = "재고 상태: ALL, NORMAL, CAUTION, URGENT")
+            @RequestParam(name = "statusCode", required = false, defaultValue = "ALL") String statusCode,
             @Parameter(description = "페이지 번호")
             @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
             @Parameter(description = "페이지 크기")
             @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
     ) {
-        // --- 더미 데이터 생성 ---
         List<InventoryItemDto> allItems = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             String itemCategory = ITEM_CATEGORIES[i % ITEM_CATEGORIES.length];
@@ -874,11 +667,9 @@ public class ImController {
             int currentStock = 20 + (i * 5) % 300;
             int safetyStock = 100;
             String statusValue;
-
             if (currentStock < safetyStock * 0.5) statusValue = "URGENT";
             else if (currentStock < safetyStock) statusValue = "CAUTION";
             else statusValue = "NORMAL";
-
             int unitPrice = 5000 + (i * 1000) % 30000;
 
             allItems.add(InventoryItemDto.builder()
@@ -897,15 +688,24 @@ public class ImController {
                     .build());
         }
 
-        // --- 필터링 로직 (대소문자 구분 X, 부분 일치 포함) ---
+        // 필터링
         List<InventoryItemDto> filteredItems = allItems.stream()
-                .filter(item -> category == null || item.getCategory().equalsIgnoreCase(category.trim()))
-                .filter(item -> warehouseName == null || item.getWarehouseName().equalsIgnoreCase(warehouseName.trim()))
-                .filter(item -> statusCode == null || item.getStatusCode().equalsIgnoreCase(statusCode.trim()))
-                .filter(item -> itemName == null || item.getItemName().toLowerCase().contains(itemName.toLowerCase().trim()))
+                .filter(item -> {
+                    if (statusCode == null || statusCode.equalsIgnoreCase("ALL")) return true;
+                    return item.getStatusCode().equalsIgnoreCase(statusCode.trim());
+                })
+                .filter(item -> {
+                    if (type == null || keyword == null || keyword.isBlank()) return true;
+                    if (type.equalsIgnoreCase("WAREHOUSE_NAME")) {
+                        return item.getWarehouseName().toLowerCase().contains(keyword.toLowerCase().trim());
+                    } else if (type.equalsIgnoreCase("ITEM_NAME")) {
+                        return item.getItemName().toLowerCase().contains(keyword.toLowerCase().trim());
+                    }
+                    return true;
+                })
                 .collect(Collectors.toList());
 
-        // --- 페이지네이션 ---
+        // 페이지네이션
         int fromIndex = Math.min(page * size, filteredItems.size());
         int toIndex = Math.min(fromIndex + size, filteredItems.size());
         List<InventoryItemDto> pagedItems = filteredItems.subList(fromIndex, toIndex);
@@ -929,7 +729,7 @@ public class ImController {
     @GetMapping("/iv/shortage")
     @Operation(
             summary = "부족 재고 목록 조회",
-            description = "부족 재고 목록을 조회합니다. (statusCode=URGENT 또는 CAUTION으로 필터링 가능)",
+            description = "부족 재고 목록을 조회합니다. (statusCode=ALL, URGENT, CAUTION으로 필터링 가능)",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
@@ -938,8 +738,8 @@ public class ImController {
             }
     )
     public ResponseEntity<ApiResponse<Object>> getShortageItems(
-            @Parameter(description = "재고 상태: URGENT 또는 CAUTION")
-            @RequestParam(name = "statusCode", required = false) String statusCode,
+            @Parameter(description = "재고 상태: ALL, URGENT 또는 CAUTION")
+            @RequestParam(name = "statusCode", required = false, defaultValue = "ALL") String statusCode,
             @Parameter(description = "페이지 번호(0-base)")
             @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
             @Parameter(description = "페이지 크기")
@@ -954,11 +754,12 @@ public class ImController {
             String uom = UOM_NAMES[i % UOM_NAMES.length];
             String itemNameValue = ITEM_NAMES[i % ITEM_NAMES.length] + " " + (i + 1);
 
-            int safetyStock = 100 + (i % 50);
-            int currentStock = safetyStock - 10 - (i % 90);
+            Random random = new Random();
+
+            int safetyStock = 100 + random.nextInt(50); // 100~149
+            int currentStock = random.nextInt(150);     // 0~149
             if (currentStock < 0) currentStock = 5;
 
-            // 상태 결정
             String statusValue = currentStock < safetyStock * 0.5 ? "URGENT" : "CAUTION";
 
             int unitPrice = 5000 + (i * 1000) % 30000;
@@ -981,20 +782,18 @@ public class ImController {
             allItems.add(item);
         }
 
-        // 실제 필터링 적용
+        // 필터링 (ALL이면 전체, 아니면 해당 상태만)
         List<ShortageItemDetailDto> filteredItems = allItems.stream()
                 .filter(item -> {
-                    if (statusCode == null || statusCode.isBlank()) return true;
+                    if (statusCode == null || statusCode.equalsIgnoreCase("ALL")) return true;
                     return item.getStatusCode().equalsIgnoreCase(statusCode.trim());
                 })
                 .collect(Collectors.toList());
 
-        // 페이지네이션
         int fromIndex = Math.min(page * size, filteredItems.size());
         int toIndex = Math.min(fromIndex + size, filteredItems.size());
         List<ShortageItemDetailDto> pagedItems = filteredItems.subList(fromIndex, toIndex);
 
-        // 페이지 정보
         PageDto pageInfo = PageDto.builder()
                 .number(page)
                 .size(size)
@@ -1089,14 +888,11 @@ public class ImController {
             @Parameter(description = "페이지 크기")
             @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
     ) {
-
-        // --- 더미 데이터 생성 ---
         List<ReceivedPurchaseOrderDto> allOrders = new ArrayList<>();
         LocalDateTime baseDate = LocalDateTime.now();
 
         for (int i = 0; i < 50; i++) {
             String supplier = SUPPLIER_NAMES[i % SUPPLIER_NAMES.length];
-
             LocalDateTime orderDate = baseDate.minusDays(30 + (i % 90));
             LocalDateTime receivedDate = orderDate.plusDays(7 + (i % 14));
             int totalAmount = 500000 + (i * 100000) % 4500000;
@@ -1106,16 +902,13 @@ public class ImController {
                     .purchaseOrderNumber("PO-2025-" + String.format("%04d", 500 + i))
                     .supplierCompanyName(supplier)
                     .orderDate(orderDate)
-                    .receivedDate(receivedDate)
+                    .dueDate(receivedDate)
                     .totalAmount(totalAmount)
                     .statusCode("RECEIVED")
                     .build());
         }
 
-        // --- 기준 날짜 제한 (2025-10-21T22:18 이전만) ---
-        LocalDateTime cutoffDate = LocalDateTime.of(2025, 10, 21, 22, 18);
-
-        // --- 날짜 파라미터 파싱 ---
+        // 날짜 파라미터 파싱
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate startDate = null;
         LocalDate endDate = null;
@@ -1129,26 +922,23 @@ public class ImController {
             }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
-                    ApiResponse.fail("날짜 형식이 올바르지 않습니다. (예: 2025-10-01)", HttpStatus.BAD_REQUEST,null)
+                    ApiResponse.fail("날짜 형식이 올바르지 않습니다. (예: 2025-10-01)", HttpStatus.BAD_REQUEST, null)
             );
         }
 
-        // --- 날짜 필터링 ---
+        // orderDate 기준으로 날짜 필터링
         LocalDate finalStartDate = startDate;
         LocalDate finalEndDate = endDate;
         List<ReceivedPurchaseOrderDto> filteredOrders = allOrders.stream()
-                // cutoffDate 이전만 포함
-                .filter(order -> order.getReceivedDate().isBefore(cutoffDate) || order.getReceivedDate().isEqual(cutoffDate))
-                // startDate ~ endDate 필터 적용 (있을 경우)
                 .filter(order -> {
-                    LocalDate receivedDate = order.getReceivedDate().toLocalDate();
-                    boolean afterStart = (finalStartDate == null) || !receivedDate.isBefore(finalStartDate);
-                    boolean beforeEnd = (finalEndDate == null) || !receivedDate.isAfter(finalEndDate);
+                    LocalDate orderDateOnly = order.getOrderDate().toLocalDate();
+                    boolean afterStart = (finalStartDate == null) || !orderDateOnly.isBefore(finalStartDate);
+                    boolean beforeEnd = (finalEndDate == null) || !orderDateOnly.isAfter(finalEndDate);
                     return afterStart && beforeEnd;
                 })
                 .collect(Collectors.toList());
 
-        // --- 페이지네이션 ---
+        // 페이지네이션
         int fromIndex = Math.min(page * size, filteredOrders.size());
         int toIndex = Math.min(fromIndex + size, filteredOrders.size());
         List<ReceivedPurchaseOrderDto> pagedOrders = filteredOrders.subList(fromIndex, toIndex);
@@ -1209,7 +999,7 @@ public class ImController {
                     .dueDate(dueDate)
                     .progress(progress)
                     .totalAmount(totalAmount)
-                    .statusCode("PRODUCTION")
+                    .statusCode("IN_PRODUCTION")
                     .build();
 
             allOrders.add(order);
@@ -1274,7 +1064,7 @@ public class ImController {
                     .customerName(customer)
                     .orderDate(orderDate)
                     .productionCompletionDate(productionCompletionDate)
-                    .readyToShipDate(readyToShipDate)
+                    .dueDate(readyToShipDate)
                     .totalAmount(totalAmount)
                     .statusCode("READY_TO_SHIP")
                     .build();
@@ -1301,5 +1091,106 @@ public class ImController {
         response.put("page", pageInfo);
 
         return ResponseEntity.ok(ApiResponse.success(response, "출고 준비완료 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
+    //창고 드롭다운 API 추가
+    @GetMapping("/iv/warehouses/dropdown/{itemId}")
+    @Operation(
+            summary = "창고 드롭다운 목록 조회",
+            description = "창고 드롭다운용 목록을 반환합니다."
+    )
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getWarehouseDropdown(
+            @PathVariable String itemId
+    ) {
+        List<Map<String, String>> warehouses = Arrays.asList(
+                Map.of("warehouseId", "1", "warehouseName", "제1창고 (원자재)","warehouseCode","A-01-01"),
+                Map.of("warehouseId", "2", "warehouseName", "제2창고 (완제품)","warehouseCode","B-01-01"),
+                Map.of("warehouseId", "3", "warehouseName", "제3창고 (부품)","warehouseCode","C-01-01"),
+                Map.of("warehouseId", "4", "warehouseName", "냉동창고 (특수보관)","warehouseCode","A-03-02"),
+                Map.of("warehouseId", "5", "warehouseName", "임시창고 (임시보관)","warehouseCode","C-03-04")
+        );
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("warehouses", warehouses);
+        return ResponseEntity.ok(ApiResponse.success(response, "창고 드롭다운 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
+    @PatchMapping("/iv/items/{itemId}/safety-stock")
+    @Operation(
+            summary = "안전재고 수정",
+            description = "품목의 안전재고를 수정합니다."
+    )
+    public ResponseEntity<ApiResponse<Void>> updateSafetyStock(
+            @Parameter(name = "itemId", description = "품목 ID")
+            @PathVariable String itemId,
+            @Parameter(name = "safetyStock", description = "수정할 안전재고")
+            @RequestParam int safetyStock
+    ) {
+        // 요청값만 잘 맞으면 200 반환 (실제 로직 없음)
+        return ResponseEntity.ok(ApiResponse.success(null, "안전재고가 수정되었습니다.", HttpStatus.OK));
+    }
+
+    // 자재 추가 API
+    @PostMapping("/iv/items")
+    @Operation(
+            summary = "자재(품목) 추가",
+            description = "자재(품목)를 추가합니다."
+    )
+    public ResponseEntity<ApiResponse<Void>> addInventoryItem(
+            @RequestBody AddInventoryItemRequestDto request
+    ) {
+        // itemId, supplierCompanyId, safetyStock, currentStock, warehouseId
+        // 요청값만 잘 받으면 200 반환
+        return ResponseEntity.ok(ApiResponse.success(null, "자재가 추가되었습니다.", HttpStatus.OK));
+    }
+
+    // 자재추가를 위한 토글 API
+    @GetMapping("/iv/items/toggle")
+    @Operation(
+            summary = "자재(품목) 토글 목록",
+            description = "자재(품목) 추가를 위한 토글 목록을 반환합니다."
+    )
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getItemToggleList() {
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (int i = 1; i <= 10; i++) {
+            items.add(Map.of(
+                    "itemId", String.valueOf(i),
+                    "itemIdName", "품목" + i,
+                    "supplierCompanyId", "SUP-" + i,
+                    "supplierCompanyName", SUPPLIER_NAMES[(i - 1) % SUPPLIER_NAMES.length],
+                    "uomName", UOM_NAMES[(i - 1) % UOM_NAMES.length],
+                    "unitPrice", 1000 * i
+            ));
+        }
+        return ResponseEntity.ok(ApiResponse.success(items, "자재 토글 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
+    // 창고 추가시 담당자 토글 API
+    @GetMapping("/iv/warehouses/managers/toggle")
+    @Operation(
+            summary = "창고 담당자 토글 목록",
+            description = "창고 추가를 위한 담당자 토글 목록을 반환합니다."
+    )
+    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getWarehouseManagerToggleList() {
+        List<Map<String, String>> managers = Arrays.asList(
+                Map.of("managerId", "1", "managerName", "김창고", "managerEmail", "kim@example.com", "managerPhone", "010-1111-2222"),
+                Map.of("managerId", "2", "managerName", "이관리", "managerEmail", "lee@example.com", "managerPhone", "010-2222-3333"),
+                Map.of("managerId", "3", "managerName", "박담당", "managerEmail", "park@example.com", "managerPhone", "010-3333-4444")
+        );
+        return ResponseEntity.ok(ApiResponse.success(managers, "창고 담당자 토글 목록을 조회했습니다.", HttpStatus.OK));
+    }
+
+    // 창고 수정 API
+    @PatchMapping("/iv/warehouses/{warehouseId}")
+    @Operation(
+            summary = "창고 정보 수정",
+            description = "창고 정보를 수정합니다."
+    )
+    public ResponseEntity<ApiResponse<Void>> updateWarehouse(
+            @PathVariable String warehouseId,
+            @RequestBody UpdateWarehouseRequestDto request
+    ) {
+        // warehouseName, warehouseType, location, managerId, warehouseStatusCode
+        return ResponseEntity.ok(ApiResponse.success(null, "창고 정보가 수정되었습니다.", HttpStatus.OK));
     }
 }

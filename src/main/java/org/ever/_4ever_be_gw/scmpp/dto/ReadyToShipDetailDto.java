@@ -15,7 +15,7 @@ import java.util.List;
 public class ReadyToShipDetailDto {
     private String salesOrderId;
     private String salesOrderNumber;
-    private String customerComapnyName;
+    private String customerCompanyName;
     private LocalDateTime dueDate;
     private String statusCode;
     private List<OrderItemDto> orderItems;
