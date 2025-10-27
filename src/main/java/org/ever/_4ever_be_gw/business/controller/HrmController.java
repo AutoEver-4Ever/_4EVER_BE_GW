@@ -21,6 +21,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.ever._4ever_be_gw.business.dto.*;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeCreateRequestDto;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeUpdateRequestDto;
+import org.ever._4ever_be_gw.business.dto.hrm.UserCreateResponseDto;
+import org.ever._4ever_be_gw.business.service.HrmService;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.ever._4ever_be_gw.common.dto.PageDto;
@@ -32,11 +34,17 @@ import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/business/hrm")
 @Tag(name = "인사관리(HRM)", description = "인사 관리 API")
 public class HrmController {
+    private final HrmService hrmService;
+
+    public HrmController(HrmService hrmService) {
+        this.hrmService = hrmService;
+    }
 
     // ==================== 인적자원 통계 ====================
 
@@ -96,17 +104,27 @@ public class HrmController {
     @PostMapping("/employee/signup")
     @Operation(
         summary = "직원 신규 등록",
-        description = "새로운 직원을 등록합니다."
+        description = "새로운 내부 직원을 등록합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> signupEmployee(
+    public Mono<ResponseEntity<ApiResponse<UserCreateResponseDto>>> signupEmployee(
         @Valid @RequestBody EmployeeCreateRequestDto requestDto
     ) {
-        // 요청 데이터 로깅 (실제 구현에서는 서비스로 전달)
-        System.out.println("직원 신규 등록 요청: " + requestDto);
-
-        return ResponseEntity.ok(ApiResponse.success(
-            null, "직원 등록이 완료되었습니다.", HttpStatus.OK
-        ));
+        return hrmService.createInternalUser(requestDto)
+                .map(response -> ResponseEntity.ok(
+                        ApiResponse.success(
+                                response,
+                                "직원 등록이 완료 되었습니다.",
+                                HttpStatus.OK
+                        )
+                ))
+                .onErrorResume(error -> {
+                    ApiResponse<UserCreateResponseDto> failResponse = ApiResponse.fail(
+                            "직원 등록 중 오류가 발생했습니다.",
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            error.getMessage()
+                    );
+                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(failResponse));
+                });
     }
 
     @PatchMapping("/employee/{employeeId}")

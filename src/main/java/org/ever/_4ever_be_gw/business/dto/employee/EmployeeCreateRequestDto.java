@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+
+// 내부 직원 등록 dto
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

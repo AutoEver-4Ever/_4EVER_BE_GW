@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.alarm.dto.request.AlarmServerRequestDto;
 import org.ever._4ever_be_gw.alarm.dto.response.AlarmServerResponseDto;
 import org.ever._4ever_be_gw.alarm.service.AlarmHttpService;
+import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,7 +29,7 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
             request.getSortBy(), request.getOrder(), request.getSource(), request.getPage(),
             request.getSize());
 
-        WebClient alarmWebClient = webClientProvider.getWebClient("alarm");
+        WebClient alarmWebClient = webClientProvider.getWebClient(ApiClientKey.ALARM);
 
         return alarmWebClient.get()
             .uri(uriBuilder -> uriBuilder.path("/notifications/list/{userId}")
@@ -60,7 +61,7 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
         AlarmServerRequestDto.NotificationCountRequest request) {
         log.debug("알림 갯수 조회 요청 - status: {}", request.getStatus());
 
-        WebClient alarmWebClient = webClientProvider.getWebClient("alarm");
+        WebClient alarmWebClient = webClientProvider.getWebClient(ApiClientKey.ALARM);
 
         return alarmWebClient.get()
             .uri(uriBuilder -> uriBuilder.path("/notifications/count/{userId}")
@@ -87,7 +88,7 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
         AlarmServerRequestDto.NotificationMarkReadRequest request) {
         log.debug("알림 읽음 처리 요청 - notificationIds: {}", request.getNotificationIds());
 
-        WebClient alarmWebClient = webClientProvider.getWebClient("alarm");
+        WebClient alarmWebClient = webClientProvider.getWebClient(ApiClientKey.ALARM);
 
         return alarmWebClient.patch()
             .uri("/notifications/list/read")
@@ -110,7 +111,7 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
     public Mono<AlarmServerResponseDto.NotificationMarkReadResponse> markReadAll() {
         log.debug("전체 알림 읽음 처리 요청");
 
-        WebClient alarmWebClient = webClientProvider.getWebClient("alarm");
+        WebClient alarmWebClient = webClientProvider.getWebClient(ApiClientKey.ALARM);
 
         return alarmWebClient.patch()
             .uri("/notifications/all/read")
@@ -133,7 +134,7 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
         AlarmServerRequestDto.NotificationMarkReadOneRequest request) {
         log.debug("단일 알림 읽음 처리 요청 - notificationId: {}", request.getNotificationId());
 
-        WebClient alarmWebClient = webClientProvider.getWebClient("alarm");
+        WebClient alarmWebClient = webClientProvider.getWebClient(ApiClientKey.ALARM);
 
         return alarmWebClient.patch()
             .uri("/notifications/{notificationId}/read", request.getNotificationId())

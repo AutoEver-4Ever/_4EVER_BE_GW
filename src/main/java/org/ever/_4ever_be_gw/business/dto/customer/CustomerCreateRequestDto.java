@@ -2,6 +2,7 @@ package org.ever._4ever_be_gw.business.dto.customer;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.ever._4ever_be_gw.common.dto.ManagerDto;
 
 @Getter
 @Setter
@@ -14,14 +15,6 @@ public class CustomerCreateRequestDto {
     private String zipCode;         // 우편번호
     private String address;         // 고객사 주소
     private String detailAddress;   // 고객사 상세 주소
-    private Manager manager;        // 고객사의 담당자 정보
+    private ManagerDto manager;        // 고객사의 담당자 정보
     private String note;            // 비고
-
-    @Getter
-    @Setter
-    public static class Manager {
-        private String name;        // 담당자 이름
-        private String mobile;      // 담당자 전화번호
-        private String email;       // 이메일
-    }
 }

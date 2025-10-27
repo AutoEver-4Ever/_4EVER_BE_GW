@@ -5,38 +5,30 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
-import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
+import org.ever._4ever_be_gw.common.exception.ValidationException;
+import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierUpdateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.mm.supplier.SupplierCreateRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.po.MmPurchaseOrderRejectRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.po.PoDetailDto;
 import org.ever._4ever_be_gw.scmpp.dto.po.PoItemDto;
+import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionCreateRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionRejectRequestDto;
+import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionUpdateRequestDto;
+import org.ever._4ever_be_gw.scmpp.service.MmService;
 import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionCreateRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionUpdateRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionRejectRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierCreateRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierUpdateRequestDto;
 
 @RestController
 @RequestMapping("/scm-pp/mm")
@@ -46,9 +38,11 @@ public class MmController {
     private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
 
     private final MmStatisticsService mmStatisticsService;
+    private final MmService mmService;
 
-    public MmController(MmStatisticsService mmStatisticsService) {
+    public MmController(MmStatisticsService mmStatisticsService, MmService mmService) {
         this.mmStatisticsService = mmStatisticsService;
+        this.mmService = mmService;
     }
 
     @GetMapping("/statistics")
@@ -1143,79 +1137,34 @@ public class MmController {
 
     @PostMapping("/supplier")
     @Operation(
-            summary = "공급업체 등록",
-            description = "신규 공급업체를 등록하고 ERP 내부용 ID/코드를 발급하며 등록된 이메일로 임시 로그인 정보를 발송합니다.",
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "등록 성공",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "success", value = "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"공급업체가 정상적으로 등록되었습니다.\",\n  \"data\": {\n    \"supplierId\": 101,\n    \"vendorCode\": \"SUP-2025-0001\",\n    \"companyName\": \"대한철강\",\n    \"managerName\": \"홍길동\",\n    \"managerEmail\": \"contact@koreasteel.com\",\n    \"createdAt\": \"2025-10-13T10:00:00Z\"\n  }\n}"))
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "401",
-                            description = "인증 필요",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "unauthorized", value = "{ \"status\": 401, \"success\": false, \"message\": \"인증이 필요합니다.\" }"))
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "403",
-                            description = "권한 없음",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "forbidden", value = "{ \"status\": 403, \"success\": false, \"message\": \"공급업체 등록 권한이 없습니다.\" }"))
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "422",
-                            description = "검증 실패",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "validation_failed", value = "{\n  \"status\": 422,\n  \"success\": false,\n  \"message\": \"요청 파라미터 검증에 실패했습니다.\",\n  \"errors\": [\n    { \"field\": \"supplierName\", \"reason\": \"필수 입력값입니다.\" },\n    { \"field\": \"supplierEmail\", \"reason\": \"올바른 이메일 형식이 아닙니다.\" }\n  ]\n}"))
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "500",
-                            description = "서버 오류",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "server_error", value = "{ \"status\": 500, \"success\": false, \"message\": \"공급업체 등록 처리 중 오류가 발생했습니다.\" }"))
-                    )
-            }
+            summary = "공급사 등록",
+            description = "신규 공급사를 등록하고 공급사의 담당자의 계정 정보를 생성합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> createVendor(
+    public Mono<ResponseEntity<ApiResponse<SupplierCreateRequestDto>>> createVendor(
 //            @RequestHeader(value = "Authorization", required = false) String authorization,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(value = "{\n  \"supplierInfo\": {\n    \"supplierName\": \"대한철강\",\n    \"supplierEmail\": \"contact@koreasteel.com\",\n    \"supplierBaseAddress\": \"서울시 강남구 테헤란로 123\",\n    \"supplierDetailAddress\": \"B동 2층\",\n    \"category\": \"원자재\",\n    \"deliveryLeadTime\": 3\n  },\n  \"managerInfo\": {\n    \"managerName\": \"홍길동\",\n    \"managerPhone\": \"02-1234-5678\",\n    \"managerEmail\": \"contact@koreasteel.com\"\n  },\n  \"materialList\": [\n    { \"materialName\": \"철강재\", \"uomCode\": \"KG\", \"unitPrice\": 1500 },\n    { \"materialName\": \"스테인리스\", \"uomCode\": \"KG\", \"unitPrice\": 2500 },\n    { \"materialName\": \"알루미늄\", \"uomCode\": \"KG\", \"unitPrice\": 2200 }\n  ]\n}"))
             )
-            @RequestBody MmSupplierCreateRequestDto request
+            @RequestBody SupplierCreateRequestDto requestDto
     ) {
-//        if (authorization == null || authorization.isBlank()) {
-//            throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
-//        }
-//
-//        String token = authorization.trim().toUpperCase(Locale.ROOT);
-//        // 오류 모킹을 우선 처리
-//        if (token.contains("ERROR")) {
-//            throw new BusinessException(ErrorCode.VENDOR_CREATE_PROCESSING_ERROR);
-//        }
-//        if (!token.contains("PR_APPROVER") && !token.contains("PURCHASING_MANAGER") && !token.contains("ADMIN")) {
-//            throw new BusinessException(ErrorCode.VENDOR_CREATE_FORBIDDEN);
-//        }
-
-        // 목업에서는 항상 성공 응답 반환
-        var sInfo = (request == null) ? null : request.getSupplierInfo();
-        var mInfo = (request == null) ? null : request.getManagerInfo();
-
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("supplierId", String.valueOf(101L));
-        data.put("supplierNumber", "SUP-2025-0001");
-        data.put("companyName", sInfo.getSupplierName());
-        String managerName = (mInfo != null && mInfo.getManagerName() != null) ? mInfo.getManagerName() : null;
-        data.put("managerName", managerName);
-        // managerEmail이 없으면 supplierEmail로 대체
-        String managerEmail = (mInfo != null && mInfo.getManagerEmail() != null && !mInfo.getManagerEmail().isBlank()) ? mInfo.getManagerEmail() : sInfo.getSupplierEmail();
-        data.put("managerEmail", managerEmail);
-        data.put("createdAt", java.time.Instant.parse("2025-10-13T10:00:00Z"));
-
-        return ResponseEntity.ok(ApiResponse.success(data, "공급업체가 정상적으로 등록되었습니다.", HttpStatus.OK));
+        return mmService.createSupplier(requestDto)
+                .map(response -> ResponseEntity
+                        .status(HttpStatus.CREATED)
+                        .body(ApiResponse.success(
+                                response,
+                                "공급사 등록 및 담당자 계정이 생성되었습니다.",
+                                HttpStatus.CREATED
+                        )))
+                .onErrorResume(error -> {
+                    ApiResponse<SupplierCreateRequestDto> fail = ApiResponse.fail(
+                            "공급사 등록 및 담당자 계정 생성 중 오류가 발생했습니다.",
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            error.getMessage()
+                    );
+                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fail));
+                });
     }
 
     @GetMapping("/supplier")
@@ -1285,7 +1234,7 @@ public class MmController {
             throw new BusinessException(ErrorCode.VENDOR_FORBIDDEN);
         }
 
-        java.util.List<org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierListResponseDto> allVendors = new java.util.ArrayList<>();
+        java.util.List<org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierListResponseDto> allVendors = new java.util.ArrayList<>();
         String[] names = {"한국철강","대한전자부품","글로벌화학","한빛소재","스마트로지스틱스","태성테크","광명산업","한성전자","그린케미칼","아주금속"};
         String[] categories = {"MATERIAL","PARTS","MATERIAL","PARTS","ETC","PARTS","MATERIAL","PARTS","MATERIAL","MATERIAL"};
         int[] deliveryLeadDays = {3,1,5,2,0,7,6,2,9,10};
@@ -1308,9 +1257,9 @@ public class MmController {
                     || catParam.equalsIgnoreCase(cat);
             if (!statusOk || !categoryOk) continue;
 
-            var dto = new org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierListResponseDto();
+            var dto = new org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierListResponseDto();
             dto.setStatusCode(st);
-            var sInfo = new org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierListResponseDto.SupplierInfo();
+            var sInfo = new org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierListResponseDto.SupplierInfo();
             sInfo.setSupplierId(String.valueOf(1 + i));
             sInfo.setSupplierName(names[idx]);
             sInfo.setSupplierCode(String.format("SUP%03d", idx + 1));
@@ -1330,7 +1279,7 @@ public class MmController {
         int s = (size == null || size < 1) ? 10 : size;
         int fromIdx = Math.min(pageIndex * s, total);
         int toIdx = Math.min(fromIdx + s, total);
-        java.util.List<org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierListResponseDto> content = allVendors.subList(fromIdx, toIdx);
+        java.util.List<org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierListResponseDto> content = allVendors.subList(fromIdx, toIdx);
 
         org.ever._4ever_be_gw.common.dto.PageDto pageDto = org.ever._4ever_be_gw.common.dto.PageDto.builder()
                 .number(pageIndex)
@@ -1416,10 +1365,10 @@ public class MmController {
         String[] emails = {"contact@koreasteel.com","sales@dahanelec.com","info@globalchem.co.kr","info@hanbits.com","service@smartlogistics.kr","sales@taesung.com","contact@kwangmyung.co.kr","info@hanseong.com","sales@greenchem.co.kr","contact@ajumetal.co.kr"};
         String[] statusCodeArr = {"ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE","ACTIVE","INACTIVE","ACTIVE"};
 
-        var dto = new org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierDetailResponseDto();
+        var dto = new org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierDetailResponseDto();
         String st = statusCodeArr[idx];
         dto.setStatusCode(st);
-        var sInfo = new org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierDetailResponseDto.SupplierInfo();
+        var sInfo = new org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierDetailResponseDto.SupplierInfo();
         sInfo.setSupplierId(String.valueOf(supplierId));
         sInfo.setSupplierCode(String.format("SUP%03d", idx + 1));
         sInfo.setSupplierName(names[idx]);
@@ -1432,7 +1381,7 @@ public class MmController {
         sInfo.setDeliveryLeadTime(leadDays[idx]);
         dto.setSupplierInfo(sInfo);
 
-        var mInfo = new org.ever._4ever_be_gw.scmpp.dto.supplier.MmSupplierDetailResponseDto.ManagerInfo();
+        var mInfo = new org.ever._4ever_be_gw.scmpp.dto.mm.supplier.MmSupplierDetailResponseDto.ManagerInfo();
         mInfo.setManagerName("담당자" + (idx + 1));
         mInfo.setManagerPhone(phones[idx]);
         mInfo.setManagerEmail(emails[idx]);
