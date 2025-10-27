@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateStockTransferDto {
-    private Long fromWarehouseId;
-    private Long toWarehouseId;
-    private Long stockId;
+    private String fromWarehouseId;
+    private String toWarehouseId;
+    private String stockId;
     private Integer stockQuantity;
     private String uomName;
     private String reason;

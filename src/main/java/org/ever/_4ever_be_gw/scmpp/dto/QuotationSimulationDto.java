@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class QuotationSimulationDto {
     private String quotationId;
-    private String quotationCode;
+    private String quotationNumber;
     private String customerCompanyId;
     private String customerCompanyName;
     private String productId;
@@ -29,7 +29,8 @@ public class QuotationSimulationDto {
     @AllArgsConstructor
     public static class SimulationResultDto {
         private String status; // FAIL, PENDING, PASS
-        private Integer availableQty;
+        private Integer availableQuantity;
+        private Integer shortageQuantity;
         private String suggestedDueDate;
         private String generatedAt;
     }

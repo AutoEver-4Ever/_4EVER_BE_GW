@@ -19,7 +19,7 @@ public class WarehouseStatisticDto {
     @AllArgsConstructor
     public static class TotalWarehouseDto {
         private String value;
-        private int comparedPrev;
+        private int delta_rate;
     }
     
     @Data
@@ -28,6 +28,6 @@ public class WarehouseStatisticDto {
     @AllArgsConstructor
     public static class InOperationWarehouseDto {
         private int value;
-        private int comparedPrev;
+        private int delta_rate;
     }
 }
