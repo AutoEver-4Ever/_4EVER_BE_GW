@@ -70,12 +70,18 @@ public class AlarmController {
         description = "알림 목록을 페이징/정렬/필터와 함께 조회합니다."
     )
     public Mono<ResponseEntity<ApiResponse<PageResponseDto<NotificationListResponseDto>>>> getNotificationList(
-        @AllowedValues(allowedValues = {
-            "createdAt"}, ignoreCase = true, message = "sortBy는 createdAt만 허용됩니다.")
+        @AllowedValues(
+            allowedValues = {"createdAt"},
+            ignoreCase = true,
+            message = "sortBy는 createdAt만 허용됩니다."
+        )
         @RequestParam(name = "sortBy", required = false, defaultValue = "createdAt")
         String sortBy,
-        @AllowedValues(allowedValues = {"asc",
-            "desc"}, ignoreCase = true, message = "order는 asc 또는 desc만 허용됩니다.")
+        @AllowedValues(
+            allowedValues = {"asc", "desc"},
+            ignoreCase = true,
+            message = "order는 asc 또는 desc만 허용됩니다."
+        )
         @RequestParam(name = "order", required = false, defaultValue = "desc")
         String order,
         @AllowedValues(
