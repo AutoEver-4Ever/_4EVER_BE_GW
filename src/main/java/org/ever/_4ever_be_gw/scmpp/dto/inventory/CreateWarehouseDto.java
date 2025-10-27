@@ -14,4 +14,5 @@ public class CreateWarehouseDto {
     private String warehouseType;
     private String location;
     private String managerId;
+    private String note;
 }

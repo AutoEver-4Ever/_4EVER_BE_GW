@@ -31,6 +31,7 @@ public class WarehouseDetailDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class WarehouseManagerDto {
+        private String managerId;
         private String managerName;
         private String managerPhoneNumber;
         private String managerEmail;
