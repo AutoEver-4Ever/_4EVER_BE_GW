@@ -159,7 +159,8 @@ public class AlarmController {
     // ===== 알림 갯수 조회 =====
     @GetMapping("/count")
     @Operation(summary = "알림 갯수 조회", description = "상태별(READ/UNREAD) 알림 갯수를 조회합니다.")
-    public Mono<ResponseEntity<ApiResponse<NotificationCountResponseDto>>> getNotificationCount(
+//    public Mono<ResponseEntity<ApiResponse<NotificationCountResponseDto>>> getNotificationCount(
+    public Mono<ResponseEntity<String>> getNotificationCount(
         @AllowedValues(
             allowedValues = {"READ", "UNREAD"},
             ignoreCase = true,
@@ -176,24 +177,35 @@ public class AlarmController {
 
         return alarmHttpService.getNotificationCount(request)
             .map(serverResponse -> {
-                NotificationCountResponseDto clientResponse = AlarmDtoConverter.toClientResponse(
-                    serverResponse);
-                String msg =
-                    (status == null || status.isBlank()) ? "전체 알림 갯수를 성공적으로 조회했습니다."
-                        : ("UNREAD".equalsIgnoreCase(status) ? "안 읽은 알림 갯수를 성공적으로 조회했습니다."
-                            : "읽은 알림 갯수를 성공적으로 조회했습니다.");
-                return ResponseEntity.ok(ApiResponse.success(clientResponse, msg, HttpStatus.OK));
+                NotificationCountResponseDto clientResponse = AlarmDtoConverter
+                    .toClientResponse(serverResponse);
+                String msg = (status == null || status.isBlank())
+                    ? "전체 알림 갯수를 성공적으로 조회했습니다."
+                    : ("UNREAD".equalsIgnoreCase(status)
+                        ? "안 읽은 알림 갯수를 성공적으로 조회했습니다."
+                        : "읽은 알림 갯수를 성공적으로 조회했습니다.");
+                ApiResponse.success(clientResponse, msg, HttpStatus.OK);
+                log.info("[AlarmController] 알림 갯수 조회 성공: status={}, response={}",
+                    status, serverResponse);
+                // TODO 삭제됨 다시 작성
+                return ResponseEntity.ok("성공");
+            })
+            .doOnSuccess(response -> {
+                log.info("[AlarmController] 알림 갯수 조회 성공: status={}, response={}",
+                    status, response.getBody());
             })
             .onErrorResume(error -> {
                 // 외부 서버 오류 시 목업 데이터 반환 (fallback)
-                NotificationCountResponseDto fallbackResponse = createFallbackNotificationCount(
-                    status);
+                NotificationCountResponseDto fallbackResponse =
+                    createFallbackNotificationCount(status);
                 String msg = (status == null || status.isBlank())
                     ? "전체 알림 갯수를 성공적으로 조회했습니다. (목업 데이터)"
-                    : ("UNREAD".equalsIgnoreCase(status) ? "안 읽은 알림 갯수를 성공적으로 조회했습니다. (목업 데이터)"
+                    : ("UNREAD".equalsIgnoreCase(status)
+                        ? "안 읽은 알림 갯수를 성공적으로 조회했습니다. (목업 데이터)"
                         : "읽은 알림 갯수를 성공적으로 조회했습니다. (목업 데이터)");
-                return Mono.just(
-                    ResponseEntity.ok(ApiResponse.success(fallbackResponse, msg, HttpStatus.OK)));
+//                return Mono.just(
+//                    ResponseEntity.ok(ApiResponse.success(fallbackResponse, msg, HttpStatus.OK)));
+                return Mono.just(ResponseEntity.ok("성공 (목업 데이터)"));
             });
     }
 
