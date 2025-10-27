@@ -3,6 +3,7 @@ package org.ever._4ever_be_gw.alarm.util;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.alarm.dto.request.AlarmServerRequestDto;
 import org.ever._4ever_be_gw.alarm.dto.response.AlarmServerResponseDto;
 import org.ever._4ever_be_gw.alarm.dto.response.NotificationCountResponseDto;
@@ -11,6 +12,7 @@ import org.ever._4ever_be_gw.alarm.dto.response.NotificationReadResponseDto;
 import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.dto.pagable.PageResponseDto;
 
+@Slf4j
 public class AlarmDtoConverter {
 
     /**
@@ -94,9 +96,9 @@ public class AlarmDtoConverter {
         PageDto pageDto = PageDto.builder()
             .number(pageInfo.getNumber())
             .size(pageInfo.getSize())
-            .totalElements(pageInfo.getTotalElements().intValue())
+            .totalElements(pageInfo.getTotalElements())
             .totalPages(pageInfo.getTotalPages())
-            .hasNext(pageInfo.getHasNext())
+            .hasNext(pageInfo.isHasNext())
             .build();
 
         return PageResponseDto.<NotificationListResponseDto>builder()
@@ -111,9 +113,14 @@ public class AlarmDtoConverter {
     public static NotificationCountResponseDto toClientResponse(
         AlarmServerResponseDto.NotificationCountResponse serverResponse
     ) {
-        return NotificationCountResponseDto.builder()
+        log.debug("변환전 - toClientResponse: dto={}", serverResponse);
+
+        NotificationCountResponseDto dto = NotificationCountResponseDto.builder()
             .count(serverResponse.getCount())
             .build();
+
+        log.debug("변환후 - NotificationCountResponseDto:  dto={}", dto);
+        return dto;
     }
 
     /**
