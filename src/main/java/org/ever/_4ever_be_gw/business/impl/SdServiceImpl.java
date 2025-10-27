@@ -35,7 +35,7 @@ public class SdServiceImpl implements SdService {
                 .onErrorResume(WebClientResponseException.class, ex -> {
                     log.error("[ERROR] 비즈니스 서버 오류 - status: {}, body: {}",
                             ex.getStatusCode(), ex.getResponseBodyAsString());
-                    return Mono.error(new RuntimeException("고객사 등록 중 오류가 발생했습니다. : " + ex.getMessage()));
+                    return Mono.error(new RuntimeException("고객사 등록 및 담당자 생성 중 오류가 발생했습니다. : " + ex.getMessage()));
                 });
     }
 }
