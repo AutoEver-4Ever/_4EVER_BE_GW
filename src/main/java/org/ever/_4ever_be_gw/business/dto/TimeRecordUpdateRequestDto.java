@@ -15,11 +15,11 @@ import java.time.LocalDateTime;
 @ToString
 public class TimeRecordUpdateRequestDto {
 
-    private LocalDateTime inTime;
+    private LocalDateTime checkInTime;
 
-    private LocalDateTime outTime;
+    private LocalDateTime checkOutTime;
 
     @Pattern(regexp = "^(ON_TIME|LATE|LEAVE)$", message = "출퇴근 상태는 ON_TIME, LATE, LEAVE 중 하나여야 합니다")
-    private String attendanceStatus;
+    private String statusCode;
 
 }

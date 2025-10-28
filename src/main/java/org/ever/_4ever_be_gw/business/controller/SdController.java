@@ -13,6 +13,7 @@ import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckItemDto;
 import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckItemRequestDto;
 import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckRequestDto;
 import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckResponseDto;
+import org.ever._4ever_be_gw.business.service.SdService;
 import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
@@ -25,6 +26,7 @@ import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -237,6 +239,12 @@ import java.util.stream.Collectors;
                     .build();
             MOCK_SO_DETAIL.put(soId, detailDto);
         }
+    }
+
+    private final SdService sdService;
+
+    public SdController(SdService sdService) {
+        this.sdService = sdService;
     }
 
     // SD 통계 조회
@@ -589,45 +597,45 @@ import java.util.stream.Collectors;
     @PostMapping("/customers")
     @Operation(
             summary = "고객사 등록",
-            description = "고객사 정보를 신규 등록합니다."
+            description = "고객사 정보를 신규 등록하며, 고객사의 담당자 정보를 통해 담당자(사용자)가 생성됩니다."
     )
-    public ResponseEntity<ApiResponse<CustomerCreateResponseDto>> createCustomer(
+    public Mono<ResponseEntity<ApiResponse<CustomerCreateResponseDto>>> createCustomer(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(name = "request", value = "{\n  \"companyName\": \"삼성전자\",\n  \"businessNumber\": \"123-45-67890\",\n  \"ceoName\": \"이재용\",\n  \"contactPhone\": \"02-1234-5678\",\n  \"contactEmail\": \"contact@samsung.com\",\n  \"zipCode\": \"06236\",\n  \"address\": \"서울시 강남구 테헤란로 123\",\n  \"detailAddress\": \"4층\",\n  \"manager\": {\n    \"name\": \"김철수\",\n    \"mobile\": \"010-1234-5678\",\n    \"email\": \"kim@samsung.com\"\n  },\n  \"note\": \"주요 고객사, 정기 거래처\"\n}"))
+                            examples = @ExampleObject(name = "request",
+                                    value = "{\n  \"companyName\": \"삼성전자\"," +
+                                            "\n  \"businessNumber\": \"123-45-67890\"," +
+                                            "\n  \"ceoName\": \"이재용\"," +
+                                            "\n  \"contactPhone\": \"02-1234-5678\"," +
+                                            "\n  \"contactEmail\": \"contact@samsung.com\"," +
+                                            "\n  \"zipCode\": \"06236\"," +
+                                            "\n  \"address\": \"서울시 강남구 테헤란로 123\"," +
+                                            "\n  \"detailAddress\": \"4층\"," +
+                                            "\n  \"manager\":" +
+                                            " {\n    \"name\": \"김철수\"," +
+                                              "\n    \"mobile\": \"010-1234-5678\"," +
+                                              "\n    \"email\": \"kim@samsung.com\"\n  }," +
+                                                "\n  \"note\": \"주요 고객사, 정기 거래처\"\n}"))
             )
-            @RequestBody CustomerCreateRequestDto request
+            @RequestBody CustomerCreateRequestDto requestDto
     ) {
-        // 성공 응답 DTO
-        String customerId = UuidV7.string();
-        String customerNumber = "CUS-" + customerId.substring(0, 6);
-        CustomerManagerDto managerDto = null;
-        if (request.getManager() != null) {
-            managerDto = CustomerManagerDto.builder()
-                    .managerName(request.getManager().getName())
-                    .managerPhone(request.getManager().getMobile())
-                    .managerEmail(request.getManager().getEmail())
-                    .build();
-        }
-
-        CustomerCreateResponseDto data = CustomerCreateResponseDto.builder()
-                .customerId(customerId)
-                .customerNumber(customerNumber)
-                .customerName(request.getCompanyName())
-                .ceoName(request.getCeoName())
-                .businessNumber(request.getBusinessNumber())
-                .contactPhone(request.getContactPhone())
-                .contactEmail(request.getContactEmail())
-                .zipCode(request.getZipCode())
-                .baseAddress(request.getAddress())
-                .detailAddress(request.getDetailAddress())
-                .manager(managerDto)
-                .note(request.getNote())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(data, "고객사가 등록되었습니다.", HttpStatus.CREATED));
+        return sdService.createCustomer(requestDto)
+                .map(response -> ResponseEntity
+                        .status(HttpStatus.CREATED)
+                        .body(ApiResponse.success(
+                                response,
+                                "고객사 등록 및 담당자 계정이 생성되었습니다.",
+                                HttpStatus.CREATED
+                        )))
+                .onErrorResume(error -> {
+                    ApiResponse<CustomerCreateResponseDto> fail = ApiResponse.fail(
+                            "고객사 등록 및 담당자 계정 생성 중 오류가 발생했습니다.",
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            error.getMessage()
+                    );
+                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fail));
+                });
     }
 
     @GetMapping("/customers")
