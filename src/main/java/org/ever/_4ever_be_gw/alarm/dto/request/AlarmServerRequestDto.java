@@ -56,4 +56,13 @@ public class AlarmServerRequestDto {
         private UUID userId;
         private String notificationId;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NotificationMarkReadAllRequest {
+
+        private UUID userId;
+    }
 }

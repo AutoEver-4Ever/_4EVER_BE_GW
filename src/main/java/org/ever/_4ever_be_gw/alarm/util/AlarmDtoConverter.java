@@ -70,6 +70,7 @@ public class AlarmDtoConverter {
         String notificationId
     ) {
         return AlarmServerRequestDto.NotificationMarkReadOneRequest.builder()
+            .userId(userId)
             .notificationId(notificationId)
             .build();
     }
