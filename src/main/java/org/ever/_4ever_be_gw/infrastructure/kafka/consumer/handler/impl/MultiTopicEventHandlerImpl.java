@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MultiTopicEventHandlerImpl implements MultiTopicEventHandler {
 
+    private final AlarmSendService alarmSendService;
+
     @Override
     public void handleUserEvent(UserEvent event) {
         // User 서비스에서 받은 이벤트 처리
@@ -47,11 +49,16 @@ public class MultiTopicEventHandlerImpl implements MultiTopicEventHandler {
 
     @Override
     public void handleAlarmEvent(AlarmEvent event) {
-        // Alarm 서비스에서 받은 이벤트 처리
-        log.debug("알림 이벤트 처리 완료 - Type: {}", event.getAlarmType());
+        log.info("알림 이벤트 수신 - UserId: {}, Title: {}, Message: {}",
+            event.getUserId(), event.getTitle(), event.getMessage());
 
-        // TODO: 실제 비즈니스 로직 구현
-        // 1. 알림 전송 확인
-        // 2. 알림 이력 저장
+        // SSE를 통해 알림 전송
+        alarmSendService.sendAlarmMessage(
+            event.getUserId(),
+            "새 알림이 도착했습니다.",
+            event
+        );
+
+        log.info("알림 이벤트 처리 완료 - UserId: {}", event.getUserId());
     }
 }
