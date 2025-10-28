@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.ever._4ever_be_gw.business.dto.*;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeCreateRequestDto;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeUpdateRequestDto;
-import org.ever._4ever_be_gw.business.dto.hrm.UserCreateResponseDto;
+import org.ever._4ever_be_gw.business.dto.hrm.CreateAuthUserResultDto;
 import org.ever._4ever_be_gw.business.service.HrmService;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
@@ -29,6 +29,7 @@ import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
+import org.ever._4ever_be_gw.common.exception.RemoteApiException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
 import org.springframework.http.HttpStatus;
@@ -106,25 +107,43 @@ public class HrmController {
         summary = "직원 신규 등록",
         description = "새로운 내부 직원을 등록합니다."
     )
-    public Mono<ResponseEntity<ApiResponse<UserCreateResponseDto>>> signupEmployee(
+    public Mono<ResponseEntity<ApiResponse<CreateAuthUserResultDto>>> signupEmployee(
         @Valid @RequestBody EmployeeCreateRequestDto requestDto
     ) {
         return hrmService.createInternalUser(requestDto)
-                .map(response -> ResponseEntity.ok(
-                        ApiResponse.success(
-                                response,
-                                "직원 등록이 완료 되었습니다.",
-                                HttpStatus.OK
-                        )
-                ))
-                .onErrorResume(error -> {
-                    ApiResponse<UserCreateResponseDto> failResponse = ApiResponse.fail(
-                            "직원 등록 중 오류가 발생했습니다.",
-                            HttpStatus.INTERNAL_SERVER_ERROR,
-                            error.getMessage()
-                    );
-                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(failResponse));
-                });
+            .map(remoteResponse -> {
+                HttpStatus httpStatus = HttpStatus.resolve(remoteResponse.getStatus());
+                if (httpStatus == null) {
+                    httpStatus = HttpStatus.OK;
+                }
+                String message = remoteResponse.getMessage() != null
+                    ? remoteResponse.getMessage()
+                    : "직원 등록이 완료 되었습니다.";
+
+                return ResponseEntity.status(httpStatus)
+                    .body(ApiResponse.success(
+                        remoteResponse.getData(),
+                        message,
+                        httpStatus
+                    ));
+            })
+            .onErrorResume(RemoteApiException.class, ex -> {
+                HttpStatus status = ex.getStatus() != null ? ex.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+                ApiResponse<CreateAuthUserResultDto> failResponse = ApiResponse.fail(
+                    ex.getMessage() != null ? ex.getMessage() : "직원 등록 중 오류가 발생했습니다.",
+                    status,
+                    ex.getErrors()
+                );
+                return Mono.just(ResponseEntity.status(status).body(failResponse));
+            })
+            .onErrorResume(error -> {
+                ApiResponse<CreateAuthUserResultDto> failResponse = ApiResponse.fail(
+                    "직원 등록 중 오류가 발생했습니다.",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    error.getMessage()
+                );
+                return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(failResponse));
+            });
     }
 
     @PatchMapping("/employee/{employeeId}")
