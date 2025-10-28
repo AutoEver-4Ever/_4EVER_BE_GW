@@ -49,16 +49,16 @@ public class MultiTopicEventHandlerImpl implements MultiTopicEventHandler {
 
     @Override
     public void handleAlarmEvent(AlarmEvent event) {
-        log.info("알림 이벤트 수신 - UserId: {}, Title: {}, Message: {}",
-            event.getUserId(), event.getTitle(), event.getMessage());
+        log.info("알림 이벤트 수신 - eventId: {}, Title: {}, Message: {}",
+            event.getEventId(), event.getTitle(), event.getMessage());
 
         // SSE를 통해 알림 전송
-        alarmSendService.sendAlarmMessage(
-            event.getUserId(),
-            "새 알림이 도착했습니다.",
-            event
-        );
+//        alarmSendService.sendAlarmMessage(
+//            event.getUserId(),
+//            "새 알림이 도착했습니다.",
+//            event
+//        );
 
-        log.info("알림 이벤트 처리 완료 - UserId: {}", event.getUserId());
+        log.info("알림 이벤트 처리 완료 - eventId: {}", event.getEventId());
     }
 }
