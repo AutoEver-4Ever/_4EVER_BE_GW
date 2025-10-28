@@ -1,18 +1,24 @@
 package org.ever._4ever_be_gw.infrastructure.kafka.consumer;
 
+import static org.ever._4ever_be_gw.infrastructure.kafka.config.KafkaTopicConfig.ALARM_EVENT_TOPIC;
+import static org.ever._4ever_be_gw.infrastructure.kafka.config.KafkaTopicConfig.BUSINESS_EVENT_TOPIC;
+import static org.ever._4ever_be_gw.infrastructure.kafka.config.KafkaTopicConfig.SCM_EVENT_TOPIC;
+import static org.ever._4ever_be_gw.infrastructure.kafka.config.KafkaTopicConfig.USER_EVENT_TOPIC;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.infrastructure.kafka.consumer.handler.MultiTopicEventHandler;
-import org.ever._4ever_be_gw.infrastructure.kafka.event.*;
+import org.ever.event.AlarmEvent;
+import org.ever.event.BusinessEvent;
+import org.ever.event.ScmEvent;
+import org.ever.event.UserEvent;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
-
-import static org.ever._4ever_be_gw.infrastructure.kafka.config.KafkaTopicConfig.*;
 
 @Slf4j
 @Component
@@ -83,7 +89,10 @@ public class MultiTopicEventListener {
     private void handleScmEvent(String message) {
         try {
             ScmEvent event = objectMapper.readValue(message, ScmEvent.class);
-            log.info("SCM 이벤트 처리 중 - OrderId: {}, Action: {}", event.getOrderId(), event.getAction());
+            log.info(
+                "SCM 이벤트 처리 중 - OrderId: {}, Action: {}",
+                event.getOrderId(), event.getAction()
+            );
 
             // SCM 이벤트 처리 로직
             multiTopicEventHandler.handleScmEvent(event);
