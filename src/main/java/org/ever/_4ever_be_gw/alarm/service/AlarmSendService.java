@@ -1,5 +1,6 @@
 package org.ever._4ever_be_gw.alarm.service;
 
+import org.ever.event.AlarmSentEvent;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 public interface AlarmSendService {
@@ -11,5 +12,5 @@ public interface AlarmSendService {
     void removeEmitter(String userId);
 
     // 사용자별 알림 메시지 전송
-    void sendAlarmMessage(String userId, String message, Object data);
+    void sendAlarmMessage(AlarmSentEvent event);
 }
