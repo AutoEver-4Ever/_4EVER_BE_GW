@@ -1,11 +1,10 @@
-package org.ever._4ever_be_gw.infrastructure.kafka.event;
+package org.ever.event;
 
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.time.LocalDateTime;
 
 @Getter
 @SuperBuilder
