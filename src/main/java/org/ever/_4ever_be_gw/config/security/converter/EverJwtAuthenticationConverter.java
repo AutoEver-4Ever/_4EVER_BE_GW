@@ -1,17 +1,13 @@
 package org.ever._4ever_be_gw.config.security.converter;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.ever._4ever_be_gw.config.security.principal.EverJwtAuthenticationToken;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 public class EverJwtAuthenticationConverter implements Converter<Jwt, EverJwtAuthenticationToken> {
@@ -19,7 +15,7 @@ public class EverJwtAuthenticationConverter implements Converter<Jwt, EverJwtAut
     @Override
     public EverJwtAuthenticationToken convert(Jwt jwt) {
         EverUserPrincipal principal = buildPrincipal(jwt);
-        Collection<GrantedAuthority> authorities = convertAuthorities(jwt, principal);
+        Collection<GrantedAuthority> authorities = convertAuthorities(principal);
         return new EverJwtAuthenticationToken(jwt, authorities, principal);
     }
 
@@ -28,8 +24,6 @@ public class EverJwtAuthenticationConverter implements Converter<Jwt, EverJwtAut
             jwt.getClaimAsString("login_email"),
             jwt.getSubject()
         );
-
-        Set<String> authorities = new LinkedHashSet<>(getAuthorityClaims(jwt));
 
         return EverUserPrincipal.builder()
             .userId(firstNonBlank(
@@ -45,30 +39,16 @@ public class EverJwtAuthenticationConverter implements Converter<Jwt, EverJwtAut
                 jwt.getClaimAsString("user_type"),
                 jwt.getClaimAsString("userType")
             ))
-            .authorities(authorities)
             .issuedAt(jwt.getIssuedAt())
             .expiresAt(jwt.getExpiresAt())
             .build();
     }
 
-    private Collection<GrantedAuthority> convertAuthorities(Jwt jwt, EverUserPrincipal principal) {
-        Set<String> rawAuthorities = new LinkedHashSet<>(getAuthorityClaims(jwt));
-        if (rawAuthorities.isEmpty() && StringUtils.hasText(principal.getUserRole())) {
-            rawAuthorities.add(principal.getUserRole());
-        }
-
-        return rawAuthorities.stream()
-            .filter(StringUtils::hasText)
-            .map(SimpleGrantedAuthority::new)
-            .collect(Collectors.toUnmodifiableSet());
-    }
-
-    private List<String> getAuthorityClaims(Jwt jwt) {
-        List<String> authorities = jwt.getClaimAsStringList("authorities");
-        if (CollectionUtils.isEmpty(authorities)) {
+    private Collection<GrantedAuthority> convertAuthorities(EverUserPrincipal principal) {
+        if (!StringUtils.hasText(principal.getUserRole())) {
             return List.of();
         }
-        return authorities;
+        return List.of(new SimpleGrantedAuthority(principal.getUserRole()));
     }
 
     private String firstNonBlank(String... values) {
