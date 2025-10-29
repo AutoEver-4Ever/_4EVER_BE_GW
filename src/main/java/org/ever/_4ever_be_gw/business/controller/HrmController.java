@@ -20,7 +20,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.ever._4ever_be_gw.business.dto.*;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeCreateRequestDto;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeUpdateRequestDto;
-import org.ever._4ever_be_gw.business.dto.hrm.UserCreateResponseDto;
+import org.ever._4ever_be_gw.business.dto.hrm.CreateAuthUserResultDto;
 import org.ever._4ever_be_gw.business.service.HrmHttpService;
 import org.ever._4ever_be_gw.business.service.HrmService;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
@@ -67,19 +67,19 @@ public class HrmController {
         summary = "직원 신규 등록",
         description = "새로운 내부 직원을 등록합니다."
     )
-    public Mono<ResponseEntity<ApiResponse<UserCreateResponseDto>>> signupEmployee(
+    public Mono<ResponseEntity<ApiResponse<CreateAuthUserResultDto>>> signupEmployee(
         @Valid @RequestBody EmployeeCreateRequestDto requestDto
     ) {
         return hrmService.createInternalUser(requestDto)
                 .map(response -> ResponseEntity.ok(
                         ApiResponse.success(
-                                response,
+                                response.getData(),
                                 "직원 등록이 완료 되었습니다.",
                                 HttpStatus.OK
                         )
                 ))
                 .onErrorResume(error -> {
-                    ApiResponse<UserCreateResponseDto> failResponse = ApiResponse.fail(
+                    ApiResponse<CreateAuthUserResultDto> failResponse = ApiResponse.fail(
                             "직원 등록 중 오류가 발생했습니다.",
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             error.getMessage()
