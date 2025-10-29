@@ -307,6 +307,84 @@ public class HrmHttpServiceImpl implements HrmHttpService {
     }
 
     @Override
+    public ResponseEntity<ApiResponse<Object>> getEmployeeWithTrainingByInternelUserId(String internelUserId) {
+        log.debug("InternelUser ID로 직원 정보 및 교육 이력 조회 요청 - internelUserId: {}", internelUserId);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/employees/{internelUserId}", internelUserId)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("InternelUser ID로 직원 정보 및 교육 이력 조회 성공 - internelUserId: {}", internelUserId);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("InternelUser ID로 직원 정보 및 교육 이력 조회", ex);
+        } catch (Exception e) {
+            log.error("InternelUser ID로 직원 정보 및 교육 이력 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("InternelUser ID로 직원 정보 및 교육 이력 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getAvailableTrainingsByInternelUserId(String internelUserId) {
+        log.debug("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 요청 - internelUserId: {}", internelUserId);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/employees/{internelUserId}/available-trainings", internelUserId)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 성공 - internelUserId: {}", internelUserId);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getCustomerUserDetailByUserId(String customerUserId) {
+        log.debug("CustomerUser ID로 고객 사용자 상세 정보 조회 요청 - customerUserId: {}", customerUserId);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/customers/by-customer-user/{customerUserId}", customerUserId)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("CustomerUser ID로 고객 사용자 상세 정보 조회 성공 - customerUserId: {}", customerUserId);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("CustomerUser ID로 고객 사용자 상세 정보 조회", ex);
+        } catch (Exception e) {
+            log.error("CustomerUser ID로 고객 사용자 상세 정보 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("CustomerUser ID로 고객 사용자 상세 정보 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
     public ResponseEntity<ApiResponse<Object>> updateEmployee(String employeeId, Map<String, Object> requestBody) {
         log.debug("직원 정보 수정 요청 - employeeId: {}, body: {}", employeeId, requestBody);
 
@@ -1131,13 +1209,13 @@ public class HrmHttpServiceImpl implements HrmHttpService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<Object>> checkIn(String employeeId) {
-        log.debug("출근 처리 요청 - employeeId: {}", employeeId);
+    public ResponseEntity<ApiResponse<Object>> checkIn(String internelUserId) {
+        log.debug("출근 처리 요청 - internelUserId: {}", internelUserId);
 
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-            Map<String, Object> requestBody = Map.of("employeeId", employeeId);
+            Map<String, Object> requestBody = Map.of("employeeId", internelUserId);
 
             ApiResponse<Object> response = businessClient.patch()
                     .uri("/hrm/attendance/check-in")
@@ -1146,7 +1224,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                     .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
                     .block();
 
-            log.info("출근 처리 성공 - employeeId: {}", employeeId);
+            log.info("출근 처리 성공 - internelUserId: {}", internelUserId);
             return ResponseEntity.ok(response);
 
         } catch (WebClientResponseException ex) {
@@ -1160,13 +1238,13 @@ public class HrmHttpServiceImpl implements HrmHttpService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<Object>> checkOut(String employeeId) {
-        log.debug("퇴근 처리 요청 - employeeId: {}", employeeId);
+    public ResponseEntity<ApiResponse<Object>> checkOut(String internelUserId) {
+        log.debug("퇴근 처리 요청 - internelUserId: {}", internelUserId);
 
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-            Map<String, Object> requestBody = Map.of("employeeId", employeeId);
+            Map<String, Object> requestBody = Map.of("employeeId", internelUserId);
 
             ApiResponse<Object> response = businessClient.patch()
                     .uri("/hrm/attendance/check-out")
@@ -1175,7 +1253,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                     .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
                     .block();
 
-            log.info("퇴근 처리 성공 - employeeId: {}", employeeId);
+            log.info("퇴근 처리 성공 - internelUserId: {}", internelUserId);
             return ResponseEntity.ok(response);
 
         } catch (WebClientResponseException ex) {
@@ -1184,6 +1262,90 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             log.error("퇴근 처리 중 예기치 않은 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     ApiResponse.fail("퇴근 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> checkInByInternelUserId(String internelUserId) {
+        log.debug("InternelUser ID로 출근 처리 요청 - internelUserId: {}", internelUserId);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            Map<String, Object> requestBody = Map.of("employeeId", internelUserId);
+
+            ApiResponse<Object> response = businessClient.patch()
+                    .uri("/hrm/attendance/check-in-by-internel-user")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("InternelUser ID로 출근 처리 성공 - internelUserId: {}", internelUserId);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("InternelUser ID로 출근 처리", ex);
+        } catch (Exception e) {
+            log.error("InternelUser ID로 출근 처리 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("InternelUser ID로 출근 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> checkOutByInternelUserId(String internelUserId) {
+        log.debug("InternelUser ID로 퇴근 처리 요청 - internelUserId: {}", internelUserId);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            Map<String, Object> requestBody = Map.of("employeeId", internelUserId);
+
+            ApiResponse<Object> response = businessClient.patch()
+                    .uri("/hrm/attendance/check-out-by-internel-user")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("InternelUser ID로 퇴근 처리 성공 - internelUserId: {}", internelUserId);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("InternelUser ID로 퇴근 처리", ex);
+        } catch (Exception e) {
+            log.error("InternelUser ID로 퇴근 처리 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("InternelUser ID로 퇴근 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getAttendanceRecordsByInternelUserId(String internelUserId) {
+        log.debug("InternelUser ID로 출퇴근 기록 목록 조회 요청 - internelUserId: {}", internelUserId);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/employees/{internelUserId}/attendance-records", internelUserId)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("InternelUser ID로 출퇴근 기록 목록 조회 성공 - internelUserId: {}", internelUserId);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("InternelUser ID로 출퇴근 기록 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("InternelUser ID로 출퇴근 기록 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("InternelUser ID로 출퇴근 기록 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }

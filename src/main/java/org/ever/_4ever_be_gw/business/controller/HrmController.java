@@ -146,6 +146,42 @@ public class HrmController {
         return hrmHttpService.getEmployeeDetail(employeeId);
     }
 
+    @GetMapping("/employees/by-internel-user/{internelUserId}")
+    @Operation(
+        summary = "InternelUser ID로 직원 정보 및 교육 이력 조회",
+        description = "InternelUser ID로 직원 상세 정보 및 교육 이력을 함께 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> getEmployeeWithTrainingByInternelUserId(
+        @Parameter(description = "InternelUser ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("internelUserId") String internelUserId
+    ) {
+        return hrmHttpService.getEmployeeWithTrainingByInternelUserId(internelUserId);
+    }
+
+    @GetMapping("/employees/by-internel-user/{internelUserId}/available-trainings")
+    @Operation(
+        summary = "InternelUser ID로 수강 가능한 교육 프로그램 목록 조회",
+        description = "InternelUser ID로 수강하지 않은 교육 프로그램 중 모집 중이 아닌 프로그램(IN_PROGRESS, COMPLETED)만 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> getAvailableTrainingsByInternelUserId(
+        @Parameter(description = "InternelUser ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("internelUserId") String internelUserId
+    ) {
+        return hrmHttpService.getAvailableTrainingsByInternelUserId(internelUserId);
+    }
+
+    @GetMapping("/customers/by-customer-user/{customerUserId}")
+    @Operation(
+        summary = "CustomerUser ID로 고객 사용자 상세 정보 조회",
+        description = "CustomerUser ID로 고객 사용자의 상세 정보를 조회합니다. (이메일, 사번, 입사일, 연락처, 주소, 가입기간)"
+    )
+    public ResponseEntity<ApiResponse<Object>> getCustomerUserDetailByUserId(
+        @Parameter(description = "CustomerUser ID", example = "customer1")
+        @PathVariable("customerUserId") String customerUserId
+    ) {
+        return hrmHttpService.getCustomerUserDetailByUserId(customerUserId);
+    }
+
     // ==================== 부서 관리 ====================
 
     @GetMapping("/departments")
@@ -243,38 +279,74 @@ public class HrmController {
 
     @PatchMapping("/attendance/check-in")
     @Operation(
-        summary = "출근 처리",
-        description = "직원의 출근을 처리합니다. (임시: JWT 미구현으로 employeeId를 서비스에서 주입)"
+        summary = "출근 처리 (InternelUser ID 기반)",
+        description = "InternelUser ID를 사용하여 직원의 출근을 처리합니다. (임시: JWT 미구현으로 internelUserId를 서비스에서 주입)"
     )
     public ResponseEntity<ApiResponse<Object>> checkIn(
-        @Parameter(description = "직원 ID (optional, JWT 구현 전까지)", example = "0193e7c8-1234-7abc-9def-0123456789ab")
-        @RequestParam(name = "employeeId", required = false) String employeeId
+        @Parameter(description = "InternelUser ID (optional, JWT 구현 전까지)", example = "internel1")
+        @RequestParam(name = "internelUserId", required = false) String internelUserId
     ) {
-        // TODO: JWT 구현 후 토큰에서 employeeId 추출
-        // 임시로 employeeId가 없으면 하드코딩된 값 사용 (Business DB 실제 목 데이터)
-        String targetEmployeeId = (employeeId != null && !employeeId.isBlank())
-            ? employeeId
-            : "019a293e-163d-7f6f-9689-16381fba05a7"; // 임시: Business DB의 실제 employee ID (internel1, EMP-001)
+        // TODO: JWT 구현 후 토큰에서 internelUserId 추출
+        // 임시로 internelUserId가 없으면 하드코딩된 값 사용 (Business DB 실제 목 데이터)
+        String targetInternelUserId = (internelUserId != null && !internelUserId.isBlank())
+            ? internelUserId
+            : "internel1"; // 임시: Business DB의 실제 internelUser ID
 
-        return hrmHttpService.checkIn(targetEmployeeId);
+        return hrmHttpService.checkIn(targetInternelUserId);
     }
 
     @PatchMapping("/attendance/check-out")
     @Operation(
-        summary = "퇴근 처리",
-        description = "직원의 퇴근을 처리합니다. (임시: JWT 미구현으로 employeeId를 서비스에서 주입)"
+        summary = "퇴근 처리 (InternelUser ID 기반)",
+        description = "InternelUser ID를 사용하여 직원의 퇴근을 처리합니다. (임시: JWT 미구현으로 internelUserId를 서비스에서 주입)"
     )
     public ResponseEntity<ApiResponse<Object>> checkOut(
-        @Parameter(description = "직원 ID (optional, JWT 구현 전까지)", example = "0193e7c8-1234-7abc-9def-0123456789ab")
-        @RequestParam(name = "employeeId", required = false) String employeeId
+        @Parameter(description = "InternelUser ID (optional, JWT 구현 전까지)", example = "internel1")
+        @RequestParam(name = "internelUserId", required = false) String internelUserId
     ) {
-        // TODO: JWT 구현 후 토큰에서 employeeId 추출
-        // 임시로 employeeId가 없으면 하드코딩된 값 사용 (Business DB 실제 목 데이터)
-        String targetEmployeeId = (employeeId != null && !employeeId.isBlank())
-            ? employeeId
-            : "019a293e-163d-7f6f-9689-16381fba05a7"; // 임시: Business DB의 실제 employee ID (internel1, EMP-001)
+        // TODO: JWT 구현 후 토큰에서 internelUserId 추출
+        // 임시로 internelUserId가 없으면 하드코딩된 값 사용 (Business DB 실제 목 데이터)
+        String targetInternelUserId = (internelUserId != null && !internelUserId.isBlank())
+            ? internelUserId
+            : "internel1"; // 임시: Business DB의 실제 internelUser ID
 
-        return hrmHttpService.checkOut(targetEmployeeId);
+        return hrmHttpService.checkOut(targetInternelUserId);
+    }
+
+    @PatchMapping("/attendance/check-in-by-internel-user")
+    @Operation(
+        summary = "InternelUser ID로 출근 처리",
+        description = "InternelUser ID를 사용하여 출근을 처리합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> checkInByInternelUserId(
+        @Parameter(description = "InternelUser ID", example = "internel1", required = true)
+        @RequestParam(name = "internelUserId") String internelUserId
+    ) {
+        return hrmHttpService.checkInByInternelUserId(internelUserId);
+    }
+
+    @PatchMapping("/attendance/check-out-by-internel-user")
+    @Operation(
+        summary = "InternelUser ID로 퇴근 처리",
+        description = "InternelUser ID를 사용하여 퇴근을 처리합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> checkOutByInternelUserId(
+        @Parameter(description = "InternelUser ID", example = "internel1", required = true)
+        @RequestParam(name = "internelUserId") String internelUserId
+    ) {
+        return hrmHttpService.checkOutByInternelUserId(internelUserId);
+    }
+
+    @GetMapping("/employees/by-internel-user/{internelUserId}/attendance-records")
+    @Operation(
+        summary = "InternelUser ID로 출퇴근 기록 목록 조회",
+        description = "InternelUser ID를 사용하여 해당 직원의 모든 출퇴근 기록을 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> getAttendanceRecordsByInternelUserId(
+        @Parameter(description = "InternelUser ID", example = "internel1", required = true)
+        @PathVariable String internelUserId
+    ) {
+        return hrmHttpService.getAttendanceRecordsByInternelUserId(internelUserId);
     }
 
     @GetMapping("/attendance/statuses")

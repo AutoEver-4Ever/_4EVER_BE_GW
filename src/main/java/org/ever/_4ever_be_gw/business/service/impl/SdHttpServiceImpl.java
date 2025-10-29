@@ -460,6 +460,33 @@ public class SdHttpServiceImpl implements SdHttpService {
     }
 
     @Override
+    public ResponseEntity<ApiResponse<Object>> rejectQuotation(String quotationId, Map<String, Object> requestBody) {
+        log.debug("견적서 거부 요청 - quotationId: {}, body: {}", quotationId, requestBody);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.post()
+                    .uri("/sd/quotations/{quotationId}/rejected", quotationId)
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("견적서 거부 성공 - quotationId: {}", quotationId);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("견적서 거부", ex);
+        } catch (Exception e) {
+            log.error("견적서 거부 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("견적서 거부 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
     public ResponseEntity<ApiResponse<Object>> checkInventory(Map<String, Object> requestBody) {
         log.debug("재고 확인 요청 - body: {}", requestBody);
 

@@ -93,6 +93,11 @@ public interface SdHttpService {
     ResponseEntity<ApiResponse<Object>> confirmQuotation(Map<String, Object> requestBody);
 
     /**
+     * 견적서 거부
+     */
+    ResponseEntity<ApiResponse<Object>> rejectQuotation(String quotationId, Map<String, Object> requestBody);
+
+    /**
      * 재고 확인
      */
     ResponseEntity<ApiResponse<Object>> checkInventory(Map<String, Object> requestBody);

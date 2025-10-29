@@ -61,7 +61,7 @@ public class SdController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(name = "request", value = "{\n  \"items\": [\n    { \"itemId\": \"018f2c1a-3bfa-7e21-8a3c-7f9d5e2a1c44\", \"itemName\": \"제품 A\", \"requiredQuantity\": 10 },\n    { \"itemId\": \"018f2c1a-3bfb-7e21-9b3c-1a2b3c4d5e6f\", \"itemName\": \"제품 B\", \"requiredQuantity\": 5 }\n  ]\n}"))
+                            examples = @ExampleObject(name = "request", value = "{\n  \"items\": [\n    { \"itemId\": \"018f2c1a-3bfa-7e21-8a3c-7f9d5e2a1c44\", \"requiredQuantity\": 10 },\n    { \"itemId\": \"018f2c1a-3bfb-7e21-9b3c-1a2b3c4d5e6f\", \"requiredQuantity\": 5 }\n  ]\n}"))
             )
             @RequestBody Map<String, Object> requestBody
     ) {
@@ -136,6 +136,24 @@ public class SdController {
             @RequestBody Map<String, Object> requestBody
     ) {
         return sdHttpService.confirmQuotation(requestBody);
+    }
+
+    @PostMapping("/quotations/{quotationId}/rejected")
+    @Operation(
+            summary = "견적 거부",
+            description = "견적서를 거부하고 거부 사유를 기록합니다. 견적 상태가 REJECTED로 변경됩니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> rejectQuotation(
+            @Parameter(description = "거부할 견적서 ID (UUID)")
+            @PathVariable("quotationId") String quotationId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "request", value = "{\n  \"reason\": \"가격 조건 불일치\"\n}"))
+            )
+            @RequestBody Map<String, Object> requestBody
+    ) {
+        return sdHttpService.rejectQuotation(quotationId, requestBody);
     }
 
     @PostMapping("/customers")

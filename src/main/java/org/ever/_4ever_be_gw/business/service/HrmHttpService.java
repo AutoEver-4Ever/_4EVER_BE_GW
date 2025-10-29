@@ -71,6 +71,21 @@ public interface HrmHttpService {
     ResponseEntity<ApiResponse<Object>> getEmployeeDetail(String employeeId);
 
     /**
+     * InternelUser ID로 직원 정보 및 교육 이력 조회
+     */
+    ResponseEntity<ApiResponse<Object>> getEmployeeWithTrainingByInternelUserId(String internelUserId);
+
+    /**
+     * InternelUser ID로 수강 가능한 교육 프로그램 목록 조회
+     */
+    ResponseEntity<ApiResponse<Object>> getAvailableTrainingsByInternelUserId(String internelUserId);
+
+    /**
+     * CustomerUser ID로 고객 사용자 상세 정보 조회
+     */
+    ResponseEntity<ApiResponse<Object>> getCustomerUserDetailByUserId(String customerUserId);
+
+    /**
      * 직원 정보 수정
      */
     ResponseEntity<ApiResponse<Object>> updateEmployee(String employeeId, Map<String, Object> requestBody);
@@ -230,12 +245,27 @@ public interface HrmHttpService {
             String employeeId, String startDate, String endDate, String status, Integer page, Integer size);
 
     /**
-     * 출근 처리
+     * 출근 처리 (InternelUser ID 기반)
      */
-    ResponseEntity<ApiResponse<Object>> checkIn(String employeeId);
+    ResponseEntity<ApiResponse<Object>> checkIn(String internelUserId);
 
     /**
-     * 퇴근 처리
+     * 퇴근 처리 (InternelUser ID 기반)
      */
-    ResponseEntity<ApiResponse<Object>> checkOut(String employeeId);
+    ResponseEntity<ApiResponse<Object>> checkOut(String internelUserId);
+
+    /**
+     * InternelUser ID로 출근 처리
+     */
+    ResponseEntity<ApiResponse<Object>> checkInByInternelUserId(String internelUserId);
+
+    /**
+     * InternelUser ID로 퇴근 처리
+     */
+    ResponseEntity<ApiResponse<Object>> checkOutByInternelUserId(String internelUserId);
+
+    /**
+     * InternelUser ID로 출퇴근 기록 목록 조회
+     */
+    ResponseEntity<ApiResponse<Object>> getAttendanceRecordsByInternelUserId(String internelUserId);
 }
