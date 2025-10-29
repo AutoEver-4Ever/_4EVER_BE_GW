@@ -110,6 +110,58 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         }
     }
 
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getAllDepartmentsSimple() {
+        log.debug("전체 부서 목록 조회 요청 (ID, Name만)");
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/departments/simple")
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("전체 부서 목록 조회 성공");
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("전체 부서 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("전체 부서 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("전체 부서 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getDepartmentMembers(String departmentId) {
+        log.debug("부서 구성원 목록 조회 요청 - departmentId: {}", departmentId);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/departments/{departmentId}/members", departmentId)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("부서 구성원 목록 조회 성공 - departmentId: {}", departmentId);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("부서 구성원 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("부서 구성원 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("부서 구성원 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
     // ==================== Positions ====================
 
     @Override
@@ -134,6 +186,32 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             log.error("직급 목록 조회 중 예기치 않은 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     ApiResponse.fail("직급 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getAllPositionsSimple() {
+        log.debug("전체 직급 목록 조회 요청 (ID, Name만)");
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/positions/simple")
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("전체 직급 목록 조회 성공");
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("전체 직급 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("전체 직급 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("전체 직급 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }
@@ -547,6 +625,60 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         }
     }
 
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getAllPayrollStatuses() {
+        log.debug("급여 상태 목록 조회 요청");
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/payroll/statuses")
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("급여 상태 목록 조회 성공");
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("급여 상태 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("급여 상태 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("급여 상태 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    // ==================== Attendance ====================
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getAllAttendanceStatuses() {
+        log.debug("출퇴근 상태 목록 조회 요청");
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/attendance/statuses")
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("출퇴근 상태 목록 조회 성공");
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("출퇴근 상태 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("출퇴근 상태 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("출퇴근 상태 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
     // ==================== Training ====================
 
     @Override
@@ -661,6 +793,84 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             log.error("교육 프로그램 수정 중 예기치 않은 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     ApiResponse.fail("교육 프로그램 수정 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getAllTrainingCategories() {
+        log.debug("교육 카테고리 목록 조회 요청");
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/trainings/categories")
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("교육 카테고리 목록 조회 성공");
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("교육 카테고리 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("교육 카테고리 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("교육 카테고리 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getAllTrainingPrograms() {
+        log.debug("전체 교육 프로그램 목록 조회 요청");
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/trainings/programs")
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("전체 교육 프로그램 목록 조회 성공");
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("전체 교육 프로그램 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("전체 교육 프로그램 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("전체 교육 프로그램 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getAllTrainingCompletionStatuses() {
+        log.debug("교육 완료 상태 목록 조회 요청");
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri("/hrm/trainings/completion-statuses")
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("교육 완료 상태 목록 조회 성공");
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("교육 완료 상태 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("교육 완료 상태 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("교육 완료 상태 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }

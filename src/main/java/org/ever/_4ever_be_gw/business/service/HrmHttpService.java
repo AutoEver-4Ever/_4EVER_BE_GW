@@ -30,6 +30,16 @@ public interface HrmHttpService {
      */
     ResponseEntity<ApiResponse<Object>> getDepartmentDetail(String departmentId);
 
+    /**
+     * 전체 부서 목록 조회 (ID, Name만)
+     */
+    ResponseEntity<ApiResponse<Object>> getAllDepartmentsSimple();
+
+    /**
+     * 부서 구성원 목록 조회 (ID, Name만)
+     */
+    ResponseEntity<ApiResponse<Object>> getDepartmentMembers(String departmentId);
+
     // ==================== Positions ====================
 
     /**
@@ -41,6 +51,11 @@ public interface HrmHttpService {
      * 직급 상세 정보 조회
      */
     ResponseEntity<ApiResponse<Object>> getPositionDetail(String positionId);
+
+    /**
+     * 전체 직급 목록 조회 (ID, Name만)
+     */
+    ResponseEntity<ApiResponse<Object>> getAllPositionsSimple();
 
     // ==================== Employees ====================
 
@@ -116,6 +131,18 @@ public interface HrmHttpService {
      */
     ResponseEntity<ApiResponse<Object>> generateMonthlyPayroll();
 
+    /**
+     * 급여 상태 목록 조회 (enum 전체)
+     */
+    ResponseEntity<ApiResponse<Object>> getAllPayrollStatuses();
+
+    // ==================== Attendance ====================
+
+    /**
+     * 출퇴근 상태 목록 조회 (enum 전체)
+     */
+    ResponseEntity<ApiResponse<Object>> getAllAttendanceStatuses();
+
     // ==================== Training ====================
 
     /**
@@ -138,6 +165,21 @@ public interface HrmHttpService {
      * 교육 프로그램 수정
      */
     ResponseEntity<ApiResponse<Object>> updateTrainingProgram(String programId, Map<String, Object> requestBody);
+
+    /**
+     * 교육 카테고리 목록 조회 (enum 전체)
+     */
+    ResponseEntity<ApiResponse<Object>> getAllTrainingCategories();
+
+    /**
+     * 전체 교육 프로그램 목록 조회 (ID, Name만)
+     */
+    ResponseEntity<ApiResponse<Object>> getAllTrainingPrograms();
+
+    /**
+     * 교육 완료 상태 목록 조회
+     */
+    ResponseEntity<ApiResponse<Object>> getAllTrainingCompletionStatuses();
 
     /**
      * 직원 교육 이력 조회

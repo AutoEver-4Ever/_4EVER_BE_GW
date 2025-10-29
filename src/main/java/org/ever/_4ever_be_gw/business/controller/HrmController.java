@@ -164,6 +164,27 @@ public class HrmController {
         return hrmHttpService.getDepartmentList(status, page, size);
     }
 
+    @GetMapping("/departments/all")
+    @Operation(
+        summary = "전체 부서 목록 조회 (ID, Name만)",
+        description = "전체 부서의 ID와 Name만 간단히 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> getAllDepartmentsSimple() {
+        return hrmHttpService.getAllDepartmentsSimple();
+    }
+
+    @GetMapping("/departments/{departmentId}/members")
+    @Operation(
+        summary = "부서 구성원 목록 조회 (ID, Name만)",
+        description = "특정 부서의 구성원 ID와 Name만 간단히 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> getDepartmentMembers(
+        @Parameter(description = "부서 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("departmentId") String departmentId
+    ) {
+        return hrmHttpService.getDepartmentMembers(departmentId);
+    }
+
     // ==================== 직급 관리 ====================
 
     @GetMapping("/positions")
@@ -185,6 +206,15 @@ public class HrmController {
         @PathVariable("positionId") String positionId
     ) {
         return hrmHttpService.getPositionDetail(positionId);
+    }
+
+    @GetMapping("/positions/all")
+    @Operation(
+        summary = "전체 직급 목록 조회 (ID, Name만)",
+        description = "전체 직급의 ID와 Name만 간단히 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> getAllPositionsSimple() {
+        return hrmHttpService.getAllPositionsSimple();
     }
 
     // ==================== 출퇴근 관리 ====================
@@ -245,6 +275,15 @@ public class HrmController {
             : "019a293e-163d-7f6f-9689-16381fba05a7"; // 임시: Business DB의 실제 employee ID (internel1, EMP-001)
 
         return hrmHttpService.checkOut(targetEmployeeId);
+    }
+
+    @GetMapping("/attendance/statuses")
+    @Operation(
+        summary = "출퇴근 상태 목록 조회 (enum 전체)",
+        description = "출퇴근 상태 enum의 모든 값을 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> getAllAttendanceStatuses() {
+        return hrmHttpService.getAllAttendanceStatuses();
     }
 
     // ==================== 휴가 관리 ====================
@@ -665,6 +704,15 @@ public class HrmController {
         return ResponseEntity.ok(ApiResponse.success(
             data, "급여 명세서 상세 조회에 성공했습니다.", HttpStatus.OK
         ));
+    }
+
+    @GetMapping("/payroll/statuses")
+    @Operation(
+        summary = "급여 상태 목록 조회 (enum 전체)",
+        description = "급여 상태 enum의 모든 값을 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> getAllPayrollStatuses() {
+        return hrmHttpService.getAllPayrollStatuses();
     }
 
     // ==================== Mock 생성 함수 ====================
@@ -1248,6 +1296,33 @@ public class HrmController {
         return ResponseEntity.ok(ApiResponse.success(
             data, "교육 프로그램이 수정되었습니다.", HttpStatus.OK
         ));
+    }
+
+    @GetMapping("/trainings/categories")
+    @Operation(
+        summary = "교육 카테고리 목록 조회 (enum 전체)",
+        description = "교육 카테고리 enum의 모든 값을 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> getAllTrainingCategories() {
+        return hrmHttpService.getAllTrainingCategories();
+    }
+
+    @GetMapping("/trainings/programs")
+    @Operation(
+        summary = "전체 교육 프로그램 목록 조회 (ID, Name만)",
+        description = "전체 교육 프로그램의 ID와 Name만 간단히 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> getAllTrainingPrograms() {
+        return hrmHttpService.getAllTrainingPrograms();
+    }
+
+    @GetMapping("/trainings/completion-statuses")
+    @Operation(
+        summary = "교육 완료 상태 목록 조회",
+        description = "교육 완료 상태의 모든 값을 조회합니다. (완료: true, 미완료: false)"
+    )
+    public ResponseEntity<ApiResponse<Object>> getAllTrainingCompletionStatuses() {
+        return hrmHttpService.getAllTrainingCompletionStatuses();
     }
 
     // ==================== 직원 교육 현황 조회 ====================
