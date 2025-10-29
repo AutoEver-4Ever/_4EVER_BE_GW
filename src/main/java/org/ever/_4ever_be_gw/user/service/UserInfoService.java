@@ -14,13 +14,13 @@ public class UserInfoService {
 
     private final UserProfileRemoteClient userProfileRemoteClient;
 
-    public UserInfoResponse getUserInfo(EverUserPrincipal principal) {
+    public UserInfoResponse getUserInfo(EverUserPrincipal principal, String accessToken) {
         if (principal == null) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
         }
 
         String userName = userProfileRemoteClient
-            .fetchUserName(principal.getUserType(), principal.getUserId())
+            .fetchUserName(principal.getUserType(), principal.getUserId(), accessToken)
             .orElse(null);
 
         return new UserInfoResponse(

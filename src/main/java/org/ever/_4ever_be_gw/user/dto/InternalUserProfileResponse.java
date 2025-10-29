@@ -1,7 +1,10 @@
 package org.ever._4ever_be_gw.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record InternalUserProfileResponse(
     String userId,
-    String name
+    @JsonProperty("userName")
+    String userName
 ) {
 }

@@ -2,6 +2,7 @@ package org.ever._4ever_be_gw.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.config.security.principal.EverJwtAuthenticationToken;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.user.dto.UserInfoResponse;
 import org.ever._4ever_be_gw.user.service.UserInfoService;
@@ -19,8 +20,16 @@ public class UserInfoController {
     private final UserInfoService userInfoService;
 
     @GetMapping("/info")
-    public ApiResponse<UserInfoResponse> getUserInfo(@AuthenticationPrincipal EverUserPrincipal principal) {
-        UserInfoResponse data = userInfoService.getUserInfo(principal);
+    public ApiResponse<UserInfoResponse> getUserInfo(
+        @AuthenticationPrincipal EverUserPrincipal principal,
+        EverJwtAuthenticationToken authentication
+    ) {
+        UserInfoResponse data = userInfoService.getUserInfo(
+            principal,
+            authentication != null && authentication.getToken() != null
+                ? authentication.getToken().getTokenValue()
+                : null
+        );
         return ApiResponse.success(data, "사용자 기본 정보를 조회했습니다.", HttpStatus.OK);
     }
 }

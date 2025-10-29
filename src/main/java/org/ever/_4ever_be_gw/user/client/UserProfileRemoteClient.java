@@ -25,6 +25,10 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 @RequiredArgsConstructor
 public class UserProfileRemoteClient {
 
+    private static final String INTERNAL_PROFILE_PATH = "/hrm/users/internal/{userId}";
+    private static final String CUSTOMER_PROFILE_PATH = "/hrm/users/customer/{userId}";
+    private static final String SUPPLIER_PROFILE_PATH = "/api/scm-pp/mm/users/supplier/{userId}";
+
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
     private static final ParameterizedTypeReference<RemoteApiResponse<InternalUserProfileResponse>> INTERNAL_RESPONSE_TYPE =
         new ParameterizedTypeReference<>() {};
@@ -35,26 +39,32 @@ public class UserProfileRemoteClient {
 
     private final WebClientProvider webClientProvider;
 
-    public Optional<String> fetchUserName(String userType, String userId) {
+    public Optional<String> fetchUserName(String userType, String userId, String accessToken) {
         if (!StringUtils.hasText(userType) || !StringUtils.hasText(userId)) {
+            return Optional.empty();
+        }
+
+        if (!StringUtils.hasText(accessToken)) {
+            log.warn("[GW][UserProfile] 액세스 토큰이 없어 사용자 이름을 조회할 수 없습니다. userId: {}, userType: {}", userId, userType);
             return Optional.empty();
         }
 
         String normalizedType = userType.toUpperCase(Locale.ROOT);
 
         return switch (normalizedType) {
-            case "INTERNAL" -> fetchInternalUserName(userId);
-            case "CUSTOMER" -> fetchCustomerUserName(userId);
-            case "SUPPLIER" -> fetchSupplierUserName(userId);
+            case "INTERNAL" -> fetchInternalUserName(userId, accessToken);
+            case "CUSTOMER" -> fetchCustomerUserName(userId, accessToken);
+            case "SUPPLIER" -> fetchSupplierUserName(userId, accessToken);
             default -> Optional.empty();
         };
     }
 
-    private Optional<String> fetchInternalUserName(String userId) {
+    private Optional<String> fetchInternalUserName(String userId, String accessToken) {
         WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
         try {
-            RemoteApiResponse<InternalUserProfileResponse> response = businessClient.post()
-                .uri("/hrm/{userId}/employee", userId)
+            RemoteApiResponse<InternalUserProfileResponse> response = businessClient.get()
+                .uri(INTERNAL_PROFILE_PATH, userId)
+                .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(INTERNAL_RESPONSE_TYPE)
                 .block(REQUEST_TIMEOUT);
@@ -64,7 +74,7 @@ public class UserProfileRemoteClient {
                 return Optional.empty();
             }
 
-            return Optional.ofNullable(response.getData().name());
+            return Optional.ofNullable(response.getData().userName());
         } catch (WebClientResponseException ex) {
             log.error("[GW][UserProfile] 내부 사용자 이름 조회 중 원격 응답 예외 - userId: {}, status: {}, body: {}",
                 userId, ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
@@ -75,11 +85,12 @@ public class UserProfileRemoteClient {
         }
     }
 
-    private Optional<String> fetchCustomerUserName(String userId) {
+    private Optional<String> fetchCustomerUserName(String userId, String accessToken) {
         WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
         try {
             RemoteApiResponse<CustomerUserProfileResponse> response = businessClient.get()
-                .uri("/hrm/customers/by-customer-user/{userId}", userId)
+                .uri(CUSTOMER_PROFILE_PATH, userId)
+                .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(CUSTOMER_RESPONSE_TYPE)
                 .block(REQUEST_TIMEOUT);
@@ -89,7 +100,7 @@ public class UserProfileRemoteClient {
                 return Optional.empty();
             }
 
-            return Optional.ofNullable(response.getData().managerName());
+            return Optional.ofNullable(response.getData().userName());
         } catch (WebClientResponseException ex) {
             log.error("[GW][UserProfile] 고객 사용자 이름 조회 중 원격 응답 예외 - userId: {}, status: {}, body: {}",
                 userId, ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
@@ -100,11 +111,12 @@ public class UserProfileRemoteClient {
         }
     }
 
-    private Optional<String> fetchSupplierUserName(String userId) {
+    private Optional<String> fetchSupplierUserName(String userId, String accessToken) {
         WebClient scmClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
         try {
             RemoteApiResponse<SupplierUserProfileResponse> response = scmClient.get()
-                .uri("/api/scm-pp/mm/supplier/users/{userId}", userId)
+                .uri(SUPPLIER_PROFILE_PATH, userId)
+                .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(SUPPLIER_RESPONSE_TYPE)
                 .block(REQUEST_TIMEOUT);
@@ -114,7 +126,7 @@ public class UserProfileRemoteClient {
                 return Optional.empty();
             }
 
-            return Optional.ofNullable(response.getData().supplierUserName());
+            return Optional.ofNullable(response.getData().userName());
         } catch (WebClientResponseException ex) {
             log.error("[GW][UserProfile] 공급사 사용자 이름 조회 중 원격 응답 예외 - userId: {}, status: {}, body: {}",
                 userId, ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
