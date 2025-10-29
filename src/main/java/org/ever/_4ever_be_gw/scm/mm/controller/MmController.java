@@ -1,17 +1,22 @@
 package org.ever._4ever_be_gw.scm.mm.controller;
 
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.business.dto.hrm.CreateAuthUserResultDto;
+import org.ever._4ever_be_gw.common.exception.RemoteApiException;
+import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
+import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.scm.mm.dto.PurchaseOrderRejectRequestDto;
 import org.ever._4ever_be_gw.scm.mm.dto.PurchaseRequisitionCreateRequestDto;
 import org.ever._4ever_be_gw.scm.mm.dto.PurchaseRequisitionRejectRequestDto;
 import org.ever._4ever_be_gw.scm.mm.dto.StockPurchaseRequestDto;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.http.ResponseEntity;
+import org.ever._4ever_be_gw.scmpp.dto.mm.supplier.SupplierCreateRequestDto;
+import org.ever._4ever_be_gw.scmpp.service.MmService;
 import org.springframework.http.MediaType;
-
-import java.util.Map;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/scm-pp/mm")
@@ -19,6 +24,7 @@ import java.util.Map;
 public class MmController {
 
     private final WebClientProvider webClientProvider;
+    private final MmService mmService;
 
     // 공급업체 목록 조회
     @GetMapping("/supplier")
@@ -57,6 +63,43 @@ public class MmController {
                 .block();
 
         return ResponseEntity.ok(result);
+    }
+
+    // 공급업체 등록 (SAGA)
+    @PostMapping("/supplier")
+    public Mono<ResponseEntity<ApiResponse<CreateAuthUserResultDto>>> createSupplier(
+        @RequestBody SupplierCreateRequestDto requestDto
+    ) {
+        return mmService.createSupplier(requestDto)
+            .map(remoteResponse -> {
+                var status = org.springframework.http.HttpStatus.resolve(remoteResponse.getStatus());
+                if (status == null) {
+                    status = org.springframework.http.HttpStatus.OK;
+                }
+                String message = remoteResponse.getMessage() != null
+                    ? remoteResponse.getMessage()
+                    : "공급사 등록이 완료되었습니다.";
+
+                return ResponseEntity.status(status)
+                    .body(ApiResponse.success(remoteResponse.getData(), message, status));
+            })
+            .onErrorResume(RemoteApiException.class, ex -> {
+                var status = ex.getStatus() != null ? ex.getStatus() : org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+                ApiResponse<CreateAuthUserResultDto> fail = ApiResponse.fail(
+                    ex.getMessage() != null ? ex.getMessage() : "공급사 등록 중 오류가 발생했습니다.",
+                    status,
+                    ex.getErrors()
+                );
+                return Mono.just(ResponseEntity.status(status).body(fail));
+            })
+            .onErrorResume(error -> {
+                ApiResponse<CreateAuthUserResultDto> fail = ApiResponse.fail(
+                    "공급사 등록 중 오류가 발생했습니다.",
+                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+                    error.getMessage()
+                );
+                return Mono.just(ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR).body(fail));
+            });
     }
 
     // 재고성 구매요청 생성
