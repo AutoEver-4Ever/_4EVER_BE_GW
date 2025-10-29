@@ -29,6 +29,7 @@ public class ItemDetailDto {
     private String warehouseName;
     private String warehouseNumber;
     private LocalDateTime lastModified;
+    private String location;
     private String description;
     private List<StockMovementDto> stockMovements;
     

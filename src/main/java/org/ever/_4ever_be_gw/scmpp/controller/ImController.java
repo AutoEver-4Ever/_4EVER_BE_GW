@@ -151,10 +151,6 @@ public class ImController {
             }
     )
     public ResponseEntity<ApiResponse<Map<String, Object>>> getStockTransferList(
-            @Parameter(name = "page", description = "페이지 번호")
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @Parameter(name = "size", description = "페이지 크기")
-            @RequestParam(required = false, defaultValue = "20") int size
     ) {
         List<StockTransferDto> items = Arrays.asList(
                 StockTransferDto.builder()
@@ -200,8 +196,8 @@ public class ImController {
         );
 
         PageDto pageInfo = PageDto.builder()
-                .number(page)
-                .size(size)
+                .number(0)
+                .size(5)
                 .totalElements(5)
                 .totalPages(1)
                 .hasNext(false)
@@ -463,6 +459,7 @@ public class ImController {
                 .warehouseId("123")
                 .warehouseName("제1창고")
                 .warehouseNumber("A-01-01")
+                .location("서울시 금천구")
                 .lastModified(LocalDateTime.parse("2024-01-15T09:15"))
                 .description("고품질 스테인리스 스틸 파이프, 내식성 우수")
                 .stockMovements(stockMovements)
@@ -641,7 +638,7 @@ public class ImController {
         return ResponseEntity.ok(ApiResponse.success(response, "주문 상세 정보를 조회했습니다.", HttpStatus.OK));
     }
 
-    @GetMapping("/inventory-items")
+    @GetMapping("/iv/inventory-items")
     @Operation(
             summary = "재고 목록 조회",
             description = "재고 목록을 조회합니다. 타입(WAREHOUSE_NAME, ITEM_NAME)과 키워드로 검색, 상태코드(ALL, NORMAL, CAUTION, URGENT) 필터링 가능"
@@ -812,7 +809,10 @@ public class ImController {
     }
 
 
-    @GetMapping("/purchase-orders/pending")
+    @GetMapping("/purchase-orders/receiving")
+    @Operation(
+            summary = "입고 대기 목록 조회"
+    )
     public ResponseEntity<ApiResponse<Object>> getPendingPurchaseOrders(
             @Parameter(description = "페이지 번호(0-base)")
             @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
@@ -838,7 +838,7 @@ public class ImController {
                     .orderDate(orderDate)
                     .dueDate(dueDate)
                     .totalAmount(totalAmount)
-                    .statusCode("PENDING")
+                    .statusCode("RECEIVING")
                     .build());
         }
 
@@ -1160,7 +1160,7 @@ public class ImController {
         for (int i = 1; i <= 10; i++) {
             items.add(Map.of(
                     "itemId", String.valueOf(i),
-                    "itemIdName", "품목" + i,
+                    "itemName", "품목" + i,
                     "supplierCompanyId", "SUP-" + i,
                     "supplierCompanyName", SUPPLIER_NAMES[(i - 1) % SUPPLIER_NAMES.length],
                     "uomName", UOM_NAMES[(i - 1) % UOM_NAMES.length],
@@ -1186,7 +1186,7 @@ public class ImController {
     }
 
     // 창고 수정 API
-    @PatchMapping("/iv/warehouses/{warehouseId}")
+    @PutMapping("/iv/warehouses/{warehouseId}")
     @Operation(
             summary = "창고 정보 수정",
             description = "창고 정보를 수정합니다."

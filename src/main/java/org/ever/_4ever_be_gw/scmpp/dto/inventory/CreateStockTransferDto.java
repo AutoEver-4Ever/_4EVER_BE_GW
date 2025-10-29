@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class CreateStockTransferDto {
     private String fromWarehouseId;
     private String toWarehouseId;
-    private String stockId;
+    private String itemId;
     private Integer stockQuantity;
     private String uomName;
     private String reason;
