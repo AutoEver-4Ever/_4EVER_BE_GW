@@ -2,14 +2,20 @@ package org.ever._4ever_be_gw.infrastructure.kafka.consumer.handler.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_gw.alarm.service.AlarmSendService;
 import org.ever._4ever_be_gw.infrastructure.kafka.consumer.handler.MultiTopicEventHandler;
-import org.ever._4ever_be_gw.infrastructure.kafka.event.*;
+import org.ever.event.AlarmEvent;
+import org.ever.event.BusinessEvent;
+import org.ever.event.ScmEvent;
+import org.ever.event.UserEvent;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class MultiTopicEventHandlerImpl implements MultiTopicEventHandler {
+
+    private final AlarmSendService alarmSendService;
 
     @Override
     public void handleUserEvent(UserEvent event) {
@@ -43,11 +49,16 @@ public class MultiTopicEventHandlerImpl implements MultiTopicEventHandler {
 
     @Override
     public void handleAlarmEvent(AlarmEvent event) {
-        // Alarm 서비스에서 받은 이벤트 처리
-        log.debug("알림 이벤트 처리 완료 - Type: {}", event.getAlarmType());
+        log.info("알림 이벤트 수신 - eventId: {}, Title: {}, Message: {}",
+            event.getEventId(), event.getTitle(), event.getMessage());
 
-        // TODO: 실제 비즈니스 로직 구현
-        // 1. 알림 전송 확인
-        // 2. 알림 이력 저장
+        // SSE를 통해 알림 전송
+//        alarmSendService.sendAlarmMessage(
+//            event.getUserId(),
+//            "새 알림이 도착했습니다.",
+//            event
+//        );
+
+        log.info("알림 이벤트 처리 완료 - eventId: {}", event.getEventId());
     }
 }

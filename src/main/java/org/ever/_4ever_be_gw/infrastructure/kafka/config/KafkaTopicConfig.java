@@ -14,6 +14,13 @@ public class KafkaTopicConfig {
     public static final String BUSINESS_EVENT_TOPIC = "business-event";
     public static final String ALARM_EVENT_TOPIC = "alarm-event";
 
+    // 알람 서비스 관련 토픽
+    public static final String ALARM_REQUEST_TOPIC = "alarm-request";               // 알림 요청
+    public static final String ALARM_SENT_STATUS_TOPIC = "alarm-sent-status";       // 알림 발송 상태
+    public static final String ALARM_SENT_TOPIC = "alarm-sent";                     // 알림 발송
+    public static final String ALARM_REQUEST_STATUS_TOPIC = "alarm-request-status"; // 알림 요청 상태
+
+
     @Bean
     public NewTopic userEventTopic() {
         return TopicBuilder.name(USER_EVENT_TOPIC)
