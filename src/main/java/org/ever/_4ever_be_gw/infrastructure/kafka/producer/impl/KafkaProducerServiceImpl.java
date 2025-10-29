@@ -1,6 +1,6 @@
 package org.ever._4ever_be_gw.infrastructure.kafka.producer.impl;
 
-import static org.ever._4ever_be_gw.infrastructure.kafka.config.KafkaTopicConfig.ALARM_EVENT_TOPIC;
+import static org.ever._4ever_be_gw.infrastructure.kafka.config.KafkaTopicConfig.ALARM_REQUEST_TOPIC;
 import static org.ever._4ever_be_gw.infrastructure.kafka.config.KafkaTopicConfig.BUSINESS_EVENT_TOPIC;
 import static org.ever._4ever_be_gw.infrastructure.kafka.config.KafkaTopicConfig.SCM_EVENT_TOPIC;
 import static org.ever._4ever_be_gw.infrastructure.kafka.config.KafkaTopicConfig.USER_EVENT_TOPIC;
@@ -41,7 +41,7 @@ public class KafkaProducerServiceImpl implements KafkaProducerService {
 
     @Override
     public CompletableFuture<SendResult<String, Object>> sendAlarmEvent(AlarmEvent event) {
-        return sendEvent(ALARM_EVENT_TOPIC, event.getUserId(), event);
+        return sendEvent(ALARM_REQUEST_TOPIC, event.getTargetId(), event);
     }
 
     @Override
