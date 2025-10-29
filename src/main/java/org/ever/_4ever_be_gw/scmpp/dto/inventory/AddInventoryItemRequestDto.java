@@ -5,7 +5,6 @@ import lombok.Data;
 @Data
 public class AddInventoryItemRequestDto {
     private String itemId;
-    private String supplierCompanyId;
     private Integer safetyStock;
     private Integer currentStock;
     private String warehouseId;
