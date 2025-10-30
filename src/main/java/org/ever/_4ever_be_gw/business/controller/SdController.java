@@ -5,12 +5,18 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import java.util.Map;
+import org.ever._4ever_be_gw.business.dto.customer.CustomerCreateRequestDto;
+import org.ever._4ever_be_gw.business.dto.hrm.CreateAuthUserResultDto;
 import org.ever._4ever_be_gw.business.service.SdHttpService;
+import org.ever._4ever_be_gw.business.service.SdService;
+import org.ever._4ever_be_gw.common.exception.RemoteApiException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/business/sd")
@@ -18,9 +24,11 @@ import java.util.Map;
 public class SdController {
 
     private final SdHttpService sdHttpService;
+    private final SdService sdService;
 
-    public SdController(SdHttpService sdHttpService) {
+    public SdController(SdHttpService sdHttpService, SdService sdService) {
         this.sdHttpService = sdHttpService;
+        this.sdService = sdService;
     }
 
     // SD 통계 조회
@@ -161,7 +169,7 @@ public class SdController {
             summary = "고객사 등록",
             description = "고객사 정보를 신규 등록하며, 고객사의 담당자 정보를 통해 담당자(사용자)가 생성됩니다."
     )
-    public ResponseEntity<ApiResponse<Object>> createCustomer(
+    public Mono<ResponseEntity<ApiResponse<CreateAuthUserResultDto>>> createCustomer(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
@@ -180,9 +188,42 @@ public class SdController {
                                               "\n    \"email\": \"kim@samsung.com\"\n  }," +
                                                 "\n  \"note\": \"주요 고객사, 정기 거래처\"\n}"))
             )
-            @RequestBody Map<String, Object> requestBody
+            @Valid @RequestBody CustomerCreateRequestDto requestDto
     ) {
-        return sdHttpService.createCustomer(requestBody);
+        return sdService.createCustomer(requestDto)
+            .map(remoteResponse -> {
+                HttpStatus httpStatus = HttpStatus.resolve(remoteResponse.getStatus());
+                if (httpStatus == null) {
+                    httpStatus = HttpStatus.OK;
+                }
+                String message = remoteResponse.getMessage() != null
+                    ? remoteResponse.getMessage()
+                    : "고객사 등록이 완료되었습니다.";
+
+                return ResponseEntity.status(httpStatus)
+                    .body(ApiResponse.success(
+                        remoteResponse.getData(),
+                        message,
+                        httpStatus
+                    ));
+            })
+            .onErrorResume(RemoteApiException.class, ex -> {
+                HttpStatus status = ex.getStatus() != null ? ex.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+                ApiResponse<CreateAuthUserResultDto> failResponse = ApiResponse.fail(
+                    ex.getMessage() != null ? ex.getMessage() : "고객사 등록 중 오류가 발생했습니다.",
+                    status,
+                    ex.getErrors()
+                );
+                return Mono.just(ResponseEntity.status(status).body(failResponse));
+            })
+            .onErrorResume(error -> {
+                ApiResponse<CreateAuthUserResultDto> failResponse = ApiResponse.fail(
+                    "고객사 등록 중 오류가 발생했습니다.",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    error.getMessage()
+                );
+                return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(failResponse));
+            });
     }
 
     @GetMapping("/customers")
