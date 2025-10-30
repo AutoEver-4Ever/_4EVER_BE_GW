@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -12,8 +14,8 @@ import lombok.NoArgsConstructor;
 public class TopCustomerDto {
     private String customerNumber;
     private String customerName;
-    private Integer orderCount;
-    private Long sale;
+    private Long orderCount;
+    private BigDecimal sale;
     private Boolean active;
 }
 

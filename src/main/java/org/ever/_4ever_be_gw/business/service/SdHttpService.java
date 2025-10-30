@@ -1,5 +1,6 @@
 package org.ever._4ever_be_gw.business.service;
 
+import org.ever._4ever_be_gw.business.dto.analytics.SalesAnalyticsResponseDto;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
 
@@ -21,7 +22,7 @@ public interface SdHttpService {
     /**
      * 매출 분석 통계 조회
      */
-    ResponseEntity<ApiResponse<Object>> getSalesAnalytics(String startDate, String endDate);
+    ResponseEntity<ApiResponse<SalesAnalyticsResponseDto>> getSalesAnalytics(String startDate, String endDate);
 
     // ==================== Customers ====================
 
@@ -57,7 +58,7 @@ public interface SdHttpService {
      * 주문 목록 조회
      */
     ResponseEntity<ApiResponse<Object>> getOrderList(
-            String startDate, String endDate, String search, String type, String status, Integer page, Integer size);
+            String customerId, String employeeId, String startDate, String endDate, String search, String type, String status, Integer page, Integer size);
 
     /**
      * 주문서 상세 조회
@@ -70,7 +71,7 @@ public interface SdHttpService {
      * 견적 목록 조회
      */
     ResponseEntity<ApiResponse<Object>> getQuotationList(
-            String startDate, String endDate, String status, String type, String search, String sort, Integer page, Integer size);
+            String customerId, String startDate, String endDate, String status, String type, String search, String sort, Integer page, Integer size);
 
     /**
      * 견적 상세 조회

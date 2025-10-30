@@ -14,6 +14,6 @@ public class PeriodDto {
     private String end;
     private String weekStart;
     private String weekEnd;
-    private Integer weekCount;
+    private int weekCount;
 }
 

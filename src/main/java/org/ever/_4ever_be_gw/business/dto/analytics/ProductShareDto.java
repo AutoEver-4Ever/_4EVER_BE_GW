@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -12,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class ProductShareDto {
     private String productCode;
     private String productName;
-    private Long sale;
-    private Double saleShare;
+    private BigDecimal sale;
+    private Integer saleShare;
 }
 
