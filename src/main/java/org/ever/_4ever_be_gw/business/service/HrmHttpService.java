@@ -53,9 +53,9 @@ public interface HrmHttpService {
     ResponseEntity<ApiResponse<Object>> getPositionDetail(String positionId);
 
     /**
-     * 전체 직급 목록 조회 (ID, Name만)
+     * 부서별 직급 목록 조회 (ID, Name만)
      */
-    ResponseEntity<ApiResponse<Object>> getAllPositionsSimple();
+    ResponseEntity<ApiResponse<Object>> getPositionsByDepartmentId(String departmentId);
 
     // ==================== Employees ====================
 
@@ -63,7 +63,7 @@ public interface HrmHttpService {
      * 직원 목록 조회
      */
     ResponseEntity<ApiResponse<Object>> getEmployeeList(
-            String department, String position, String name, Integer page, Integer size);
+            String departmentId, String positionId, String name, Integer page, Integer size);
 
     /**
      * 직원 상세 정보 조회

@@ -120,10 +120,10 @@ public class HrmController {
         description = "직원 목록을 페이지네이션으로 조회합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getEmployees(
-        @Parameter(description = "부서 필터")
-        @RequestParam(name = "department", required = false) String department,
-        @Parameter(description = "직급 필터")
-        @RequestParam(name = "position", required = false) String position,
+        @Parameter(description = "부서 ID 필터")
+        @RequestParam(name = "departmentId", required = false) String departmentId,
+        @Parameter(description = "직급 ID 필터")
+        @RequestParam(name = "positionId", required = false) String positionId,
         @Parameter(description = "이름 검색")
         @RequestParam(name = "name", required = false) String name,
         @Parameter(description = "페이지 번호(0-base)")
@@ -131,7 +131,7 @@ public class HrmController {
         @Parameter(description = "페이지 크기(최대 200)")
         @RequestParam(name = "size", required = false) Integer size
     ) {
-        return hrmHttpService.getEmployeeList(department, position, name, page, size);
+        return hrmHttpService.getEmployeeList(departmentId, positionId, name, page, size);
     }
 
     @GetMapping("/employees/{employeeId}")
@@ -244,13 +244,16 @@ public class HrmController {
         return hrmHttpService.getPositionDetail(positionId);
     }
 
-    @GetMapping("/positions/all")
+    @GetMapping("/{departmentId}/positions/all")
     @Operation(
-        summary = "전체 직급 목록 조회 (ID, Name만)",
-        description = "전체 직급의 ID와 Name만 간단히 조회합니다."
+        summary = "부서별 직급 목록 조회 (ID, Name만)",
+        description = "특정 부서의 직급 ID와 Name만 간단히 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getAllPositionsSimple() {
-        return hrmHttpService.getAllPositionsSimple();
+    public ResponseEntity<ApiResponse<Object>> getPositionsByDepartmentId(
+        @Parameter(description = "부서 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("departmentId") String departmentId
+    ) {
+        return hrmHttpService.getPositionsByDepartmentId(departmentId);
     }
 
     // ==================== 출퇴근 관리 ====================

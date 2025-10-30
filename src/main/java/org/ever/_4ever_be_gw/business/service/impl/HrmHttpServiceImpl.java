@@ -191,27 +191,27 @@ public class HrmHttpServiceImpl implements HrmHttpService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<Object>> getAllPositionsSimple() {
-        log.debug("전체 직급 목록 조회 요청 (ID, Name만)");
+    public ResponseEntity<ApiResponse<Object>> getPositionsByDepartmentId(String departmentId) {
+        log.debug("부서별 직급 목록 조회 요청 - departmentId: {}", departmentId);
 
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
             ApiResponse<Object> response = businessClient.get()
-                    .uri("/hrm/positions/simple")
+                    .uri("/hrm/" + departmentId + "/positions/all")
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
                     .block();
 
-            log.info("전체 직급 목록 조회 성공");
+            log.info("부서별 직급 목록 조회 성공 - departmentId: {}", departmentId);
             return ResponseEntity.ok(response);
 
         } catch (WebClientResponseException ex) {
-            return handleWebClientError("전체 직급 목록 조회", ex);
+            return handleWebClientError("부서별 직급 목록 조회", ex);
         } catch (Exception e) {
-            log.error("전체 직급 목록 조회 중 예기치 않은 오류 발생", e);
+            log.error("부서별 직급 목록 조회 중 예기치 않은 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    ApiResponse.fail("전체 직급 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+                    ApiResponse.fail("부서별 직급 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }
@@ -246,9 +246,9 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
     @Override
     public ResponseEntity<ApiResponse<Object>> getEmployeeList(
-            String department, String position, String name, Integer page, Integer size) {
-        log.debug("직원 목록 조회 요청 - department: {}, position: {}, name: {}, page: {}, size: {}",
-                department, position, name, page, size);
+            String departmentId, String positionId, String name, Integer page, Integer size) {
+        log.debug("직원 목록 조회 요청 - departmentId: {}, positionId: {}, name: {}, page: {}, size: {}",
+                departmentId, positionId, name, page, size);
 
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
@@ -256,8 +256,8 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             ApiResponse<Object> response = businessClient.get()
                     .uri(uriBuilder -> {
                         var builder = uriBuilder.path("/hrm/employee");
-                        if (department != null) builder.queryParam("department", department);
-                        if (position != null) builder.queryParam("position", position);
+                        if (departmentId != null) builder.queryParam("departmentId", departmentId);
+                        if (positionId != null) builder.queryParam("positionId", positionId);
                         if (name != null) builder.queryParam("name", name);
                         builder.queryParam("page", page != null ? page : 0);
                         builder.queryParam("size", size != null ? size : 20);
