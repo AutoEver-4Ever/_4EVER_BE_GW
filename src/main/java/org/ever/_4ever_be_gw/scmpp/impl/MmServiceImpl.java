@@ -28,7 +28,7 @@ public class MmServiceImpl implements MmService {
         WebClient scmPpClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
         return scmPpClient.post()
-            .uri("/mm/supplier")
+            .uri("/scm-pp/mm/supplier")
             .bodyValue(requestDto)
             .retrieve()
             .bodyToMono(new ParameterizedTypeReference<RemoteApiResponse<CreateAuthUserResultDto>>() {})
