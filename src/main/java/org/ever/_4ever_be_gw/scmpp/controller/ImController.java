@@ -1198,4 +1198,33 @@ public class ImController {
         // warehouseName, warehouseType, location, managerId, warehouseStatusCode
         return ResponseEntity.ok(ApiResponse.success(null, "창고 정보가 수정되었습니다.", HttpStatus.OK));
     }
+    //판매제품 토글
+    @GetMapping("/product/item/toggle")
+    @Operation(
+            summary = "판매 제품 토글"
+    )
+    public ResponseEntity<ApiResponse<ProductMultipleResponseDto>> getItemCategoryProducts() {
+
+            // 목업 데이터 생성
+            List<ProductMultipleResponseDto.ProductDto> mockProducts = new ArrayList<>();
+
+            for (int i = 1; i <= 10; i++) {
+                mockProducts.add(ProductMultipleResponseDto.ProductDto.builder()
+                        .itemId("ITEM-" + i)
+                        .itemNumber("ITEM-" + String.format("%03d", i))
+                        .itemName("판매 제품 " + i)
+                        .uomName("EA")
+                        .unitPrice(BigDecimal.valueOf(1000 + (i * 100)))
+                        .build());
+            }
+
+            ProductMultipleResponseDto response = ProductMultipleResponseDto.builder()
+                    .products(mockProducts)
+                    .build();
+
+            return ResponseEntity.ok(ApiResponse.success(response, "목업 데이터 조회 성공", HttpStatus.OK));
+
+
+    }
+
 }
