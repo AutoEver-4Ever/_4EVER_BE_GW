@@ -165,7 +165,7 @@ public class AlarmSendServiceImpl implements AlarmSendService {
     @Override
     @Scheduled(fixedRate = 20000)
     public void broadcastKeepAlive() {
-        log.debug("[SSE][BROADCAST-KEEPALIVE] activeConnections={}", emitterMap.size());
+//        log.debug("[SSE][BROADCAST-KEEPALIVE] activeConnections={}", emitterMap.size());
         emitterMap.forEach((userId, emitter) -> {
             try {
                 emitter.send(SseEmitter.event().name("keepalive").data("ping"));
