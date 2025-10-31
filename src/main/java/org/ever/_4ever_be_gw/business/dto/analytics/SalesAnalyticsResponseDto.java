@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -13,8 +14,8 @@ import java.util.List;
 @AllArgsConstructor
 public class SalesAnalyticsResponseDto {
     private PeriodDto period;
-    private Long totalSale;
-    private Integer totalOrders;
+    private BigDecimal totalSale;
+    private Long totalOrders;
     private List<TrendPointDto> trend;
     private TrendScaleDto trendScale;
     private List<ProductShareDto> productShare;

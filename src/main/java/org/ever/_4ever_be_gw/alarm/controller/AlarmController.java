@@ -17,6 +17,7 @@ import org.ever._4ever_be_gw.alarm.dto.response.NotificationCountResponseDto;
 import org.ever._4ever_be_gw.alarm.dto.response.NotificationListResponseDto;
 import org.ever._4ever_be_gw.alarm.dto.response.NotificationReadResponseDto;
 import org.ever._4ever_be_gw.alarm.service.AlarmHttpService;
+import org.ever._4ever_be_gw.alarm.service.AlarmSendService;
 import org.ever._4ever_be_gw.alarm.util.AlarmDtoConverter;
 import org.ever._4ever_be_gw.common.dto.pagable.PageResponseDto;
 import org.ever._4ever_be_gw.common.dto.validation.AllowedValues;
@@ -45,6 +46,7 @@ public class AlarmController {
     final static int MAX_PAGE_SIZE = 100;
 
     private final AlarmHttpService alarmHttpService;
+    private final AlarmSendService alarmSendService;
     private final UUID tempUuid = UuidCreator.getTimeOrderedEpoch(); // 임시 사용자 UUID // TODO : 인증 연동 후 수정
 
     // ===== 알림 목록 조회 =====
@@ -99,13 +101,17 @@ public class AlarmController {
 
     // ===== 알림 구독 요청 =====
     @PostMapping("/subscribe/{userId}")
-    @Operation(summary = "알림 구독 요청", description = "사용자 구독을 등록합니다. (목업: data 없음)")
+    @Operation(summary = "알림 구독 요청", description = "SSE를 통해 실시간 알림을 구독합니다.")
     public ResponseEntity<ApiResponse<Map<String, Object>>> subscribe(
         @ValidUuidV7
         @PathVariable("userId")
         String userId
     ) {
-        // 구독 요청은 외부 서버로 전송하지 않고 로컬에서 처리
+        log.info("알림 구독 요청 - UserId: {}", userId);
+        
+        // SSE Emitter 추가
+        alarmSendService.addEmitter(userId);
+        
         Map<String, Object> data = Map.of("userId", userId, "subscribed", true);
         return ResponseEntity.ok(ApiResponse.success(data, "알림 구독이 성공적으로 등록되었습니다.", HttpStatus.OK));
     }

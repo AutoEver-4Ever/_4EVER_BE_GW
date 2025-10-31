@@ -2,6 +2,7 @@ package org.ever._4ever_be_gw.config.swagger;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -40,6 +41,12 @@ public class SwaggerConfig {
                 .url("https://api.everp.co.kr" + basePath)
                 .description("Production Server");
 
+        SecurityScheme bearerScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .description("액세스 토큰을 입력하세요.");
+
         boolean isProd = false;
         for (String profile : environment.getActiveProfiles()) {
             if ("prod".equalsIgnoreCase(profile)) {
@@ -52,8 +59,13 @@ public class SwaggerConfig {
 
         return new OpenAPI()
                 .info(apiInfo())
-                .servers(servers);
+                .servers(servers)
+                .components(new io.swagger.v3.oas.models.Components()
+                        .addSecuritySchemes("bearerAuth", bearerScheme))
+                .addSecurityItem(new io.swagger.v3.oas.models.security.SecurityRequirement()
+                        .addList("bearerAuth"));
     }
+
 
     private Info apiInfo() {
         return new Info()
