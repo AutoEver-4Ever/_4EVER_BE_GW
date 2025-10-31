@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -33,6 +34,7 @@ public class SseHttpHeaderFilter implements Filter {
                 httpResponse.getHeader(HttpHeaders.CONNECTION));
 
             // 스트리밍 헤더 직접 설정
+            httpResponse.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE);
             httpResponse.setHeader(HttpHeaders.CACHE_CONTROL, "no-cache");
             httpResponse.setHeader(HttpHeaders.CONNECTION, "keep-alive");
             httpResponse.setHeader("X-Accel-Buffering", "no"); // Nginx 버퍼링 방지
