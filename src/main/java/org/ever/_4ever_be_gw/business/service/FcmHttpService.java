@@ -19,6 +19,13 @@ public interface FcmHttpService {
             String company, String startDate, String endDate, Integer page, Integer size);
 
     /**
+     * 공급사 사용자 ID로 매입 전표 목록 조회 (AP)
+     * Business 서비스에서 SCM 서비스를 호출하여 supplierCompanyId를 얻어 조회
+     */
+    ResponseEntity<ApiResponse<Object>> getApInvoicesBySupplierUserId(
+            String supplierUserId, String startDate, String endDate, Integer page, Integer size);
+
+    /**
      * 매출 전표 목록 조회 (AR)
      */
     ResponseEntity<ApiResponse<Object>> getArInvoices(

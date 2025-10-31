@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
@@ -86,6 +87,43 @@ public class FcmHttpServiceImpl implements FcmHttpService {
             log.error("매입 전표 목록 조회 중 예기치 않은 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     ApiResponse.fail("매입 전표 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getApInvoicesBySupplierUserId(
+            String supplierUserId, String startDate, String endDate, Integer page, Integer size) {
+        log.debug("공급사 사용자 ID로 매입 전표 목록 조회 요청 - supplierUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                supplierUserId, startDate, endDate, page, size);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            // supplierUserId를 requestBody에 담아서 Business 서비스로 전송
+            Map<String, Object> requestBody = new LinkedHashMap<>();
+            requestBody.put("supplierUserId", supplierUserId);
+            if (startDate != null) requestBody.put("startDate", startDate);
+            if (endDate != null) requestBody.put("endDate", endDate);
+            requestBody.put("page", page != null ? page : 0);
+            requestBody.put("size", size != null ? size : 10);
+
+            ApiResponse<Object> response = businessClient.post()
+                    .uri("/fcm/statement/ap/by-supplier")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("공급사 사용자 ID로 매입 전표 목록 조회 성공 - supplierUserId: {}", supplierUserId);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("공급사 매입 전표 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("공급사 매입 전표 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("공급사 매입 전표 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }
