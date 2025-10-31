@@ -706,6 +706,17 @@ public class HrmController {
         return hrmHttpService.completePayroll(requestDto);
     }
 
+    // 모든 직원 당월 급여 생성
+    // GET /api/business/hrm/payroll/generate
+    @GetMapping("/payroll/generate")
+    @Operation(
+        summary = "모든 직원 당월 급여 생성",
+        description = "모든 직원의 당월 급여를 생성합니다. 이미 존재하는 급여는 건너뛰고 없는 직원의 급여만 생성합니다 (idempotent)."
+    )
+    public ResponseEntity<ApiResponse<Void>> generateMonthlyPayroll() {
+        return hrmHttpService.generateMonthlyPayroll();
+    }
+
     // 월별 사내 급여 상세 조회
     // GET /api/business/hrm/payroll/{payrollId}
     @GetMapping("/payroll/{payrollId}")
@@ -871,7 +882,7 @@ public class HrmController {
         // JWT 토큰이 있으면 해당 employee의 id로 요청
         if (principal != null) {
             // JWT에서 userId를 employeeId로 사용
-            requestDto.setEmployeeId(principal.getUserId());
+            requestDto.setInternelUserId(principal.getUserId());
         }
         // JWT가 없으면 requestDto의 employeeId 사용 (목업)
 

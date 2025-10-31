@@ -749,7 +749,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-            ApiResponse<?> response = businessClient.post()
+            ApiResponse<?> response = businessClient.get()
                     .uri("/hrm/payroll/generate")
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<ApiResponse<?>>() {})
@@ -1413,7 +1413,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                     .bodyToMono(new ParameterizedTypeReference<ApiResponse<?>>() {})
                     .block();
 
-            log.info("휴가 신청 성공 - employeeId: {}", requestDto.getEmployeeId());
+            log.info("휴가 신청 성공 - employeeId: {}", requestDto.getInternelUserId());
             @SuppressWarnings("unchecked")
             ApiResponse result = (ApiResponse) response;
             return ResponseEntity.ok(result);
