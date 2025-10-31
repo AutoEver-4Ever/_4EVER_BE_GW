@@ -19,7 +19,7 @@
 //import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionCreateRequestDto;
 //import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionRejectRequestDto;
 //import org.ever._4ever_be_gw.scmpp.dto.pr.MmPurchaseRequisitionUpdateRequestDto;
-//import org.ever._4ever_be_gw.scmpp.service.MmService;
+//import org.ever._4ever_be_gw.scm.mm.service.MmService;
 //import org.ever._4ever_be_gw.scmpp.service.MmStatisticsService;
 //import org.springframework.http.HttpStatus;
 //import org.springframework.http.ResponseEntity;

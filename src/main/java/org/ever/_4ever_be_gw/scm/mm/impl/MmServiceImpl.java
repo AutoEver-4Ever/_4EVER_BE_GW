@@ -1,4 +1,4 @@
-package org.ever._4ever_be_gw.scmpp.impl;
+package org.ever._4ever_be_gw.scm.mm.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +8,7 @@ import org.ever._4ever_be_gw.common.exception.RemoteApiException;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.scmpp.dto.mm.supplier.SupplierCreateRequestDto;
-import org.ever._4ever_be_gw.scmpp.service.MmService;
+import org.ever._4ever_be_gw.scm.mm.service.MmService;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
