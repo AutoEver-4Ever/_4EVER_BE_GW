@@ -27,7 +27,8 @@ public class HrmServiceImpl implements HrmService {
     public Mono<RemoteApiResponse<CreateAuthUserResultDto>> createInternalUser(EmployeeCreateRequestDto requestDto) {
         log.debug("내부 사용자 등록 요청, payload: {}", requestDto);
 
-        WebClient businessWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        // 내부 사용자 등록 요청 시의 대기 시간 조정을 위해 longTimeoutWebClient 사용
+        WebClient businessWebClient = webClientProvider.getLongTimeoutWebClient(ApiClientKey.BUSINESS);
 
         return businessWebClient.post()
             .uri("/hrm/employee-users")

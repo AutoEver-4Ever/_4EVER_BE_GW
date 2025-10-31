@@ -25,7 +25,9 @@ public class MmServiceImpl implements MmService {
 
     @Override
     public Mono<RemoteApiResponse<CreateAuthUserResultDto>> createSupplier(SupplierCreateRequestDto requestDto) {
-        WebClient scmPpClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
+
+        // longTimeout 적용
+        WebClient scmPpClient = webClientProvider.getLongTimeoutWebClient(ApiClientKey.SCM_PP);
 
         return scmPpClient.post()
             .uri("/scm-pp/mm/supplier")

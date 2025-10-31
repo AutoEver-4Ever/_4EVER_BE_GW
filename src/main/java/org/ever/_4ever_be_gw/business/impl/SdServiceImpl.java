@@ -28,7 +28,8 @@ public class SdServiceImpl implements SdService {
     public Mono<RemoteApiResponse<CreateAuthUserResultDto>> createCustomer(CustomerCreateRequestDto requestDto) {
         log.debug("고객사 등록 요청 payload: {}", requestDto);
 
-        WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        // 내부 사용자 등록 요청 시의 대기 시간 조정을 위해 longTimeoutWebClient 사용
+        WebClient businessClient = webClientProvider.getLongTimeoutWebClient(ApiClientKey.BUSINESS);
 
         return businessClient.post()
             .uri("/sd/customers")
