@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.business.dto.InvoiceUpdateRequestDto;
+import org.ever._4ever_be_gw.business.dto.fcm.response.FcmStatisticsDto;
 import org.ever._4ever_be_gw.business.service.FcmHttpService;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
@@ -33,7 +34,7 @@ public class FcmController {
 		summary = "FCM 통계 조회",
 		description = "기간별 재무 관리 통계를 조회합니다."
 	)
-	public ResponseEntity<ApiResponse<Object>> getStatistics(
+	public ResponseEntity<ApiResponse<FcmStatisticsDto>> getStatistics(
 		@Parameter(description = "조회 기간 목록(콤마 구분)")
 		@RequestParam(name = "periods", required = false) String periods
 	) {
