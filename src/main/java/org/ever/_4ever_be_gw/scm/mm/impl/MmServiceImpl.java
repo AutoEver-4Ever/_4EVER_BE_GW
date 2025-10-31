@@ -7,7 +7,7 @@ import org.ever._4ever_be_gw.common.dto.RemoteApiResponse;
 import org.ever._4ever_be_gw.common.exception.RemoteApiException;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
-import org.ever._4ever_be_gw.scmpp.dto.mm.supplier.SupplierCreateRequestDto;
+import org.ever._4ever_be_gw.scm.mm.dto.SupplierCreateRequestDto;
 import org.ever._4ever_be_gw.scm.mm.service.MmService;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;

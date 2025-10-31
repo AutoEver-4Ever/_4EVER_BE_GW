@@ -30,7 +30,7 @@ import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
-import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
+import org.ever._4ever_be_gw.scm.PeriodStatDto;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
