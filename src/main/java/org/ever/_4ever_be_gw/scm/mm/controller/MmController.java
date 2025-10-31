@@ -1,6 +1,5 @@
 package org.ever._4ever_be_gw.scm.mm.controller;
 
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_gw.business.dto.hrm.CreateAuthUserResultDto;
 import org.ever._4ever_be_gw.common.exception.RemoteApiException;
@@ -12,7 +11,7 @@ import org.ever._4ever_be_gw.scm.mm.dto.PurchaseRequisitionCreateRequestDto;
 import org.ever._4ever_be_gw.scm.mm.dto.PurchaseRequisitionRejectRequestDto;
 import org.ever._4ever_be_gw.scm.mm.dto.StockPurchaseRequestDto;
 import org.ever._4ever_be_gw.scmpp.dto.mm.supplier.SupplierCreateRequestDto;
-import org.ever._4ever_be_gw.scmpp.service.MmService;
+import org.ever._4ever_be_gw.scm.mm.service.MmService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
