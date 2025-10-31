@@ -48,11 +48,13 @@ public class WebClientConfig {
     @Bean
     public WebClient.Builder longTimeoutWebClientBuilder() {
         HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)
-                .responseTimeout(Duration.ofMinutes(60))
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)   // 10초
+                .responseTimeout(Duration.ofMinutes(60))                // 60초
                 .doOnConnected(conn -> conn
-                        .addHandlerLast(new ReadTimeoutHandler(10_000, TimeUnit.MILLISECONDS))
-                        .addHandlerLast(new WriteTimeoutHandler(10_000, TimeUnit.MILLISECONDS))
+                        // ReadTimeoutHandler: 연결이 성립 된 후, 서버로 부터의 응답 timeoud 시간 설정
+                        .addHandlerLast(new ReadTimeoutHandler(60_000, TimeUnit.MILLISECONDS))
+                        // WriteTimeoutHandler: 클라이언트가 서버로 요청 데이터를 보내는 동안 지정한 시간 안에 전송이 완료되지 않으면 시간 설정
+                        .addHandlerLast(new WriteTimeoutHandler(60_000, TimeUnit.MILLISECONDS))
                 );
 
         return WebClient.builder()
