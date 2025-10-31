@@ -34,7 +34,23 @@ public class MmServiceImpl implements MmService {
             .bodyValue(requestDto)
             .retrieve()
             .bodyToMono(new ParameterizedTypeReference<RemoteApiResponse<CreateAuthUserResultDto>>() {})
+                .switchIfEmpty(Mono.error(
+                        new RemoteApiException(
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                "[ERROR][MM] SCM_PP 서버 응답 본문이 비었습니다.",
+                                null
+                        )))
+
             .flatMap(response -> {
+                if (response == null) {
+                    return Mono.error(
+                            new RemoteApiException(
+                                    HttpStatus.INTERNAL_SERVER_ERROR,
+                                    "[ERROR][MM] SCM_PP 서버 응답을 파싱할 수 없습니다.",
+                                    null
+                            )
+                    );
+                }
                 if (!response.isSuccess()) {
                     HttpStatus status = HttpStatus.resolve(response.getStatus());
                     if (status == null) {
@@ -44,12 +60,17 @@ public class MmServiceImpl implements MmService {
                 }
                 return Mono.just(response);
             })
-            .doOnSuccess(response -> log.info("[INFO] 공급사 등록 성공 - tx status: {}, userId: {}", response.getStatus(),
-                response.getData() != null ? response.getData().getUserId() : null))
-            .doOnError(error -> log.error("[ERROR] 공급사 등록 실패: {}", error.getMessage(), error))
+            .doOnSuccess(response ->
+                    log.info("[INFO] 공급사 등록 성공 - tx status: {}, userId: {}"
+                            , response.getStatus(), response.getData() != null ? response.getData().getUserId() : null))
+
+            .doOnError(error ->
+                    log.error("[ERROR] 공급사 등록 실패: {}", error.getMessage(), error))
+
             .onErrorResume(WebClientResponseException.class, ex -> {
                 log.error("[ERROR] SCM_PP 서버 응답 오류 - status: {}, body: {}",
                     ex.getStatusCode(), ex.getResponseBodyAsString());
+
                 return Mono.error(new RemoteApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "[ERROR] 공급사 등록 처리 중 오류가 발생했습니다.",
