@@ -1,5 +1,6 @@
 package org.ever._4ever_be_gw.business.service;
 
+import org.ever._4ever_be_gw.business.dto.fcm.response.FcmStatisticsDto;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
 
@@ -10,7 +11,7 @@ public interface FcmHttpService {
     /**
      * 재무관리 통계 조회
      */
-    ResponseEntity<ApiResponse<Object>> getFcmStatistics(String periods);
+    ResponseEntity<ApiResponse<FcmStatisticsDto>> getFcmStatistics(String periods);
 
     /**
      * 매입 전표 목록 조회 (AP)
