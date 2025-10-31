@@ -4,16 +4,16 @@
 //import io.swagger.v3.oas.annotations.Parameter;
 //import io.swagger.v3.oas.annotations.tags.Tag;
 //import jakarta.validation.Valid;
-//import org.ever._4ever_be_gw.mockdata.business.dto.InvoiceUpdateRequestDto;
-//import org.ever._4ever_be_gw.mockdata.business.dto.invoice.InvoiceDetailDto;
-//import org.ever._4ever_be_gw.mockdata.business.dto.invoice.PurchaseInvoiceItemDto;
+//import org.ever._4ever_be_gw.business.dto.InvoiceUpdateRequestDto;
+//import org.ever._4ever_be_gw.business.dto.invoice.InvoiceDetailDto;
+//import org.ever._4ever_be_gw.business.dto.invoice.PurchaseInvoiceItemDto;
 //import org.ever._4ever_be_gw.common.dto.PageDto;
 //import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 //import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 //import org.ever._4ever_be_gw.common.exception.ErrorCode;
 //import org.ever._4ever_be_gw.common.exception.ValidationException;
 //import org.ever._4ever_be_gw.common.response.ApiResponse;
-//import org.ever._4ever_be_gw.mockdata.scmpp.dto.PeriodStatDto;
+//import org.ever._4ever_be_gw.scm.PeriodStatDto;
 //// Use business-layer AP invoice DTOs for detail view
 //import org.springframework.http.HttpStatus;
 //import org.springframework.http.ResponseEntity;

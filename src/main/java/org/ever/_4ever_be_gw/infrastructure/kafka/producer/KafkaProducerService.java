@@ -1,9 +1,11 @@
 package org.ever._4ever_be_gw.infrastructure.kafka.producer;
 
-import org.ever._4ever_be_gw.infrastructure.kafka.event.*;
-import org.springframework.kafka.support.SendResult;
-
 import java.util.concurrent.CompletableFuture;
+import org.ever.event.AlarmEvent;
+import org.ever.event.BusinessEvent;
+import org.ever.event.ScmEvent;
+import org.ever.event.UserEvent;
+import org.springframework.kafka.support.SendResult;
 
 /**
  * Kafka Producer 서비스 인터페이스

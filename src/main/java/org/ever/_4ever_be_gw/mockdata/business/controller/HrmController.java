@@ -18,10 +18,10 @@
 //import java.util.Set;
 //import java.util.concurrent.ThreadLocalRandom;
 //
-//import org.ever._4ever_be_gw.mockdata.business.dto.*;
-//import org.ever._4ever_be_gw.mockdata.business.dto.employee.EmployeeCreateRequestDto;
-//import org.ever._4ever_be_gw.mockdata.business.dto.employee.EmployeeUpdateRequestDto;
-//import org.ever._4ever_be_gw.mockdata.business.dto.hrm.UserCreateResponseDto;
+//import org.ever._4ever_be_gw.business.dto.*;
+//import org.ever._4ever_be_gw.business.dto.employee.EmployeeCreateRequestDto;
+//import org.ever._4ever_be_gw.business.dto.employee.EmployeeUpdateRequestDto;
+//import org.ever._4ever_be_gw.business.dto.hrm.UserCreateResponseDto;
 //import org.ever._4ever_be_gw.mockdata.business.service.HrmService;
 //import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 //import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
@@ -30,7 +30,7 @@
 //import org.ever._4ever_be_gw.common.exception.ErrorCode;
 //import org.ever._4ever_be_gw.common.exception.ValidationException;
 //import org.ever._4ever_be_gw.common.response.ApiResponse;
-//import org.ever._4ever_be_gw.mockdata.scmpp.dto.PeriodStatDto;
+//import org.ever._4ever_be_gw.scm.PeriodStatDto;
 //import org.springframework.http.HttpStatus;
 //import org.springframework.http.ResponseEntity;
 //import org.springframework.web.bind.annotation.*;

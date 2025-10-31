@@ -16,7 +16,7 @@
 //import org.ever._4ever_be_gw.mockdata.scmpp.dto.*;
 //import org.ever._4ever_be_gw.common.exception.BusinessException;
 //import org.ever._4ever_be_gw.common.exception.ErrorCode;
-//import org.ever._4ever_be_gw.mockdata.scmpp.dto.PeriodStatDto;
+//import org.ever._4ever_be_gw.scm.PeriodStatDto;
 //import org.ever._4ever_be_gw.mockdata.scmpp.dto.inventory.*;
 //import org.ever._4ever_be_gw.mockdata.scmpp.dto.warehouse.UpdateWarehouseRequestDto;
 //import org.ever._4ever_be_gw.mockdata.scmpp.dto.warehouse.WarehouseDetailDto;

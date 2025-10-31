@@ -5,14 +5,14 @@
 //import io.swagger.v3.oas.annotations.media.Content;
 //import io.swagger.v3.oas.annotations.media.ExampleObject;
 //import io.swagger.v3.oas.annotations.tags.Tag;
-//import org.ever._4ever_be_gw.mockdata.business.constants.QuotationStatus;
-//import org.ever._4ever_be_gw.mockdata.business.dto.customer.*;
-//import org.ever._4ever_be_gw.mockdata.business.dto.order.*;
-//import org.ever._4ever_be_gw.mockdata.business.dto.quotation.*;
-//import org.ever._4ever_be_gw.mockdata.business.dto.sd.InventoryCheckItemDto;
-//import org.ever._4ever_be_gw.mockdata.business.dto.sd.InventoryCheckItemRequestDto;
-//import org.ever._4ever_be_gw.mockdata.business.dto.sd.InventoryCheckRequestDto;
-//import org.ever._4ever_be_gw.mockdata.business.dto.sd.InventoryCheckResponseDto;
+//import org.ever._4ever_be_gw.business.constants.QuotationStatus;
+//import org.ever._4ever_be_gw.business.dto.customer.*;
+//import org.ever._4ever_be_gw.business.dto.order.*;
+//import org.ever._4ever_be_gw.business.dto.quotation.*;
+//import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckItemDto;
+//import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckItemRequestDto;
+//import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckRequestDto;
+//import org.ever._4ever_be_gw.business.dto.sd.InventoryCheckResponseDto;
 //import org.ever._4ever_be_gw.mockdata.business.service.SdService;
 //import org.ever._4ever_be_gw.common.dto.PageDto;
 //import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
@@ -22,7 +22,7 @@
 //import org.ever._4ever_be_gw.common.exception.ValidationException;
 //import org.ever._4ever_be_gw.common.response.ApiResponse;
 //import org.ever._4ever_be_gw.common.util.UuidV7;
-//import org.ever._4ever_be_gw.mockdata.scmpp.dto.PeriodStatDto;
+//import org.ever._4ever_be_gw.scm.PeriodStatDto;
 //import org.springframework.http.HttpStatus;
 //import org.springframework.http.ResponseEntity;
 //import org.springframework.web.bind.annotation.*;
@@ -142,7 +142,7 @@
 //                    .build();
 //            MOCK_CUS_LIST.add(listItem);
 //
-//            org.ever._4ever_be_gw.mockdata.business.dto.customer.CustomerDetailDto detailDto = org.ever._4ever_be_gw.mockdata.business.dto.customer.CustomerDetailDto.builder()
+//            org.ever._4ever_be_gw.business.dto.customer.CustomerDetailDto detailDto = org.ever._4ever_be_gw.business.dto.customer.CustomerDetailDto.builder()
 //                    .customerId(customerId)
 //                    .customerNumber(customerNumber)
 //                    .customerName(companies[i % companies.length])
@@ -173,13 +173,13 @@
 //            java.time.LocalDate dd = od.plusDays(10 + (arrIndex % 5));
 //            String statusCode = soStatusCodes[arrIndex % soStatusCodes.length];
 //
-//            var manager = org.ever._4ever_be_gw.mockdata.business.dto.order.ManagerDto.builder()
+//            var manager = org.ever._4ever_be_gw.business.dto.order.ManagerDto.builder()
 //                    .managerName(soManagerNames[arrIndex % soManagerNames.length])
 //                    .managerPhone("02-1234-5678")
 //                    .managerEmail("contact@example.com")
 //                    .build();
 //
-//            var listItem = org.ever._4ever_be_gw.mockdata.business.dto.order.SalesOrderListItemDto.builder()
+//            var listItem = org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto.builder()
 //                    .salesOrderId(soId)
 //                    .salesOrderNumber(String.format("SO-2024-%03d", i + 1))
 //                    .customerName(soCustomers[arrIndex % soCustomers.length])
@@ -713,7 +713,7 @@
 //            summary = "고객사 상세 조회",
 //            description = "고객사 상세 정보를 조회합니다."
 //    )
-//    public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.mockdata.business.dto.customer.CustomerDetailDto>> getCustomerDetail(
+//    public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.business.dto.customer.CustomerDetailDto>> getCustomerDetail(
 //            @Parameter(description = "고객사 ID (UUID)")
 //            @org.springframework.web.bind.annotation.PathVariable("customerId") String customerId
 //    ) {
@@ -738,7 +738,7 @@
 //            summary = "고객사 정보 수정",
 //            description = "고객사 기본/연락/담당자 정보를 수정합니다."
 //    )
-//    public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.mockdata.business.dto.customer.CustomerUpdateResponseDto>> updateCustomer(
+//    public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.business.dto.customer.CustomerUpdateResponseDto>> updateCustomer(
 //            @org.springframework.web.bind.annotation.PathVariable("customerId") String customerId,
 //            @io.swagger.v3.oas.annotations.parameters.RequestBody(
 //                    required = true,
@@ -750,7 +750,7 @@
 //        String code = "CUS-" + (customerId != null && customerId.length() >= 6 ? customerId.substring(0, 6) : String.valueOf(customerId));
 //
 //        var managerDto = (request != null && request.getManager() != null)
-//                ? org.ever._4ever_be_gw.mockdata.business.dto.customer.CustomerManagerDto.builder()
+//                ? org.ever._4ever_be_gw.business.dto.customer.CustomerManagerDto.builder()
 //                    .managerName(request.getManager().getManagerName())
 //                    .managerPhone(request.getManager().getManagerPhone())
 //                    .managerEmail(request.getManager().getManagerEmail())
@@ -833,7 +833,7 @@
 //        List<SalesOrderListItemDto> all = new ArrayList<>(MOCK_SO_LIST);
 //
 //        // 필터 적용
-//        java.util.List<org.ever._4ever_be_gw.mockdata.business.dto.order.SalesOrderListItemDto> filtered = all;
+//        java.util.List<org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto> filtered = all;
 //        if (status != null && !status.equalsIgnoreCase("ALL")) {
 //            final String st = status.toUpperCase(Locale.ROOT);
 //            filtered = filtered.stream()
@@ -872,15 +872,15 @@
 //        // 정렬: orderDate desc, saleOrderId asc 보조
 //        filtered = filtered.stream()
 //                .sorted(java.util.Comparator
-//                        .comparing((org.ever._4ever_be_gw.mockdata.business.dto.order.SalesOrderListItemDto m) -> java.time.LocalDate.parse(m.getOrderDate()))
+//                        .comparing((org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto m) -> java.time.LocalDate.parse(m.getOrderDate()))
 //                        .reversed()
-//                        .thenComparing(org.ever._4ever_be_gw.mockdata.business.dto.order.SalesOrderListItemDto::getSalesOrderId))
+//                        .thenComparing(org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto::getSalesOrderId))
 //                .toList();
 //
 //        int total = filtered.size();
 //        int fromIdx = Math.min(pageIndex * pageSize, total);
 //        int toIdx2 = Math.min(fromIdx + pageSize, total);
-//        java.util.List<org.ever._4ever_be_gw.mockdata.business.dto.order.SalesOrderListItemDto> pageContent = filtered.subList(fromIdx, toIdx2);
+//        java.util.List<org.ever._4ever_be_gw.business.dto.order.SalesOrderListItemDto> pageContent = filtered.subList(fromIdx, toIdx2);
 //
 //        // PageDto 구성 (공통)
 //        int totalPages = pageSize == 0 ? 0 : (int) Math.ceil((double) total / pageSize);
@@ -893,7 +893,7 @@
 //                .hasNext(hasNext)
 //                .build();
 //
-//        var data = org.ever._4ever_be_gw.mockdata.business.dto.order.SalesOrderListResponseDto.builder()
+//        var data = org.ever._4ever_be_gw.business.dto.order.SalesOrderListResponseDto.builder()
 //                .content(pageContent)
 //                .page(pageDto)
 //                .build();
@@ -907,7 +907,7 @@
 //            summary = "주문서 상세 조회",
 //            description = "주문서 상세 정보를 조회합니다. 주문 정보, 고객 정보, 품목, 총액, 메모를 포함합니다."
 //    )
-//    public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.mockdata.business.dto.order.SalesOrderDetailDto>> getSalesOrderDetail(
+//    public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.business.dto.order.SalesOrderDetailDto>> getSalesOrderDetail(
 //            @Parameter(description = "주문서 ID (UUID)")
 //            @org.springframework.web.bind.annotation.PathVariable("salesOrderId") String soId
 //    ) {
@@ -932,7 +932,7 @@
 //                    "  * productShare: 상위 5개 + etc(총 6개) ({ productCode, productName, sale, saleShare })\n" +
 //                    "  * topCustomers: 10개 고객({ customerCode, customerName, orderCount, sale, active })"
 //    )
-//    public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.mockdata.business.dto.analytics.SalesAnalyticsResponseDto>> getSalesAnalytics(
+//    public ResponseEntity<ApiResponse<org.ever._4ever_be_gw.business.dto.analytics.SalesAnalyticsResponseDto>> getSalesAnalytics(
 //            @Parameter(description = "시작일 (yyyy-mm-dd)") @RequestParam(name = "start", required = false) String startDateStr,
 //            @Parameter(description = "종료일 (yyyy-mm-dd)") @RequestParam(name = "end", required = false) String endDateStr
 //    ) {
@@ -1088,23 +1088,23 @@
 //            trendScale.put("sale", saleScale);
 //            trendScale.put("orderCount", orderScale);
 //
-//            var periodDto = new org.ever._4ever_be_gw.mockdata.business.dto.analytics.PeriodDto(
+//            var periodDto = new org.ever._4ever_be_gw.business.dto.analytics.PeriodDto(
 //                    startDate.toString(), endDate.toString(), weekStart.toString(), weekEnd.toString(), weekCount);
-//            var trendDto = trend.stream().map(m -> new org.ever._4ever_be_gw.mockdata.business.dto.analytics.TrendPointDto(
+//            var trendDto = trend.stream().map(m -> new org.ever._4ever_be_gw.business.dto.analytics.TrendPointDto(
 //                    (Integer) m.get("year"), (Integer) m.get("month"), (Integer) m.get("week"),
 //                    ((Number) m.get("sale")).longValue(), (Integer) m.get("orderCount"))).toList();
-//            var saleScaleDto = new org.ever._4ever_be_gw.mockdata.business.dto.analytics.ScaleDto(saleMin, saleMax);
-//            var orderScaleDto = new org.ever._4ever_be_gw.mockdata.business.dto.analytics.ScaleDto((long) orderMin, (long) orderMax);
-//            var trendScaleDto = new org.ever._4ever_be_gw.mockdata.business.dto.analytics.TrendScaleDto(saleScaleDto, orderScaleDto);
-//            var productShareDto = productShare.stream().map(m -> new org.ever._4ever_be_gw.mockdata.business.dto.analytics.ProductShareDto(
+//            var saleScaleDto = new org.ever._4ever_be_gw.business.dto.analytics.ScaleDto(saleMin, saleMax);
+//            var orderScaleDto = new org.ever._4ever_be_gw.business.dto.analytics.ScaleDto((long) orderMin, (long) orderMax);
+//            var trendScaleDto = new org.ever._4ever_be_gw.business.dto.analytics.TrendScaleDto(saleScaleDto, orderScaleDto);
+//            var productShareDto = productShare.stream().map(m -> new org.ever._4ever_be_gw.business.dto.analytics.ProductShareDto(
 //                    String.valueOf(m.get("productCode")), String.valueOf(m.get("productName")),
 //                    ((Number) m.get("sale")).longValue(), (Double) m.get("saleShare"))).toList();
-//            var topCustomersDto = topCustomers.stream().map(m -> new org.ever._4ever_be_gw.mockdata.business.dto.analytics.TopCustomerDto(
+//            var topCustomersDto = topCustomers.stream().map(m -> new org.ever._4ever_be_gw.business.dto.analytics.TopCustomerDto(
 //                    String.valueOf(m.get("customerCode")),
 //                    String.valueOf(m.get("customerName")), (Integer) m.get("orderCount"), ((Number) m.get("sale")).longValue(),
 //                    (Boolean) m.get("active"))).toList();
 //
-//            var data = org.ever._4ever_be_gw.mockdata.business.dto.analytics.SalesAnalyticsResponseDto.builder()
+//            var data = org.ever._4ever_be_gw.business.dto.analytics.SalesAnalyticsResponseDto.builder()
 //                    .totalSale(totalSale)
 //                    .totalOrders(totalOrders)
 //                    .period(periodDto)

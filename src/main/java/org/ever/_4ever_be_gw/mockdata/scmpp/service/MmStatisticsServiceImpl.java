@@ -2,7 +2,7 @@
 //
 //import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 //import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
-//import org.ever._4ever_be_gw.mockdata.scmpp.dto.PeriodStatDto;
+//import org.ever._4ever_be_gw.scm.PeriodStatDto;
 //import org.springframework.stereotype.Service;
 //
 //import java.math.BigDecimal;
