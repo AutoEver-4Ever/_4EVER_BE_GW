@@ -1,13 +1,14 @@
-package org.ever._4ever_be_gw.mockdata.scmpp.dto.mm.supplier;
+package org.ever._4ever_be_gw.scm.mm.dto;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class MmSupplierListResponseDto {
+public class MmSupplierDetailResponseDto {
     private String statusCode;
     private SupplierInfo supplierInfo;
+    private ManagerInfo managerInfo;
 
     @Getter
     @Setter
@@ -22,5 +23,13 @@ public class MmSupplierListResponseDto {
         private String supplierStatus;          // 공급사의 상태(ACTIVE/INACTIVE)
         private String category;                // 자재의 형태
         private Integer deliveryLeadTime;       // 배송 리드 타임
+    }
+
+    @Getter
+    @Setter
+    public static class ManagerInfo {
+        private String managerName;     // 담당자 이름
+        private String managerPhone;    // 담당자 전화번호
+        private String managerEmail;    // 담당자 이메일
     }
 }

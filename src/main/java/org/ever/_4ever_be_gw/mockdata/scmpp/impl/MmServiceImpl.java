@@ -4,7 +4,7 @@
 //import lombok.extern.slf4j.Slf4j;
 //import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 //import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
-//import org.ever._4ever_be_gw.mockdata.scmpp.dto.mm.supplier.SupplierCreateRequestDto;
+//import org.ever._4ever_be_gw.scm.mm.dto.SupplierCreateRequestDto;
 //import org.ever._4ever_be_gw.mockdata.scmpp.service.MmService;
 //import org.springframework.stereotype.Service;
 //import org.springframework.web.reactive.function.client.WebClient;
