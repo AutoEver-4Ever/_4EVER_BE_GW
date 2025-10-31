@@ -1,8 +1,8 @@
 package org.ever._4ever_be_gw.scm.mm.controller;
 
-import java.util.Map;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.ever._4ever_be_gw.business.dto.hrm.CreateAuthUserResultDto;
+import org.ever._4ever_be_gw.mockdata.business.dto.hrm.CreateAuthUserResultDto;
 import org.ever._4ever_be_gw.common.exception.RemoteApiException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
@@ -11,8 +11,8 @@ import org.ever._4ever_be_gw.scm.mm.dto.PurchaseOrderRejectRequestDto;
 import org.ever._4ever_be_gw.scm.mm.dto.PurchaseRequisitionCreateRequestDto;
 import org.ever._4ever_be_gw.scm.mm.dto.PurchaseRequisitionRejectRequestDto;
 import org.ever._4ever_be_gw.scm.mm.dto.StockPurchaseRequestDto;
-import org.ever._4ever_be_gw.scmpp.dto.mm.supplier.SupplierCreateRequestDto;
-import org.ever._4ever_be_gw.scmpp.service.MmService;
+import org.ever._4ever_be_gw.mockdata.scmpp.dto.mm.supplier.SupplierCreateRequestDto;
+import org.ever._4ever_be_gw.mockdata.scmpp.service.MmService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/scm-pp/mm")
 @RequiredArgsConstructor
+@Tag(name = "구매 관리(MM)", description = "구매 관리 API")
 public class MmController {
 
     private final WebClientProvider webClientProvider;

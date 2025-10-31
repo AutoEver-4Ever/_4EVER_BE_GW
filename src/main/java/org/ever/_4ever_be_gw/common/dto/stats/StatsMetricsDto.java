@@ -3,7 +3,7 @@ package org.ever._4ever_be_gw.common.dto.stats;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
-import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
+import org.ever._4ever_be_gw.mockdata.scmpp.dto.PeriodStatDto;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

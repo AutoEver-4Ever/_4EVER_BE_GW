@@ -1,5 +1,6 @@
 package org.ever._4ever_be_gw.scm.im.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
@@ -15,6 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/scm-pp/iv")
 @RequiredArgsConstructor
+@Tag(name = "재고관리(IM)", description = "재고 관리 API")
 public class ImController {
 
     private final WebClientProvider webClientProvider;
