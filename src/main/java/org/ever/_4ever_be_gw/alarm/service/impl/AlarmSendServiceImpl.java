@@ -23,48 +23,70 @@ public class AlarmSendServiceImpl implements AlarmSendService {
 
     @Override
     public SseEmitter addEmitter(String userId) {
-        log.info("SSE Emitter 추가 - UserId: {}", userId);
+        log.info("[SSE][EMITTER-ADD-START] userId={}", userId);
 
         // 이미 존재하는 Emitter가 있다면 제거
         SseEmitter existingEmitter = emitterMap.remove(userId);
         if (existingEmitter != null) {
-            log.info("기존 SSE Emitter 제거 - UserId: {}", userId);
+            log.info("[SSE][EMITTER-REPLACE] 기존 Emitter 제거 - userId={}, oldEmitterHash={}",
+                userId, System.identityHashCode(existingEmitter));
             try {
-                existingEmitter.completeWithError(new Exception("새로운 연결로 교체됨"));
+                log.warn("기존 SSE Emitter가 존재하여 종료 처리 - UserId: {}, oldEmitterHash={}",
+                    userId, System.identityHashCode(existingEmitter));
+                existingEmitter.complete();
             } catch (Exception e) {
-                log.warn("기존 SSE Emitter 종료 중 오류 - UserId: {}", userId, e);
+                log.warn("기존 SSE Emitter 종료 중 오류 - UserId: {}, oldEmitterHash={}",
+                    userId, System.identityHashCode(existingEmitter), e);
             }
         }
 
         // 새로운 Emitter 생성
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
+        final int emitterHash = System.identityHashCode(emitter);
+        log.debug("[SSE][EMITTER-CREATED] userId={}, emitterHash={}, timeoutMs={}",
+            userId, emitterHash, DEFAULT_TIMEOUT);
 
         // 완료 콜백 등록
         emitter.onCompletion(() -> {
-            log.info("SSE Emitter 완료 - UserId: {}", userId);
+            log.info("[SSE][EMITTER-COMPLETED] userId={}, emitterHash={}", userId, emitterHash);
             emitterMap.remove(userId);
         });
 
         // 타임아웃 콜백 등록
         emitter.onTimeout(() -> {
-            log.warn("SSE Emitter 타임아웃 - UserId: {}", userId);
+            log.warn("[SSE][EMITTER-TIMEOUT] userId={}, emitterHash={}", userId, emitterHash);
             emitterMap.remove(userId);
-            try {
-                emitter.completeWithError(new Exception("타임아웃"));
-            } catch (Exception e) {
-                log.warn("SSE Emitter 타임아웃 처리 중 오류 - UserId: {}", userId, e);
-            }
+            log.warn("[SSE][EMITTER-TIMEOUT-COMPLETE] userId={}, emitterHash={}",
+                userId, emitterHash);
+            emitter.complete();
         });
 
         // 에러 콜백 등록
         emitter.onError((ex) -> {
-            log.error("SSE Emitter 에러 - UserId: {}", userId, ex);
+            log.error("[SSE][EMITTER-ERROR] userId={}, emitterHash={}, msg={}",
+                userId, emitterHash, ex.getMessage(), ex);
             emitterMap.remove(userId);
         });
 
         // Emitter 저장
         emitterMap.put(userId, emitter);
-        log.info("SSE Emitter 추가 완료 - UserId: {}, 현재 연결 수: {}", userId, emitterMap.size());
+        log.info("[SSE][EMITTER-ADD-END] userId={}, emitterHash={}, activeConnections={}",
+            userId, emitterHash, emitterMap.size());
+
+//        // 초기 keep-alive 이벤트 전송 (연결 즉시 수립 확인)
+//        try {
+//            SseEmitter.SseEventBuilder initEvent = SseEmitter.event()
+//                .name("keepalive")
+//                .data("connected");
+//            emitter.send(initEvent);
+//            log.debug("[SSE][INIT-EVENT-SENT] userId={}, emitterHash={}, event=keepalive", userId,
+//                emitterHash);
+//        } catch (Exception e) {
+//            log.warn("[SSE][INIT-EVENT-FAIL] userId={}, emitterHash={}, msg={}",
+//                userId, emitterHash, e.getMessage(), e);
+//            emitterMap.remove(userId);
+//            throw new RuntimeException("SSE 초기 이벤트 전송 실패", e);
+//        }
 
         return emitter;
     }
@@ -75,6 +97,7 @@ public class AlarmSendServiceImpl implements AlarmSendService {
         SseEmitter emitter = emitterMap.remove(userId);
         if (emitter != null) {
             try {
+                log.warn("SSE Emitter 종료 처리 - UserId: {}", userId);
                 emitter.complete();
             } catch (Exception e) {
                 log.warn("SSE Emitter 종료 중 오류 - UserId: {}", userId, e);
@@ -94,8 +117,7 @@ public class AlarmSendServiceImpl implements AlarmSendService {
 
         try {
             // 데이터를 JSON으로 변환
-            String jsonData = objectMapper.writeValueAsString(
-                event.getTitle() + ": " + event.getMessage());
+            String jsonData = objectMapper.writeValueAsString(event);
 
             // SSE 메시지 전송
             SseEmitter.SseEventBuilder sseEvent = SseEmitter.event()
@@ -109,6 +131,8 @@ public class AlarmSendServiceImpl implements AlarmSendService {
             log.error("알림 메시지 전송 실패 - targetId: {}", event.getTargetId(), e);
             emitterMap.remove(event.getTargetId());
             try {
+                log.error("SSE Emitter 에러 처리 - targetId: {}",
+                    event.getTargetId());
                 emitter.completeWithError(e);
             } catch (Exception ex) {
                 log.warn("SSE Emitter 에러 처리 중 오류 - targetId: {}", event.getTargetId(), e);
