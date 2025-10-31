@@ -292,11 +292,11 @@ public class MmController {
     }
 
     // 구매요청서 상태 토글
-    @GetMapping("/purchase_requisition/status/toggle")
+    @GetMapping("/purchase-requisition/status/toggle")
     public ResponseEntity<Object> getPurchaseRequisitionStatusToggle() {
         Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
-                .uri("/scm-pp/mm/purchase_requisition/status/toggle")
+                .uri("/scm-pp/mm/purchase-requisition/status/toggle")
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(Object.class)
