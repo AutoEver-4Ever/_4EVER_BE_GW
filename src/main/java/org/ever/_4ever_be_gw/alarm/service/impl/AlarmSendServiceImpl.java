@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.alarm.service.AlarmSendService;
 import org.ever.event.AlarmSentEvent;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -73,20 +74,21 @@ public class AlarmSendServiceImpl implements AlarmSendService {
         log.info("[SSE][EMITTER-ADD-END] userId={}, emitterHash={}, activeConnections={}",
             userId, emitterHash, emitterMap.size());
 
-//        // 초기 keep-alive 이벤트 전송 (연결 즉시 수립 확인)
-//        try {
-//            SseEmitter.SseEventBuilder initEvent = SseEmitter.event()
-//                .name("keepalive")
-//                .data("connected");
-//            emitter.send(initEvent);
-//            log.debug("[SSE][INIT-EVENT-SENT] userId={}, emitterHash={}, event=keepalive", userId,
-//                emitterHash);
-//        } catch (Exception e) {
-//            log.warn("[SSE][INIT-EVENT-FAIL] userId={}, emitterHash={}, msg={}",
-//                userId, emitterHash, e.getMessage(), e);
-//            emitterMap.remove(userId);
-//            throw new RuntimeException("SSE 초기 이벤트 전송 실패", e);
-//        }
+        // 초기 keep-alive 이벤트 전송 (연결 즉시 수립 확인)
+        try {
+            SseEmitter.SseEventBuilder initEvent = SseEmitter.event()
+                .name("keepalive")
+                .data("connected");
+            emitter.send(initEvent);
+
+            log.debug("[SSE][INIT-EVENT-SENT] userId={}, emitterHash={}, event=keepalive",
+                userId, emitterHash);
+        } catch (Exception e) {
+            log.warn("[SSE][INIT-EVENT-FAIL] userId={}, emitterHash={}, msg={}",
+                userId, emitterHash, e.getMessage(), e);
+
+            emitterMap.remove(userId);
+        }
 
         return emitter;
     }
@@ -125,7 +127,7 @@ public class AlarmSendServiceImpl implements AlarmSendService {
                 .data(jsonData);
 
             emitter.send(sseEvent);
-            log.info("알림 메시지 전송 성공 - targetId: {}", event.getTargetId());
+            log.info("알림 메시지 전송 성공 - event=alarm, targetId: {}", event.getTargetId());
 
         } catch (IOException e) {
             log.error("알림 메시지 전송 실패 - targetId: {}", event.getTargetId(), e);
@@ -136,6 +138,65 @@ public class AlarmSendServiceImpl implements AlarmSendService {
                 emitter.completeWithError(e);
             } catch (Exception ex) {
                 log.warn("SSE Emitter 에러 처리 중 오류 - targetId: {}", event.getTargetId(), e);
+            }
+        }
+    }
+
+    @Override
+    public void sendKeepAlive(String userId) {
+        SseEmitter emitter = emitterMap.get(userId);
+        if (emitter == null) {
+            log.debug("[SSE][KEEPALIVE-SKIP] emitter not found - userId={}", userId);
+            return;
+        }
+        try {
+            emitter.send(SseEmitter.event().name("keepalive").data("ping"));
+            log.debug("[SSE][KEEPALIVE-SENT] userId={}", userId);
+        } catch (Exception e) {
+            log.warn("[SSE][KEEPALIVE-FAIL] userId={}, msg={}", userId, e.getMessage(), e);
+            emitterMap.remove(userId);
+            try {
+                emitter.completeWithError(e);
+            } catch (Exception ignore) {
+            }
+        }
+    }
+
+    @Override
+    @Scheduled(fixedRate = 20000)
+    public void broadcastKeepAlive() {
+        log.debug("[SSE][BROADCAST-KEEPALIVE] activeConnections={}", emitterMap.size());
+        emitterMap.forEach((userId, emitter) -> {
+            try {
+                emitter.send(SseEmitter.event().name("keepalive").data("ping"));
+            } catch (Exception e) {
+                log.warn("[SSE][BROADCAST-KEEPALIVE-FAIL] userId={}, msg={}", userId,
+                    e.getMessage(), e);
+                emitterMap.remove(userId);
+                try {
+                    emitter.completeWithError(e);
+                } catch (Exception ignore) {
+                }
+            }
+        });
+    }
+
+    @Override
+    public void sendUnreadCount(String userId, long unreadCount) {
+        SseEmitter emitter = emitterMap.get(userId);
+        if (emitter == null) {
+            log.debug("[SSE][UNREADCOUNT-SKIP] emitter not found - userId={}", userId);
+            return;
+        }
+        try {
+            emitter.send(SseEmitter.event().name("unreadCount").data(unreadCount));
+            log.info("[SSE][UNREADCOUNT-SENT] userId={}, count={}", userId, unreadCount);
+        } catch (Exception e) {
+            log.warn("[SSE][UNREADCOUNT-FAIL] userId={}, msg={}", userId, e.getMessage(), e);
+            emitterMap.remove(userId);
+            try {
+                emitter.completeWithError(e);
+            } catch (Exception ignore) {
             }
         }
     }

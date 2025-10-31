@@ -23,7 +23,6 @@ import org.ever._4ever_be_gw.common.dto.pagable.PageResponseDto;
 import org.ever._4ever_be_gw.common.dto.validation.AllowedValues;
 import org.ever._4ever_be_gw.common.dto.validation.ValidUuidV7;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -103,7 +102,7 @@ public class AlarmController {
     }
 
     // ===== 알림 구독 요청 =====
-    @GetMapping(value = "/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping("/subscribe/{userId}")
     @Operation(summary = "알림 구독 요청", description = "SSE를 통해 실시간 알림을 구독합니다.")
     public SseEmitter subscribe(
         @ValidUuidV7
@@ -117,8 +116,7 @@ public class AlarmController {
         // SSE Emitter 추가 후 그대로 반환 (연결 유지)
         SseEmitter emitter = alarmSendService.addEmitter(userId);
 
-        log.info(
-            "[SSE][SUBSCRIBE-SUCCESS] userId={}, emitterHash={}",
+        log.info("[SSE][SUBSCRIBE-SUCCESS] userId={}, emitterHash={}",
             userId, System.identityHashCode(emitter));
 
         return emitter;
