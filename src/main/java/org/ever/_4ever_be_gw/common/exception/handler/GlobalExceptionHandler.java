@@ -11,6 +11,7 @@ import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -326,6 +327,26 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    protected ResponseEntity<ApiResponse<Object>> handleAuthorizationException(
+            AuthorizationDeniedException e
+    ) {
+        log.error("[ERROR] 권한 거부: {}", e.getMessage());
+
+        Map<String, Object> errorDetails = new HashMap<>();
+        errorDetails.put("code", ErrorCode.ACCESS_DENIED.getCode());
+        errorDetails.put("detail", e.getMessage());
+
+        ApiResponse<Object> response = ApiResponse.fail(
+                "권한이 없습니다.",
+                HttpStatus.FORBIDDEN,
+                errorDetails
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
 
     /**
      * 모든 예외 처리 (Exception)

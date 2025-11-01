@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -25,6 +26,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+// 메서드 단위 보안 기능(@PreAuthorize, @PostAuthorize)를 활성화함.
+// 따라서 컨트롤러나 서비스 메서드 위에서 권한을 검사할 수 있도록 함.
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final OAuth2ResourceServerProperties resourceServerProperties;
@@ -43,7 +47,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/api/user/info").authenticated()
+                .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(
