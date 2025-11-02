@@ -8,6 +8,7 @@ import org.ever._4ever_be_gw.business.dto.ProgramModifyRequestDto;
 import org.ever._4ever_be_gw.business.dto.TimeRecordUpdateRequestDto;
 import org.ever._4ever_be_gw.business.dto.TrainingRequestDto;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeUpdateRequestDto;
+import org.ever._4ever_be_gw.business.dto.hrm.UpdateDepartmentRequestDto;
 import org.ever._4ever_be_gw.business.dto.response.*;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.springframework.data.domain.Page;
@@ -49,6 +50,8 @@ public interface HrmHttpService {
      * 부서 구성원 목록 조회 (ID, Name만)
      */
     ResponseEntity<ApiResponse<List<DepartmentMemberDto>>> getDepartmentMembers(String departmentId);
+
+    ResponseEntity<ApiResponse<Void>> updateDepartment(String departmentId, UpdateDepartmentRequestDto requestDto);
 
     // ==================== Positions ====================
 
@@ -144,7 +147,7 @@ public interface HrmHttpService {
      * 급여 명세서 목록 조회
      */
     ResponseEntity<ApiResponse<Page<PayrollListItemDto>>> getPayrollList(
-            Integer year, Integer month, String name, String department, String position, Integer page, Integer size);
+            Integer year, Integer month, String name, String department, String position, String statusCode, Integer page, Integer size);
 
     /**
      * 급여 지급 완료 처리
@@ -244,7 +247,7 @@ public interface HrmHttpService {
      * 근태 기록 목록 조회
      */
     ResponseEntity<ApiResponse<Page<TimeRecordListItemDto>>> getAttendanceList(
-            String department, String position, String name, String date, Integer page, Integer size);
+            String department, String position, String name, String date, String statusCode, Integer page, Integer size);
 
     // ==================== Attendance ====================
 

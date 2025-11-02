@@ -251,6 +251,21 @@ public class ImController {
         return ResponseEntity.ok(result);
     }
 
+    // 재고 관리 부서 명단 반환
+    @GetMapping("/employees")
+    public ResponseEntity<Object> getInventoryEmployees() {
+        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+        Object result = scmPpWebClient.get()
+                .uri("/hrm/departments/inventory/employees")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
     // 창고 추가 생성 (외부 서버)
     @PostMapping("/warehouses")
     public ResponseEntity<Object> createWarehouse(
