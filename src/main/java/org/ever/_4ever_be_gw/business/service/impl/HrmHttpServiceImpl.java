@@ -10,6 +10,7 @@ import org.ever._4ever_be_gw.business.dto.ProgramModifyRequestDto;
 import org.ever._4ever_be_gw.business.dto.TimeRecordUpdateRequestDto;
 import org.ever._4ever_be_gw.business.dto.TrainingRequestDto;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeUpdateRequestDto;
+import org.ever._4ever_be_gw.business.dto.hrm.UpdateDepartmentRequestDto;
 import org.ever._4ever_be_gw.business.dto.response.*;
 import org.ever._4ever_be_gw.business.service.HrmHttpService;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
@@ -103,6 +104,36 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             log.error("부서 목록 조회 중 예기치 않은 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     ApiResponse.fail("부서 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Void>> updateDepartment(String departmentId, UpdateDepartmentRequestDto requestDto) {
+        log.debug("부서 정보 수정 요청 - departmentId: {}, body: {}", departmentId, requestDto);
+
+        try {
+            WebClient businessWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<?> response = businessWebClient.patch()
+                    .uri("/hrm/departments/{departmentId}", departmentId)
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .bodyValue(requestDto)
+                    .retrieve()
+                    .bodyToMono(new org.springframework.core.ParameterizedTypeReference<ApiResponse<?>>() {})
+                    .block();
+
+            log.info("부서 정보 수정 완료 - departmentId: {}", departmentId);
+
+            ApiResponse<Void> result = (ApiResponse<Void>) response;
+            return ResponseEntity.ok(result);
+
+        } catch (org.springframework.web.reactive.function.client.WebClientResponseException ex) {
+            return handleWebClientError("부서 정보 수정", ex);
+        } catch (Exception e) {
+            log.error("부서 정보 수정 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("부서 정보 수정 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }
@@ -675,7 +706,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
     @Override
     public ResponseEntity<ApiResponse<Page<PayrollListItemDto>>> getPayrollList(
-            Integer year, Integer month, String name, String department, String position, Integer page, Integer size) {
+            Integer year, Integer month, String name, String department, String position,String statusCode, Integer page, Integer size) {
         log.debug("급여 명세서 목록 조회 요청 - year: {}, month: {}, name: {}, department: {}, position: {}, page: {}, size: {}",
                 year, month, name, department, position, page, size);
 
@@ -690,6 +721,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         if (name != null) builder.queryParam("name", name);
                         if (department != null) builder.queryParam("department", department);
                         if (position != null) builder.queryParam("position", position);
+                        if (statusCode != null) builder.queryParam("statusCode", statusCode);
                         builder.queryParam("page", page != null ? page : 0);
                         builder.queryParam("size", size != null ? size : 10);
                         return builder.build();
@@ -1231,7 +1263,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
     @Override
     public ResponseEntity<ApiResponse<Page<TimeRecordListItemDto>>> getAttendanceList(
-            String department, String position, String name, String date, Integer page, Integer size) {
+            String department, String position, String name, String date,String statusCode, Integer page, Integer size) {
         log.debug("근태 기록 목록 조회 요청 - department: {}, position: {}, name: {}, date: {}, page: {}, size: {}",
                 department, position, name, date, page, size);
 
@@ -1243,6 +1275,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         var builder = uriBuilder.path("/hrm/time-records/time-record");
                         if (department != null) builder.queryParam("department", department);
                         if (position != null) builder.queryParam("position", position);
+                        if (statusCode != null) builder.queryParam("statusCode", statusCode);
                         if (name != null) builder.queryParam("name", name);
                         if (date != null) builder.queryParam("date", date);
                         builder.queryParam("page", page != null ? page : 0);
@@ -1439,7 +1472,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
             ApiResponse<?> response = businessClient.get()
                     .uri(uriBuilder -> {
-                        var builder = uriBuilder.path("/hrm/program");
+                        var builder = uriBuilder.path("/hrm/trainings/program");
                         if (programName != null) builder.queryParam("name", programName);
                         if (status != null) builder.queryParam("status", status);
                         if (category != null) builder.queryParam("category", category);
