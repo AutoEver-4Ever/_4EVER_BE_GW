@@ -2,6 +2,7 @@ package org.ever._4ever_be_gw.business.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_gw.business.dto.analytics.SalesAnalyticsResponseDto;
 import org.ever._4ever_be_gw.business.service.SdHttpService;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
@@ -52,13 +53,13 @@ public class SdHttpServiceImpl implements SdHttpService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<Object>> getSalesAnalytics(String startDate, String endDate) {
+    public ResponseEntity<ApiResponse<SalesAnalyticsResponseDto>> getSalesAnalytics(String startDate, String endDate) {
         log.debug("매출 분석 통계 조회 요청 - startDate: {}, endDate: {}", startDate, endDate);
 
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-            ApiResponse<Object> response = businessClient.get()
+            ApiResponse<SalesAnalyticsResponseDto> response = businessClient.get()
                     .uri(uriBuilder -> {
                         var builder = uriBuilder.path("/sd/analytics/sales");
                         if (startDate != null) builder.queryParam("startDate", startDate);
@@ -66,14 +67,19 @@ public class SdHttpServiceImpl implements SdHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<SalesAnalyticsResponseDto>>() {})
                     .block();
 
             log.info("매출 분석 통계 조회 성공");
             return ResponseEntity.ok(response);
 
         } catch (WebClientResponseException ex) {
-            return handleWebClientError("매출 분석 통계 조회", ex);
+            HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+            String errorBody = ex.getResponseBodyAsString();
+            log.error("매출 분석 통계 조회 실패 - Status: {}, Body: {}", ex.getStatusCode(), errorBody);
+            return ResponseEntity.status(status).body(
+                    ApiResponse.fail("매출 분석 통계 조회 중 오류가 발생했습니다.", status, null)
+            );
         } catch (Exception e) {
             log.error("매출 분석 통계 조회 중 예기치 않은 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
@@ -230,9 +236,9 @@ public class SdHttpServiceImpl implements SdHttpService {
 
     @Override
     public ResponseEntity<ApiResponse<Object>> getOrderList(
-            String startDate, String endDate, String search, String type, String status, Integer page, Integer size) {
-        log.debug("주문 목록 조회 요청 - startDate: {}, endDate: {}, search: {}, type: {}, status: {}, page: {}, size: {}",
-                startDate, endDate, search, type, status, page, size);
+            String customerId, String employeeId, String startDate, String endDate, String search, String type, String status, Integer page, Integer size) {
+        log.debug("주문 목록 조회 요청 - customerId: {}, employeeId: {}, startDate: {}, endDate: {}, search: {}, type: {}, status: {}, page: {}, size: {}",
+                customerId, employeeId, startDate, endDate, search, type, status, page, size);
 
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
@@ -240,6 +246,8 @@ public class SdHttpServiceImpl implements SdHttpService {
             ApiResponse<Object> response = businessClient.get()
                     .uri(uriBuilder -> {
                         var builder = uriBuilder.path("/sd/orders");
+                        if (customerId != null) builder.queryParam("customerId", customerId);
+                        if (employeeId != null) builder.queryParam("employeeId", employeeId);
                         if (startDate != null) builder.queryParam("startDate", startDate);
                         if (endDate != null) builder.queryParam("endDate", endDate);
                         if (search != null) builder.queryParam("search", search);
@@ -296,9 +304,9 @@ public class SdHttpServiceImpl implements SdHttpService {
 
     @Override
     public ResponseEntity<ApiResponse<Object>> getQuotationList(
-            String startDate, String endDate, String status, String type, String search, String sort, Integer page, Integer size) {
-        log.debug("견적 목록 조회 요청 - startDate: {}, endDate: {}, status: {}, type: {}, search: {}, sort: {}, page: {}, size: {}",
-                startDate, endDate, status, type, search, sort, page, size);
+            String customerId, String startDate, String endDate, String status, String type, String search, String sort, Integer page, Integer size) {
+        log.debug("견적 목록 조회 요청 - customerId: {}, startDate: {}, endDate: {}, status: {}, type: {}, search: {}, sort: {}, page: {}, size: {}",
+                customerId, startDate, endDate, status, type, search, sort, page, size);
 
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
@@ -306,6 +314,7 @@ public class SdHttpServiceImpl implements SdHttpService {
             ApiResponse<Object> response = businessClient.get()
                     .uri(uriBuilder -> {
                         var builder = uriBuilder.path("/sd/quotations");
+                        if (customerId != null) builder.queryParam("customerId", customerId);
                         if (startDate != null) builder.queryParam("startDate", startDate);
                         if (endDate != null) builder.queryParam("endDate", endDate);
                         if (status != null) builder.queryParam("status", status);

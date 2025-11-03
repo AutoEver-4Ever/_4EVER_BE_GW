@@ -2,6 +2,7 @@ package org.ever._4ever_be_gw.business.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_gw.business.dto.fcm.response.FcmStatisticsDto;
 import org.ever._4ever_be_gw.business.service.FcmHttpService;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
@@ -23,13 +25,13 @@ public class FcmHttpServiceImpl implements FcmHttpService {
     private final WebClientProvider webClientProvider;
 
     @Override
-    public ResponseEntity<ApiResponse<Object>> getFcmStatistics(String periods) {
+    public ResponseEntity<ApiResponse<FcmStatisticsDto>> getFcmStatistics(String periods) {
         log.debug("재무관리 통계 조회 요청 - periods: {}", periods);
 
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-            ApiResponse<Object> response = businessClient.get()
+            ApiResponse<FcmStatisticsDto> response = businessClient.get()
                     .uri(uriBuilder -> {
                         var builder = uriBuilder.path("/fcm/statistics");
                         if (periods != null && !periods.isBlank()) {
@@ -38,14 +40,19 @@ public class FcmHttpServiceImpl implements FcmHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<FcmStatisticsDto>>() {})
                     .block();
 
             log.info("재무관리 통계 조회 성공");
             return ResponseEntity.ok(response);
 
         } catch (WebClientResponseException ex) {
-            return handleWebClientError("재무관리 통계 조회", ex);
+            HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+            String errorBody = ex.getResponseBodyAsString();
+            log.error("재무관리 통계 조회 실패 - Status: {}, Body: {}", ex.getStatusCode(), errorBody);
+            return ResponseEntity.status(status).body(
+                    ApiResponse.fail("재무관리 통계 조회 중 오류가 발생했습니다.", status, null)
+            );
         } catch (Exception e) {
             log.error("재무관리 통계 조회 중 예기치 않은 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
@@ -86,6 +93,43 @@ public class FcmHttpServiceImpl implements FcmHttpService {
             log.error("매입 전표 목록 조회 중 예기치 않은 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     ApiResponse.fail("매입 전표 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getApInvoicesBySupplierUserId(
+            String supplierUserId, String startDate, String endDate, Integer page, Integer size) {
+        log.debug("공급사 사용자 ID로 매입 전표 목록 조회 요청 - supplierUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                supplierUserId, startDate, endDate, page, size);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            // supplierUserId를 requestBody에 담아서 Business 서비스로 전송
+            Map<String, Object> requestBody = new LinkedHashMap<>();
+            requestBody.put("supplierUserId", supplierUserId);
+            if (startDate != null) requestBody.put("startDate", startDate);
+            if (endDate != null) requestBody.put("endDate", endDate);
+            requestBody.put("page", page != null ? page : 0);
+            requestBody.put("size", size != null ? size : 10);
+
+            ApiResponse<Object> response = businessClient.post()
+                    .uri("/fcm/statement/ap/by-supplier")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("공급사 사용자 ID로 매입 전표 목록 조회 성공 - supplierUserId: {}", supplierUserId);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("공급사 매입 전표 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("공급사 매입 전표 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("공급사 매입 전표 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }

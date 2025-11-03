@@ -2,18 +2,18 @@ package org.ever._4ever_be_gw.facade;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.dashboard.dto.response.DashboardStatisticsResponseDto;
+import org.ever._4ever_be_gw.dashboard.service.DashboardHttpService;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowResponseDto;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowTabDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
-import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
+import org.ever._4ever_be_gw.scm.PeriodStatDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,8 +32,14 @@ import java.util.stream.Collectors;
 @Tag(name = "대시보드", description = "대시보드 워크플로우 API")
 public class BusinessScmFacadeController {
 
+    private final DashboardHttpService dashboardHttpService;
+
     private static final Set<String> MODULES = Set.of("SD", "MM", "IM", "PP", "HRM", "FIN");
     private static final Set<String> ALLOWED_PERIODS = Set.of("week", "month", "quarter", "year");
+
+    public BusinessScmFacadeController(DashboardHttpService dashboardHttpService) {
+        this.dashboardHttpService = dashboardHttpService;
+    }
 
     @GetMapping("/workflows")
     @Operation(
@@ -169,60 +175,8 @@ public class BusinessScmFacadeController {
     }
 
     @GetMapping("/statistics")
-    @Operation(
-            summary = "대시보드 통계 조회",
-            description = "대시보드 요약 지표(총 매출, 총 매입, 순이익, 총 직원수)를 기간별로 조회합니다. 'periods' 파라미터로 week,month,quarter,year를 선택할 수 있습니다."
-    )
-    public ResponseEntity<ApiResponse<StatsResponseDto<StatsMetricsDto>>> getDashboardStatistics(
-            @Parameter(description = "조회 기간 목록(콤마 구분)")
-            @RequestParam(name = "periods", required = false) String periods
-    ) {
-        List<String> requested = periods == null || periods.isBlank()
-                ? List.of("week", "month", "quarter", "year")
-                : Arrays.stream(periods.split(","))
-                .map(String::trim)
-                .map(String::toLowerCase)
-                .collect(Collectors.toList());
-
-        List<String> invalid = requested.stream().filter(p -> !ALLOWED_PERIODS.contains(p)).toList();
-        if (periods != null && !periods.isBlank() && (!invalid.isEmpty() || requested.stream().noneMatch(ALLOWED_PERIODS::contains))) {
-            throw new BusinessException(ErrorCode.VALIDATION_FAILED);
-        }
-
-        List<String> finalPeriods = requested.stream().filter(ALLOWED_PERIODS::contains).toList();
-        StatsResponseDto.StatsResponseDtoBuilder<StatsMetricsDto> builder = StatsResponseDto.<StatsMetricsDto>builder();
-
-        if (finalPeriods.contains("week")) {
-            builder.week(buildDashboardMetrics(68_500_000L, new java.math.BigDecimal("0.082"), 43_200_000L, new java.math.BigDecimal("0.054"), 123, java.math.BigDecimal.ZERO));
-        }
-        if (finalPeriods.contains("month")) {
-            builder.month(buildDashboardMetrics(275_000_000L, new java.math.BigDecimal("0.125"), 189_000_000L, new java.math.BigDecimal("0.083"), 123, java.math.BigDecimal.ZERO));
-        }
-        if (finalPeriods.contains("quarter")) {
-            builder.quarter(buildDashboardMetrics(812_000_000L, new java.math.BigDecimal("0.094"), 596_000_000L, new java.math.BigDecimal("0.071"), 123, java.math.BigDecimal.ZERO));
-        }
-        if (finalPeriods.contains("year")) {
-            builder.year(buildDashboardMetrics(3_215_000_000L, new java.math.BigDecimal("0.068"), 2_425_000_000L, new java.math.BigDecimal("0.057"), 123, java.math.BigDecimal.ZERO));
-        }
-
-        StatsResponseDto<StatsMetricsDto> data = builder.build();
-        return ResponseEntity.ok(ApiResponse.success(data, "대시보드 통계를 조회했습니다.", HttpStatus.OK));
+    public ResponseEntity<ApiResponse<DashboardStatisticsResponseDto>> getDashboardStatistics() {
+        return dashboardHttpService.getDashboardStatistics();
     }
 
-    private StatsMetricsDto buildDashboardMetrics(
-            long totalSales,
-            java.math.BigDecimal totalSalesChange,
-            long totalPurchases,
-            java.math.BigDecimal totalPurchasesChange,
-            int employeeCount,
-            java.math.BigDecimal employeeCountChange
-    ) {
-        long netProfit = Math.max(0, totalSales - totalPurchases);
-        return StatsMetricsDto.builder()
-                .put("totalSales", PeriodStatDto.builder().value(totalSales).deltaRate(totalSalesChange).build())
-                .put("totalPurchases", PeriodStatDto.builder().value(totalPurchases).deltaRate(totalPurchasesChange).build())
-                .put("netProfit", PeriodStatDto.builder().value(netProfit).deltaRate(new java.math.BigDecimal("0.097")).build())
-                .put("totalEmployee", PeriodStatDto.builder().value(employeeCount).deltaRate(employeeCountChange).build())
-                .build();
-    }
 }

@@ -7,14 +7,17 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.Map;
+import org.ever._4ever_be_gw.business.dto.analytics.SalesAnalyticsResponseDto;
 import org.ever._4ever_be_gw.business.dto.customer.CustomerCreateRequestDto;
 import org.ever._4ever_be_gw.business.dto.hrm.CreateAuthUserResultDto;
 import org.ever._4ever_be_gw.business.service.SdHttpService;
 import org.ever._4ever_be_gw.business.service.SdService;
 import org.ever._4ever_be_gw.common.exception.RemoteApiException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -50,7 +53,7 @@ public class SdController {
             summary = "매출 분석 통계 조회",
             description = "기간별 매출 분석 통계를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getSalesAnalytics(
+    public ResponseEntity<ApiResponse<SalesAnalyticsResponseDto>> getSalesAnalytics(
             @Parameter(description = "시작일(YYYY-MM-DD)")
             @RequestParam(required = false) String startDate,
             @Parameter(description = "종료일(YYYY-MM-DD)")
@@ -79,9 +82,10 @@ public class SdController {
     @GetMapping("/quotations")
     @Operation(
             summary = "견적 목록 조회",
-            description = "견적을 페이지네이션으로 조회합니다."
+            description = "견적을 페이지네이션으로 조회합니다. JWT의 userType에 따라 다른 목록을 조회합니다. (JWT 없을 시 목업 데이터로 동작)"
     )
     public ResponseEntity<ApiResponse<Object>> getQuotations(
+            @AuthenticationPrincipal EverUserPrincipal principal,
             @Parameter(description = "시작일(YYYY-MM-DD)")
             @RequestParam(name = "startDate", required = false) String startDate,
             @Parameter(description = "종료일(YYYY-MM-DD)")
@@ -99,7 +103,24 @@ public class SdController {
             @Parameter(description = "페이지 크기(최대 200)")
             @RequestParam(name = "size", required = false) Integer size
     ) {
-        return sdHttpService.getQuotationList(startDate, endDate, status, type, search, sort, page, size);
+        String customerId = null;
+
+        if (principal == null) {
+            // JWT 토큰이 없는 경우: 목업 데이터 사용
+            customerId = null;
+        } else {
+            // JWT 토큰이 있는 경우: JWT에서 userType과 userId 추출
+            String userType = principal.getUserType();
+            String userId = principal.getUserId();
+
+            if ("CUSTOMER".equalsIgnoreCase(userType)) {
+                customerId = userId;
+            } else if ("EMPLOYEE".equalsIgnoreCase(userType)) {
+                customerId = null;
+            }
+        }
+
+        return sdHttpService.getQuotationList(customerId, startDate, endDate, status, type, search, sort, page, size);
     }
 
     @GetMapping("/quotations/{quotationId}")
@@ -120,6 +141,7 @@ public class SdController {
             description = "요청 양식만 유효하면 200 OK를 반환합니다."
     )
     public ResponseEntity<ApiResponse<Object>> createQuotation(
+            @AuthenticationPrincipal EverUserPrincipal principal,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
@@ -127,6 +149,12 @@ public class SdController {
             )
             @RequestBody Map<String, Object> requestBody
     ) {
+        // JWT 토큰이 있으면 CUSTOMER 전용, customerId를 requestBody에 설정
+        if (principal != null) {
+            requestBody.put("customerId", principal.getUserId());
+        }
+        // JWT 토큰이 없으면 목업 데이터로 요청 (기존 로직 유지)
+
         return sdHttpService.createQuotation(requestBody);
     }
 
@@ -293,6 +321,7 @@ public class SdController {
             description = "견적서 승인에 따라 자동 생성된 주문서 목록을 조회합니다. 기간/상태/키워드(주문번호, 고객사명, 고객명) 필터를 지원합니다."
     )
     public ResponseEntity<ApiResponse<Object>> getSalesOrders(
+            @AuthenticationPrincipal EverUserPrincipal principal,
             @Parameter(description = "검색 시작일(YYYY-MM-DD)")
             @RequestParam(name = "startDate", required = false) String startDate,
             @Parameter(description = "검색 종료일(YYYY-MM-DD)")
@@ -308,7 +337,28 @@ public class SdController {
             @Parameter(description = "페이지 크기(최대 200)")
             @RequestParam(name = "size", required = false) Integer size
     ) {
-        return sdHttpService.getOrderList(startDate, endDate, search, type, status, page, size);
+        String customerId = null;
+        String employeeId = null;
+
+        if (principal == null) {
+            // JWT 토큰이 없는 경우: 목업 데이터 사용 (전체 주문서 조회)
+            customerId = null;
+            employeeId = null;
+        } else {
+            // JWT 토큰이 있는 경우: JWT에서 userType과 userId 추출
+            String userType = principal.getUserType();
+            String userId = principal.getUserId();
+
+            if ("CUSTOMER".equalsIgnoreCase(userType)) {
+                // 고객사 사용자: 해당 고객의 주문서만 조회
+                customerId = userId;
+            } else if ("EMPLOYEE".equalsIgnoreCase(userType)) {
+                // 내부 직원: 자신이 승인한 주문서만 조회
+                employeeId = userId;
+            }
+        }
+
+        return sdHttpService.getOrderList(customerId, employeeId, startDate, endDate, search, type, status, page, size);
     }
 
     // -------- Sales Order Detail (R) --------

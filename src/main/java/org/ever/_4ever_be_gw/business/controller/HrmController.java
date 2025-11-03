@@ -21,6 +21,8 @@ import org.ever._4ever_be_gw.business.dto.*;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeCreateRequestDto;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeUpdateRequestDto;
 import org.ever._4ever_be_gw.business.dto.hrm.CreateAuthUserResultDto;
+import org.ever._4ever_be_gw.business.dto.hrm.UpdateDepartmentRequestDto;
+import org.ever._4ever_be_gw.business.dto.response.*;
 import org.ever._4ever_be_gw.business.service.HrmHttpService;
 import org.ever._4ever_be_gw.business.service.HrmService;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
@@ -28,9 +30,12 @@ import org.ever._4ever_be_gw.common.dto.PageDto;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
-import org.ever._4ever_be_gw.scmpp.dto.PeriodStatDto;
+import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
+import org.ever._4ever_be_gw.scm.PeriodStatDto;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -53,7 +58,7 @@ public class HrmController {
         summary = "HRM 통계 조회",
         description = "기간별 인적자원 통계 정보를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getEmployeeStatistics(
+    public ResponseEntity<ApiResponse<HRStatisticsResponseDto>> getEmployeeStatistics(
         @Parameter(description = "조회 기간 목록(콤마 구분)")
         @RequestParam(name = "periods", required = false) String periods
     ) {
@@ -101,17 +106,12 @@ public class HrmController {
             )
         }
     )
-    public ResponseEntity<ApiResponse<Object>> updateEmployee(
+    public ResponseEntity<ApiResponse<Void>> updateEmployee(
         @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("employeeId") String employeeId,
         @Valid @RequestBody EmployeeUpdateRequestDto requestDto
     ) {
-        Map<String, Object> requestBody = new LinkedHashMap<>();
-        if (requestDto.getEmployeeName() != null) requestBody.put("employeeName", requestDto.getEmployeeName());
-        if (requestDto.getPositionId() != null) requestBody.put("positionId", requestDto.getPositionId());
-        if (requestDto.getDepartmentId() != null) requestBody.put("departmentId", requestDto.getDepartmentId());
-
-        return hrmHttpService.updateEmployee(employeeId, requestBody);
+        return hrmHttpService.updateEmployee(employeeId, requestDto);
     }
 
     @GetMapping("/employee")
@@ -119,11 +119,11 @@ public class HrmController {
         summary = "직원 목록 조회",
         description = "직원 목록을 페이지네이션으로 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getEmployees(
-        @Parameter(description = "부서 필터")
-        @RequestParam(name = "department", required = false) String department,
-        @Parameter(description = "직급 필터")
-        @RequestParam(name = "position", required = false) String position,
+    public ResponseEntity<ApiResponse<Page<EmployeeListItemDto>>> getEmployees(
+        @Parameter(description = "부서 ID 필터")
+        @RequestParam(name = "departmentId", required = false) String departmentId,
+        @Parameter(description = "직급 ID 필터")
+        @RequestParam(name = "positionId", required = false) String positionId,
         @Parameter(description = "이름 검색")
         @RequestParam(name = "name", required = false) String name,
         @Parameter(description = "페이지 번호(0-base)")
@@ -131,7 +131,7 @@ public class HrmController {
         @Parameter(description = "페이지 크기(최대 200)")
         @RequestParam(name = "size", required = false) Integer size
     ) {
-        return hrmHttpService.getEmployeeList(department, position, name, page, size);
+        return hrmHttpService.getEmployeeList(departmentId, positionId, name, page, size);
     }
 
     @GetMapping("/employees/{employeeId}")
@@ -139,7 +139,7 @@ public class HrmController {
         summary = "직원 상세 조회",
         description = "직원 상세 정보를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getEmployeeDetail(
+    public ResponseEntity<ApiResponse<EmployeeDetailDto>> getEmployeeDetail(
         @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("employeeId") String employeeId
     ) {
@@ -151,7 +151,7 @@ public class HrmController {
         summary = "InternelUser ID로 직원 정보 및 교육 이력 조회",
         description = "InternelUser ID로 직원 상세 정보 및 교육 이력을 함께 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getEmployeeWithTrainingByInternelUserId(
+    public ResponseEntity<ApiResponse<EmployeeWithTrainingDto>> getEmployeeWithTrainingByInternelUserId(
         @Parameter(description = "InternelUser ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("internelUserId") String internelUserId
     ) {
@@ -163,7 +163,7 @@ public class HrmController {
         summary = "InternelUser ID로 수강 가능한 교육 프로그램 목록 조회",
         description = "InternelUser ID로 수강하지 않은 교육 프로그램 중 모집 중이 아닌 프로그램(IN_PROGRESS, COMPLETED)만 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getAvailableTrainingsByInternelUserId(
+    public ResponseEntity<ApiResponse<List<TrainingProgramSimpleDto>>> getAvailableTrainingsByInternelUserId(
         @Parameter(description = "InternelUser ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("internelUserId") String internelUserId
     ) {
@@ -175,7 +175,7 @@ public class HrmController {
         summary = "CustomerUser ID로 고객 사용자 상세 정보 조회",
         description = "CustomerUser ID로 고객 사용자의 상세 정보를 조회합니다. (이메일, 사번, 입사일, 연락처, 주소, 가입기간)"
     )
-    public ResponseEntity<ApiResponse<Object>> getCustomerUserDetailByUserId(
+    public ResponseEntity<ApiResponse<CustomerUserDetailDto>> getCustomerUserDetailByUserId(
         @Parameter(description = "CustomerUser ID", example = "customer1")
         @PathVariable("customerUserId") String customerUserId
     ) {
@@ -189,7 +189,7 @@ public class HrmController {
         summary = "부서 목록 조회",
         description = "부서 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getDepartments(
+    public ResponseEntity<ApiResponse<DepartmentListResponseDto>> getDepartments(
         @Parameter(description = "상태 필터: ACTIVE, INACTIVE")
         @RequestParam(name = "status", required = false) String status,
         @Parameter(description = "페이지(0-base)", example = "0")
@@ -205,7 +205,7 @@ public class HrmController {
         summary = "전체 부서 목록 조회 (ID, Name만)",
         description = "전체 부서의 ID와 Name만 간단히 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getAllDepartmentsSimple() {
+    public ResponseEntity<ApiResponse<List<DepartmentSimpleDto>>> getAllDepartmentsSimple() {
         return hrmHttpService.getAllDepartmentsSimple();
     }
 
@@ -214,11 +214,19 @@ public class HrmController {
         summary = "부서 구성원 목록 조회 (ID, Name만)",
         description = "특정 부서의 구성원 ID와 Name만 간단히 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getDepartmentMembers(
+    public ResponseEntity<ApiResponse<List<DepartmentMemberDto>>> getDepartmentMembers(
         @Parameter(description = "부서 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("departmentId") String departmentId
     ) {
         return hrmHttpService.getDepartmentMembers(departmentId);
+    }
+
+    @PatchMapping("/departments/{departmentId}")
+    public ResponseEntity<ApiResponse<Void>> updateDepartment(
+            @PathVariable String departmentId,
+            @RequestBody UpdateDepartmentRequestDto requestDto
+    ) {
+        return hrmHttpService.updateDepartment(departmentId, requestDto);
     }
 
     // ==================== 직급 관리 ====================
@@ -228,7 +236,7 @@ public class HrmController {
         summary = "직급 목록 조회",
         description = "직급 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getPositions() {
+    public ResponseEntity<ApiResponse<List<PositionListItemDto>>> getPositions() {
         return hrmHttpService.getPositionList();
     }
 
@@ -237,20 +245,23 @@ public class HrmController {
         summary = "직급 상세 조회",
         description = "직급 상세 정보를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getPositionDetail(
+    public ResponseEntity<ApiResponse<PositionDetailDto>> getPositionDetail(
         @Parameter(description = "직급 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("positionId") String positionId
     ) {
         return hrmHttpService.getPositionDetail(positionId);
     }
 
-    @GetMapping("/positions/all")
+    @GetMapping("/{departmentId}/positions/all")
     @Operation(
-        summary = "전체 직급 목록 조회 (ID, Name만)",
-        description = "전체 직급의 ID와 Name만 간단히 조회합니다."
+        summary = "부서별 직급 목록 조회 (ID, Name만)",
+        description = "특정 부서의 직급 ID와 Name만 간단히 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getAllPositionsSimple() {
-        return hrmHttpService.getAllPositionsSimple();
+    public ResponseEntity<ApiResponse<List<PositionSimpleDto>>> getPositionsByDepartmentId(
+        @Parameter(description = "부서 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+        @PathVariable("departmentId") String departmentId
+    ) {
+        return hrmHttpService.getPositionsByDepartmentId(departmentId);
     }
 
     // ==================== 출퇴근 관리 ====================
@@ -260,7 +271,7 @@ public class HrmController {
         summary = "출퇴근 기록 조회",
         description = "출퇴근 기록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getAttendance(
+    public ResponseEntity<ApiResponse<Page<AttendanceListItemDto>>> getAttendance(
         @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @RequestParam(name = "employeeId", required = false) String employeeId,
         @Parameter(description = "시작일(YYYY-MM-DD)")
@@ -282,7 +293,7 @@ public class HrmController {
         summary = "출근 처리 (InternelUser ID 기반)",
         description = "InternelUser ID를 사용하여 직원의 출근을 처리합니다. (임시: JWT 미구현으로 internelUserId를 서비스에서 주입)"
     )
-    public ResponseEntity<ApiResponse<Object>> checkIn(
+    public ResponseEntity<ApiResponse<Void>> checkIn(
         @Parameter(description = "InternelUser ID (optional, JWT 구현 전까지)", example = "internel1")
         @RequestParam(name = "internelUserId", required = false) String internelUserId
     ) {
@@ -300,7 +311,7 @@ public class HrmController {
         summary = "퇴근 처리 (InternelUser ID 기반)",
         description = "InternelUser ID를 사용하여 직원의 퇴근을 처리합니다. (임시: JWT 미구현으로 internelUserId를 서비스에서 주입)"
     )
-    public ResponseEntity<ApiResponse<Object>> checkOut(
+    public ResponseEntity<ApiResponse<Void>> checkOut(
         @Parameter(description = "InternelUser ID (optional, JWT 구현 전까지)", example = "internel1")
         @RequestParam(name = "internelUserId", required = false) String internelUserId
     ) {
@@ -313,36 +324,12 @@ public class HrmController {
         return hrmHttpService.checkOut(targetInternelUserId);
     }
 
-    @PatchMapping("/attendance/check-in-by-internel-user")
-    @Operation(
-        summary = "InternelUser ID로 출근 처리",
-        description = "InternelUser ID를 사용하여 출근을 처리합니다."
-    )
-    public ResponseEntity<ApiResponse<Object>> checkInByInternelUserId(
-        @Parameter(description = "InternelUser ID", example = "internel1", required = true)
-        @RequestParam(name = "internelUserId") String internelUserId
-    ) {
-        return hrmHttpService.checkInByInternelUserId(internelUserId);
-    }
-
-    @PatchMapping("/attendance/check-out-by-internel-user")
-    @Operation(
-        summary = "InternelUser ID로 퇴근 처리",
-        description = "InternelUser ID를 사용하여 퇴근을 처리합니다."
-    )
-    public ResponseEntity<ApiResponse<Object>> checkOutByInternelUserId(
-        @Parameter(description = "InternelUser ID", example = "internel1", required = true)
-        @RequestParam(name = "internelUserId") String internelUserId
-    ) {
-        return hrmHttpService.checkOutByInternelUserId(internelUserId);
-    }
-
     @GetMapping("/employees/by-internel-user/{internelUserId}/attendance-records")
     @Operation(
         summary = "InternelUser ID로 출퇴근 기록 목록 조회",
         description = "InternelUser ID를 사용하여 해당 직원의 모든 출퇴근 기록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getAttendanceRecordsByInternelUserId(
+    public ResponseEntity<ApiResponse<List<AttendanceRecordDto>>> getAttendanceRecordsByInternelUserId(
         @Parameter(description = "InternelUser ID", example = "internel1", required = true)
         @PathVariable String internelUserId
     ) {
@@ -354,7 +341,7 @@ public class HrmController {
         summary = "출퇴근 상태 목록 조회 (enum 전체)",
         description = "출퇴근 상태 enum의 모든 값을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getAllAttendanceStatuses() {
+    public ResponseEntity<ApiResponse<List<AttendanceStatusDto>>> getAllAttendanceStatuses() {
         return hrmHttpService.getAllAttendanceStatuses();
     }
 
@@ -679,11 +666,13 @@ public class HrmController {
         summary = "월별 급여 목록 조회",
         description = "월별 사내 급여 명세서 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getMonthlyPayrollList(
+    public ResponseEntity<ApiResponse<Page<PayrollListItemDto>>> getMonthlyPayrollList(
         @Parameter(description = "연도", example = "2025")
         @RequestParam(name = "year") Integer year,
         @Parameter(description = "월(1~12)", example = "10")
         @RequestParam(name = "month") Integer month,
+        @Parameter(description = "상태코드 (PAYROLL_PAID, PAYROLL_UNPAID)")
+        @RequestParam(required = false) String statusCode,
         @Parameter(description = "직원 이름(선택)")
         @RequestParam(name = "name", required = false) String employeeName,
         @Parameter(description = "부서 ID(선택)")
@@ -712,13 +701,7 @@ public class HrmController {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        int p = (page == null || page < 0) ? 0 : page;
-        int s = (size == null || size < 1) ? 10 : size;
-
-        Map<String, Object> pageData = generateMonthlyPayrollPageMock(year, month, p, s);
-        return ResponseEntity.ok(ApiResponse.success(
-            pageData, "급여 명세서 목록 조회에 성공했습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.getPayrollList(year, month, employeeName, departmentId, positionId, statusCode, page, size);
     }
 
     // 급여 지급 완료 처리
@@ -728,21 +711,21 @@ public class HrmController {
         summary = "급여 지급 완료 처리",
         description = "급여 지급을 완료 처리합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> completePayroll(
+    public ResponseEntity<ApiResponse<Void>> completePayroll(
         @Valid @RequestBody PayrollCompleteRequestDto requestDto
     ) {
-        // 요청 데이터 로깅
-        System.out.println("급여 지급 완료 처리 요청: " + requestDto);
+        return hrmHttpService.completePayroll(requestDto);
+    }
 
-        // Mock 데이터 생성
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("payrollId", requestDto.getPayrollId());
-        data.put("statusCode", "COMPLETED");
-        data.put("completedAt", LocalDateTime.now());
-
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "급여 지급 완료 처리되었습니다.", HttpStatus.OK
-        ));
+    // 모든 직원 당월 급여 생성
+    // GET /api/business/hrm/payroll/generate
+    @GetMapping("/payroll/generate")
+    @Operation(
+        summary = "모든 직원 당월 급여 생성",
+        description = "모든 직원의 당월 급여를 생성합니다. 이미 존재하는 급여는 건너뛰고 없는 직원의 급여만 생성합니다 (idempotent)."
+    )
+    public ResponseEntity<ApiResponse<Void>> generateMonthlyPayroll() {
+        return hrmHttpService.generateMonthlyPayroll();
     }
 
     // 월별 사내 급여 상세 조회
@@ -760,7 +743,7 @@ public class HrmController {
             )
         }
     )
-    public ResponseEntity<ApiResponse<Object>> getMonthlyPayrollDetail(
+    public ResponseEntity<ApiResponse<PaystubDetailDto>> getMonthlyPayrollDetail(
         @Parameter(description = "급여 명세서 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("payrollId") String payrollId
     ) {
@@ -772,10 +755,7 @@ public class HrmController {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        Map<String, Object> data = generateMonthlyPayrollDetailMock(payrollId);
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "급여 명세서 상세 조회에 성공했습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.getPaystubDetail(payrollId);
     }
 
     @GetMapping("/payroll/statuses")
@@ -783,7 +763,7 @@ public class HrmController {
         summary = "급여 상태 목록 조회 (enum 전체)",
         description = "급여 상태 enum의 모든 값을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getAllPayrollStatuses() {
+    public ResponseEntity<ApiResponse<List<PayrollStatusDto>>> getAllPayrollStatuses() {
         return hrmHttpService.getAllPayrollStatuses();
     }
 
@@ -891,25 +871,12 @@ public class HrmController {
         summary = "출퇴근 기록 수정",
         description = "출퇴근 기록을 수정합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> updateTimeRecord(
+    public ResponseEntity<ApiResponse<Void>> updateTimeRecord(
         @Parameter(description = "근태 기록 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("timerecordId") String timerecordId,
         @Valid @RequestBody TimeRecordUpdateRequestDto requestDto
     ) {
-        // 요청 데이터 로깅
-        System.out.println("출퇴근 기록 수정 요청 - ID: " + timerecordId + ", 데이터: " + requestDto);
-
-        // Mock 데이터 생성
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("timerecordId", timerecordId);
-        data.put("employeeId", 1L);
-        data.put("checkInTime", requestDto.getCheckInTime());
-        data.put("checkOutTime", requestDto.getCheckOutTime());
-        data.put("statusCode", requestDto.getStatusCode());
-
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "출퇴근 기록 수정이 완료되었습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.updateTimeRecord(timerecordId, requestDto);
     }
 
     // ==================== 휴가 관리 ====================
@@ -919,24 +886,18 @@ public class HrmController {
         summary = "휴가 신청",
         description = "새로운 휴가를 신청합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> requestLeave(
+    public ResponseEntity<ApiResponse<Void>> requestLeave(
+        @AuthenticationPrincipal EverUserPrincipal principal,
         @Valid @RequestBody LeaveRequestDto requestDto
     ) {
-        // 요청 데이터 로깅
-        System.out.println("휴가 신청 요청: " + requestDto);
+        // JWT 토큰이 있으면 해당 employee의 id로 요청
+        if (principal != null) {
+            // JWT에서 userId를 employeeId로 사용
+            requestDto.setInternelUserId(principal.getUserId());
+        }
+        // JWT가 없으면 requestDto의 employeeId 사용 (목업)
 
-        // Mock 데이터 생성
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("leaveRequestId", 201L);
-        data.put("employeeId", requestDto.getEmployeeId());
-        data.put("leaveType", requestDto.getLeaveType());
-        data.put("startDate", requestDto.getStartDate());
-        data.put("endDate", requestDto.getEndDate());
-        data.put("status", "PENDING");
-
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "휴가 신청이 완료되었습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.requestLeave(requestDto);
     }
 
     @PatchMapping("/leave/request/{requestId}/release")
@@ -944,22 +905,11 @@ public class HrmController {
         summary = "휴가 신청 승인",
         description = "휴가 신청을 승인합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> approveLeaveRequest(
+    public ResponseEntity<ApiResponse<Void>> approveLeaveRequest(
         @Parameter(description = "휴가 신청 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("requestId") String requestId
     ) {
-        // 요청 데이터 로깅
-        System.out.println("휴가 신청 승인 요청 - ID: " + requestId);
-
-        // Mock 데이터 생성
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("leaveRequestId", requestId);
-        data.put("status", "APPROVED");
-        data.put("approvedAt", LocalDate.now());
-
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "휴가 신청이 승인되었습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.approveLeaveRequest(requestId);
     }
 
     @PatchMapping("/leave/request/{requestId}/reject")
@@ -967,22 +917,11 @@ public class HrmController {
         summary = "휴가 신청 반려",
         description = "휴가 신청을 반려합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> rejectLeaveRequest(
+    public ResponseEntity<ApiResponse<Void>> rejectLeaveRequest(
         @Parameter(description = "휴가 신청 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("requestId") String requestId
     ) {
-        // 요청 데이터 로깅
-        System.out.println("휴가 신청 반려 요청 - ID: " + requestId);
-
-        // Mock 데이터 생성
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("leaveRequestId", requestId);
-        data.put("status", "REJECTED");
-        data.put("rejectedAt", LocalDate.now());
-
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "휴가 신청이 반려되었습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.rejectLeaveRequest(requestId);
     }
 
     // ==================== 기존 조회 API들 ====================
@@ -992,9 +931,11 @@ public class HrmController {
         summary = "출퇴근 기록 목록 조회",
         description = "부서/직책/이름/일자로 출퇴근 기록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getTimeRecords(
+    public ResponseEntity<ApiResponse<Page<TimeRecordListItemDto>>> getTimeRecords(
         @Parameter(description = "부서 ID")
         @RequestParam(name = "department", required = false) String departmentId,
+        @Parameter(description = "상태 (NORMAL, LATE)")
+        @RequestParam(required = false) String statusCode,
         @Parameter(description = "직책 ID")
         @RequestParam(name = "position", required = false) String positionId,
         @Parameter(description = "직원 이름")
@@ -1026,12 +967,8 @@ public class HrmController {
 
         int p = (page == null || page < 0) ? 0 : page;
         int s = (size == null || size < 1) ? 20 : size;
-        LocalDate baseDate = LocalDate.parse(date);
 
-        Map<String, Object> data = generateTimeRecordPageMock(p, s, baseDate);
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "근태 기록 조회에 성공했습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.getAttendanceList(departmentId, positionId, employeeName, date, statusCode, p, s);
     }
 
     // 출퇴근 기록 상세 조회
@@ -1041,7 +978,7 @@ public class HrmController {
         summary = "출퇴근 기록 상세 조회",
         description = "단일 출퇴근 기록 상세 정보를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getTimeRecordDetail(
+    public ResponseEntity<ApiResponse<TimeRecordDetailDto>> getTimeRecordDetail(
         @Parameter(description = "출퇴근 기록 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("timerecordId") String timerecordId
     ) {
@@ -1050,10 +987,7 @@ public class HrmController {
                 List.of(Map.of("field", "timerecordId", "reason", "REQUIRED")));
         }
 
-        Map<String, Object> data = generateTimeRecordDetailMock(timerecordId);
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "근태 기록 상세 정보 조회에 성공했습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.getTimeRecordDetail(timerecordId);
     }
 
     // ==================== Mock 생성 함수 ====================
@@ -1065,7 +999,7 @@ public class HrmController {
         summary = "휴가 신청 목록 조회",
         description = "부서/직책/이름/유형으로 휴가 신청 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getLeaveRequestList(
+    public ResponseEntity<ApiResponse<Page<LeaveRequestListItemDto>>> getLeaveRequestList(
         @Parameter(description = "부서 ID")
         @RequestParam(name = "department", required = false) String departmentId,
         @Parameter(description = "직책 ID")
@@ -1104,13 +1038,7 @@ public class HrmController {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        int p = (page == null || page < 0) ? 0 : page;
-        int s = (size == null || size < 1) ? 10 : size;
-
-        Map<String, Object> data = generateLeaveRequestPageMock(p, s, sortOrder);
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "휴가 신청 목록 조회에 성공했습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.getLeaveRequestList(departmentId, positionId, employeeName, leaveType, sortOrder, page, size);
     }
 
     private Map<String, Object> generateLeaveRequestPageMock(int page, int size, String sortOrder) {
@@ -1262,22 +1190,10 @@ public class HrmController {
         summary = "교육 신청",
         description = "직원이 교육 프로그램에 신청합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> requestTraining(
+    public ResponseEntity<ApiResponse<Void>> requestTraining(
         @Valid @RequestBody TrainingRequestDto requestDto
     ) {
-        // 요청 데이터 로깅
-        System.out.println("교육 신청 요청: " + requestDto);
-
-        // Mock 데이터 생성
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("requestId", 301L);
-        data.put("programId", requestDto.getProgramId());
-        data.put("employeeId", 101L);
-        data.put("status", "PENDING");
-
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "교육 신청이 완료되었습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.requestTraining(requestDto);
     }
 
     @PostMapping("/program/{employeeId}")
@@ -1285,7 +1201,7 @@ public class HrmController {
         summary = "직원에게 교육 프로그램 추가",
         description = "특정 직원에게 교육 프로그램을 할당합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> assignProgramToEmployee(
+    public ResponseEntity<ApiResponse<Void>> assignProgramToEmployee(
         @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("employeeId") String employeeId,
         @Valid @RequestBody ProgramAssignRequestDto requestDto
@@ -1295,19 +1211,7 @@ public class HrmController {
                 List.of(Map.of("field", "employeeId", "reason", "REQUIRED")));
         }
 
-        // 요청 데이터 로깅
-        System.out.println("직원 교육 프로그램 추가 요청 - 직원 ID: " + employeeId + ", 데이터: " + requestDto);
-
-        // Mock 데이터 생성
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("employeeId", employeeId);
-        data.put("programId", requestDto.getProgramId());
-        data.put("assignedAt", LocalDateTime.now());
-        data.put("statusCode", "ASSIGNED");
-
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "직원에게 교육 프로그램이 추가되었습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.assignProgramToEmployee(employeeId, requestDto);
     }
 
     @PostMapping("/program")
@@ -1315,29 +1219,10 @@ public class HrmController {
         summary = "교육 프로그램 추가",
         description = "새로운 교육 프로그램을 추가합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> createProgram(
+    public ResponseEntity<ApiResponse<Void>> createProgram(
         @Valid @RequestBody ProgramCreateRequestDto requestDto
     ) {
-        // 요청 데이터 로깅
-        System.out.println("교육 프로그램 추가 요청: " + requestDto);
-
-        // Mock 데이터 생성
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("programId", 2001L);
-        data.put("programName", requestDto.getProgramName());
-        data.put("category", requestDto.getCategory());
-        data.put("trainingHour", requestDto.getTrainingHour());
-        data.put("isOnline", requestDto.getIsOnline());
-        data.put("startDate", requestDto.getStartDate());
-        data.put("capacity", requestDto.getCapacity());
-        data.put("requiredDepartments", requestDto.getRequiredDepartments());
-        data.put("requiredPositions", requestDto.getRequiredPositions());
-        data.put("description", requestDto.getDescription());
-        data.put("status", "RECRUITING");
-
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "교육 프로그램이 추가되었습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.createTrainingProgram(requestDto);
     }
 
     @PatchMapping("/program/{programId}")
@@ -1345,7 +1230,7 @@ public class HrmController {
         summary = "교육 프로그램 수정",
         description = "기존 교육 프로그램 정보를 수정합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> modifyProgram(
+    public ResponseEntity<ApiResponse<Void>> modifyProgram(
         @Parameter(description = "프로그램 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("programId") String programId,
         @Valid @RequestBody ProgramModifyRequestDto requestDto
@@ -1355,19 +1240,7 @@ public class HrmController {
                 List.of(Map.of("field", "programId", "reason", "REQUIRED")));
         }
 
-        // 요청 데이터 로깅
-        System.out.println("교육 프로그램 수정 요청 - ID: " + programId + ", 데이터: " + requestDto);
-
-        // Mock 데이터 생성
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("programId", programId);
-        data.put("programName", requestDto.getProgramName());
-        data.put("statusCode", requestDto.getStatusCode());
-        data.put("updatedAt", LocalDateTime.now());
-
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "교육 프로그램이 수정되었습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.updateTrainingProgram(programId, requestDto);
     }
 
     @GetMapping("/trainings/categories")
@@ -1375,7 +1248,7 @@ public class HrmController {
         summary = "교육 카테고리 목록 조회 (enum 전체)",
         description = "교육 카테고리 enum의 모든 값을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getAllTrainingCategories() {
+    public ResponseEntity<ApiResponse<List<TrainingCategoryDto>>> getAllTrainingCategories() {
         return hrmHttpService.getAllTrainingCategories();
     }
 
@@ -1384,7 +1257,7 @@ public class HrmController {
         summary = "전체 교육 프로그램 목록 조회 (ID, Name만)",
         description = "전체 교육 프로그램의 ID와 Name만 간단히 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getAllTrainingPrograms() {
+    public ResponseEntity<ApiResponse<List<TrainingProgramSimpleDto>>> getAllTrainingPrograms() {
         return hrmHttpService.getAllTrainingPrograms();
     }
 
@@ -1393,7 +1266,7 @@ public class HrmController {
         summary = "교육 완료 상태 목록 조회",
         description = "교육 완료 상태의 모든 값을 조회합니다. (완료: true, 미완료: false)"
     )
-    public ResponseEntity<ApiResponse<Object>> getAllTrainingCompletionStatuses() {
+    public ResponseEntity<ApiResponse<List<TrainingCompletionStatusDto>>> getAllTrainingCompletionStatuses() {
         return hrmHttpService.getAllTrainingCompletionStatuses();
     }
 
@@ -1404,7 +1277,7 @@ public class HrmController {
         summary = "직원 교육 현황 목록 조회",
         description = "부서/직급/이름으로 직원 교육 현황 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getTrainingStatusList(
+    public ResponseEntity<ApiResponse<TrainingStatusResponseDto>> getTrainingStatusList(
         @Parameter(description = "부서 ID")
         @RequestParam(name = "department", required = false) String departmentId,
         @Parameter(description = "직급 ID")
@@ -1430,32 +1303,43 @@ public class HrmController {
         int p = page == null ? 0 : page;
         int s = (size == null || size < 1) ? 20 : size;
 
-        Map<String, Object> data = generateTrainingStatusPageMock(p, s);
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "목록 조회에 성공했습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.getTrainingStatusList(departmentId, positionId, employeeName, p, s);
     }
 
     // 직원 교육 현황 상세 조회
     // GET /api/business/hrm/training/employee/{employeeId}
+//    @GetMapping("/training/employee/{employeeId}")
+//    @Operation(
+//        summary = "직원 교육 현황 상세 조회",
+//        description = "특정 직원의 교육 현황 및 이력을 조회합니다."
+//    )
+//    public ResponseEntity<ApiResponse<EmployeeTrainingSummaryDto>> getTrainingStatusDetail(
+//        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+//        @PathVariable("employeeId") String employeeId
+//    ) {
+//        if (employeeId == null || employeeId.isBlank()) {
+//            throw new ValidationException(ErrorCode.VALIDATION_FAILED,
+//                List.of(Map.of("field", "employeeId", "reason", "REQUIRED")));
+//        }
+//
+//        return hrmHttpService.getEmployeeTrainingSummary(employeeId);
+//    }
+
     @GetMapping("/training/employee/{employeeId}")
     @Operation(
-        summary = "직원 교육 현황 상세 조회",
-        description = "특정 직원의 교육 현황 및 이력을 조회합니다."
+            summary = "직원 교육 상세 조회",
+            description = "해당 직원의 교육 이력(교육명, 완료 여부, 완료일 등)을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getTrainingStatusDetail(
-        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
-        @PathVariable("employeeId") String employeeId
+    public ResponseEntity<ApiResponse<EmployeeTrainingHistoryDto>> getEmployeeTrainingHistory(
+            @PathVariable String employeeId
     ) {
+
         if (employeeId == null || employeeId.isBlank()) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED,
                 List.of(Map.of("field", "employeeId", "reason", "REQUIRED")));
         }
 
-        Map<String, Object> data = generateTrainingStatusDetailMock(employeeId);
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "직원 교육 이력 조회에 성공했습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.getEmployeeTrainingHistory(employeeId);
     }
 
     // 교육 프로그램 목록 조회
@@ -1465,7 +1349,7 @@ public class HrmController {
         summary = "교육 프로그램 목록 조회",
         description = "프로그램 이름/상태/카테고리로 교육 프로그램 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getTrainingPrograms(
+    public ResponseEntity<ApiResponse<Page<TrainingListItemDto>>> getTrainingPrograms(
         @Parameter(description = "프로그램 이름")
         @RequestParam(name = "name", required = false) String programName,
         @Parameter(description = "상태: IN_PROGRESS, COMPLETED, RECRUITING")
@@ -1503,13 +1387,7 @@ public class HrmController {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        int p = (page == null || page < 0) ? 0 : page;
-        int s = (size == null || size < 1) ? 10 : size;
-
-        Map<String, Object> data = generateTrainingProgramPageMock(p, s);
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "교육 프로그램 목록 조회에 성공했습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.getTrainingPrograms(programName, status, category, page, size);
     }
 
     // 교육 프로그램 상세 조회
@@ -1519,7 +1397,7 @@ public class HrmController {
         summary = "교육 프로그램 상세 조회",
         description = "단일 교육 프로그램 상세 정보를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Object>> getTrainingProgramDetail(
+    public ResponseEntity<ApiResponse<TrainingResponseDto>> getTrainingProgramDetail(
         @Parameter(description = "프로그램 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("programId") String programId
     ) {
@@ -1528,10 +1406,7 @@ public class HrmController {
                 List.of(Map.of("field", "programId", "reason", "REQUIRED")));
         }
 
-        Map<String, Object> data = generateTrainingProgramDetailMock(programId);
-        return ResponseEntity.ok(ApiResponse.success(
-            data, "교육 프로그램 상세 정보 조회에 성공했습니다.", HttpStatus.OK
-        ));
+        return hrmHttpService.getProgramDetailInfo(programId);
     }
 
     // ==================== Mock 생성 함수 ====================
