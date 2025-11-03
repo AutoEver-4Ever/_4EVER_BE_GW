@@ -21,6 +21,7 @@ import org.ever._4ever_be_gw.business.dto.*;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeCreateRequestDto;
 import org.ever._4ever_be_gw.business.dto.employee.EmployeeUpdateRequestDto;
 import org.ever._4ever_be_gw.business.dto.hrm.CreateAuthUserResultDto;
+import org.ever._4ever_be_gw.business.dto.hrm.UpdateDepartmentRequestDto;
 import org.ever._4ever_be_gw.business.dto.response.*;
 import org.ever._4ever_be_gw.business.service.HrmHttpService;
 import org.ever._4ever_be_gw.business.service.HrmService;
@@ -218,6 +219,14 @@ public class HrmController {
         @PathVariable("departmentId") String departmentId
     ) {
         return hrmHttpService.getDepartmentMembers(departmentId);
+    }
+
+    @PatchMapping("/departments/{departmentId}")
+    public ResponseEntity<ApiResponse<Void>> updateDepartment(
+            @PathVariable String departmentId,
+            @RequestBody UpdateDepartmentRequestDto requestDto
+    ) {
+        return hrmHttpService.updateDepartment(departmentId, requestDto);
     }
 
     // ==================== 직급 관리 ====================
@@ -662,6 +671,8 @@ public class HrmController {
         @RequestParam(name = "year") Integer year,
         @Parameter(description = "월(1~12)", example = "10")
         @RequestParam(name = "month") Integer month,
+        @Parameter(description = "상태코드 (PAYROLL_PAID, PAYROLL_UNPAID)")
+        @RequestParam(required = false) String statusCode,
         @Parameter(description = "직원 이름(선택)")
         @RequestParam(name = "name", required = false) String employeeName,
         @Parameter(description = "부서 ID(선택)")
@@ -690,7 +701,7 @@ public class HrmController {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED, errors);
         }
 
-        return hrmHttpService.getPayrollList(year, month, employeeName, departmentId, positionId, page, size);
+        return hrmHttpService.getPayrollList(year, month, employeeName, departmentId, positionId, statusCode, page, size);
     }
 
     // 급여 지급 완료 처리
@@ -923,6 +934,8 @@ public class HrmController {
     public ResponseEntity<ApiResponse<Page<TimeRecordListItemDto>>> getTimeRecords(
         @Parameter(description = "부서 ID")
         @RequestParam(name = "department", required = false) String departmentId,
+        @Parameter(description = "상태 (NORMAL, LATE)")
+        @RequestParam(required = false) String statusCode,
         @Parameter(description = "직책 ID")
         @RequestParam(name = "position", required = false) String positionId,
         @Parameter(description = "직원 이름")
@@ -955,7 +968,7 @@ public class HrmController {
         int p = (page == null || page < 0) ? 0 : page;
         int s = (size == null || size < 1) ? 20 : size;
 
-        return hrmHttpService.getAttendanceList(departmentId, positionId, employeeName, date, p, s);
+        return hrmHttpService.getAttendanceList(departmentId, positionId, employeeName, date, statusCode, p, s);
     }
 
     // 출퇴근 기록 상세 조회
@@ -1295,21 +1308,38 @@ public class HrmController {
 
     // 직원 교육 현황 상세 조회
     // GET /api/business/hrm/training/employee/{employeeId}
+//    @GetMapping("/training/employee/{employeeId}")
+//    @Operation(
+//        summary = "직원 교육 현황 상세 조회",
+//        description = "특정 직원의 교육 현황 및 이력을 조회합니다."
+//    )
+//    public ResponseEntity<ApiResponse<EmployeeTrainingSummaryDto>> getTrainingStatusDetail(
+//        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+//        @PathVariable("employeeId") String employeeId
+//    ) {
+//        if (employeeId == null || employeeId.isBlank()) {
+//            throw new ValidationException(ErrorCode.VALIDATION_FAILED,
+//                List.of(Map.of("field", "employeeId", "reason", "REQUIRED")));
+//        }
+//
+//        return hrmHttpService.getEmployeeTrainingSummary(employeeId);
+//    }
+
     @GetMapping("/training/employee/{employeeId}")
     @Operation(
-        summary = "직원 교육 현황 상세 조회",
-        description = "특정 직원의 교육 현황 및 이력을 조회합니다."
+            summary = "직원 교육 상세 조회",
+            description = "해당 직원의 교육 이력(교육명, 완료 여부, 완료일 등)을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<EmployeeTrainingSummaryDto>> getTrainingStatusDetail(
-        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
-        @PathVariable("employeeId") String employeeId
+    public ResponseEntity<ApiResponse<EmployeeTrainingHistoryDto>> getEmployeeTrainingHistory(
+            @PathVariable String employeeId
     ) {
+
         if (employeeId == null || employeeId.isBlank()) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED,
                 List.of(Map.of("field", "employeeId", "reason", "REQUIRED")));
         }
 
-        return hrmHttpService.getEmployeeTrainingSummary(employeeId);
+        return hrmHttpService.getEmployeeTrainingHistory(employeeId);
     }
 
     // 교육 프로그램 목록 조회

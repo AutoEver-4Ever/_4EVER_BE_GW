@@ -65,4 +65,17 @@ public class AlarmServerRequestDto {
 
         private UUID userId;
     }
+
+    // FCM 토큰 등록 요청
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NotificationFcmTokenRequest {
+
+        private UUID userId;
+        private String token;
+        private String deviceId;
+        private String deviceType; // IOS, ANDROID, WEB
+    }
 }

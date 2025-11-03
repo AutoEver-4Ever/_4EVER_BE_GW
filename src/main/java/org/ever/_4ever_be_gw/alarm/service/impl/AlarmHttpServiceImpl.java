@@ -237,6 +237,40 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
         }
     }
 
+    @Override
+    public ResponseEntity<ApiResponse<Void>> registerFcmToken(
+        AlarmServerRequestDto.NotificationFcmTokenRequest request) {
+        log.debug("FCM 토큰 등록 요청 - userId: {}, token: {}", request.getUserId(), request.getToken());
+
+        try {
+            WebClient alarmWebClient = webClientProvider.getWebClient(ApiClientKey.ALARM);
+
+            alarmWebClient.post()
+                .uri("/device-tokens/register")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(AlarmServerResponseDto.NotificationFcmTokenResponse.class)
+                .block();
+
+            log.info("FCM 토큰 등록 성공 - userId: {}", request.getUserId());
+            return ResponseEntity.ok(
+                ApiResponse.success(null, "FCM 토큰이 성공적으로 등록되었습니다.", HttpStatus.OK)
+            );
+
+        } catch (WebClientResponseException ex) {
+            handleWebClientError("FCM 토큰 등록", ex);
+            HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+            return ResponseEntity.status(status).body(
+                ApiResponse.fail("FCM 토큰 등록 중 오류가 발생했습니다.", status, null)
+            );
+        } catch (Exception e) {
+            log.error("FCM 토큰 등록 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse.fail("FCM 토큰 등록 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
     /**
      * WebClient 오류를 처리하고 로깅하는 공통 메서드
      * 400, 500번대 에러에 대한 상세 처리

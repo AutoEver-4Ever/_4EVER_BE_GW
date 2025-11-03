@@ -76,6 +76,23 @@ public class AlarmDtoConverter {
     }
 
     /**
+     * FCM 토큰 등록 요청 변환
+     */
+    public static AlarmServerRequestDto.NotificationFcmTokenRequest toFcmTokenServerRequest(
+        UUID userId,
+        String token,
+        String deviceId,
+        String deviceType
+    ) {
+        return AlarmServerRequestDto.NotificationFcmTokenRequest.builder()
+            .userId(userId)
+            .token(token)
+            .deviceId(deviceId)
+            .deviceType(deviceType)
+            .build();
+    }
+
+    /**
      * 서버 응답을 클라이언트 응답으로 변환 (알림 목록)
      */
     public static PageResponseDto<NotificationListResponseDto> toClientResponse(

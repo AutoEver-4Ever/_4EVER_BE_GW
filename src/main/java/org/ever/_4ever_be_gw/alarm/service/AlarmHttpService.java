@@ -44,4 +44,11 @@ public interface AlarmHttpService {
     ResponseEntity<ApiResponse<Void>> markReadOne(
         AlarmServerRequestDto.NotificationMarkReadOneRequest request
     );
+
+    /**
+     * FCM 토큰 등록
+     */
+    ResponseEntity<ApiResponse<Void>> registerFcmToken(
+        AlarmServerRequestDto.NotificationFcmTokenRequest request
+    );
 }

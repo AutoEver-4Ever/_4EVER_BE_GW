@@ -67,4 +67,15 @@ public class AlarmServerResponseDto {
 
         private int processedCount;
     }
+
+    // FCM 토큰 등록 응답
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NotificationFcmTokenResponse {
+
+        private boolean success;
+        private String message;
+    }
 }
