@@ -102,4 +102,10 @@ public interface SdHttpService {
      * 재고 확인
      */
     ResponseEntity<ApiResponse<Object>> checkInventory(Map<String, Object> requestBody);
+
+    // 공급사 대시보드 주문 목록 요청
+    ResponseEntity<ApiResponse<Object>> getDashboardSupplierOrderList(String userId, int size);
+
+    // 고객사 대시보드 견적 목록 요청
+    ResponseEntity<ApiResponse<Object>> getDashboardCustomerQuotationList(String userId, String userType);
 }

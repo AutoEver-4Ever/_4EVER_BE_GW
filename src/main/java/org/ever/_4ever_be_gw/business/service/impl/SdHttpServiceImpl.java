@@ -522,6 +522,41 @@ public class SdHttpServiceImpl implements SdHttpService {
         }
     }
 
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getDashboardSupplierOrderList(String userId, int size) {
+        log.debug("[DEBUG][DASHBOARD][SD] 공급사가 주문한 주문 목록 요청 - userId: {}", userId);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri(uriBuilder -> {
+                        return uriBuilder.path("/sd/orders/supplier")
+                                .queryParam("userId", userId)
+                                .queryParam("size", size > 0 ? size : 5)
+                                .build();
+
+                            })
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+            log.info("[INFO][DASHBOARD][SD] 공급사 주문서 목록 조회 성공");
+            return ResponseEntity.ok(response);
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("대시보드 공급사 주문서 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("[ERROR][DASHBOARD][SD] 공급사 주문서 목록 조회 중 에러 발생");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("대시보드 공급사 주문서 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getDashboardCustomerQuotationList(String userId, String userType) {
+        return null;
+    }
+
     /**
      * WebClient 오류를 처리하고 로깅하는 공통 메서드
      */
