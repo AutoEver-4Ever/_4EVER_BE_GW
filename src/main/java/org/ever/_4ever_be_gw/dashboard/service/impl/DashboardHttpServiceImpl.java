@@ -3,6 +3,7 @@ package org.ever._4ever_be_gw.dashboard.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.dashboard.dto.response.DashboardStatisticsResponseDto;
@@ -40,6 +41,15 @@ public class DashboardHttpServiceImpl implements DashboardHttpService {
         } catch (WebClientResponseException ex) {
             return handleWebClientError("종합 대시보드 통계 조회", ex);
         }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getWorkflows(
+            EverUserPrincipal principal,
+            String userType,
+            String userRole
+    ) {
+        return null;
     }
 
     private <T> ResponseEntity<ApiResponse<T>> handleWebClientError(String operation, WebClientResponseException ex) {
