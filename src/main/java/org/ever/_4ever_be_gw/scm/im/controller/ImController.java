@@ -314,7 +314,7 @@ public class ImController {
 
         Object result = scmPpWebClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/warehouses/dropdown")
+                        .path("/scm-pp/iv/warehouses/dropdown")
                         .queryParam("warehouseId", warehouseId)
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
