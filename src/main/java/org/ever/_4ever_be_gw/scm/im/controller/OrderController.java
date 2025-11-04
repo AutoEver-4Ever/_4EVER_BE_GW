@@ -140,4 +140,19 @@ public class OrderController {
 
         return ResponseEntity.ok(result);
     }
+
+
+    // 창고 통계 조회
+    @GetMapping("/product/item/toggle")
+    public ResponseEntity<Object> getItemCategoryProducts() {
+        var client = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
+
+        Object result = client.get()
+                .uri("/scm-pp/product/item/toggle")
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
 }
