@@ -135,6 +135,44 @@ public class FcmHttpServiceImpl implements FcmHttpService {
     }
 
     @Override
+    public ResponseEntity<ApiResponse<Object>> getDashboardSupplierInvoiceList(String userId, Integer size) {
+        log.debug("[DEBUG][DASHBOARD][FCM] 공급사 매입 전표 목록 요청 - userId: {}", userId);
+
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.badRequest().body(
+                    ApiResponse.fail("supplier userId is required", HttpStatus.BAD_REQUEST, null)
+            );
+        }
+
+        final int pageSize = (size != null && size > 0) ? size : 5;
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/fcm/invoice/ap/supplier")
+                            .queryParam("userId", userId)
+                            .queryParam("size", pageSize)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("[INFO][DASHBOARD][FCM] 공급사 매입 전표 목록 조회 성공");
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("대시보드 공급사 매입 전표 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("[ERROR][DASHBOARD][FCM] 공급사 매입 전표 목록 조회 중 에러 발생");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("대시보드 공급사 매입 전표 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
     public ResponseEntity<ApiResponse<Object>> getArInvoices(
             String company, String startDate, String endDate, Integer page, Integer size) {
         log.debug("AR 전표 목록 조회 요청 - company: {}, startDate: {}, endDate: {}, page: {}, size: {}",

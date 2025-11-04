@@ -61,4 +61,8 @@ public interface FcmHttpService {
      * 매입 전표 미수 처리 요청 (AP)
      */
     ResponseEntity<ApiResponse<Object>> requestApReceivable(String invoiceId);
+
+    // 공급사 매출 전표(매입 전표가 공급사 입장에서는 매출 전표)
+    ResponseEntity<ApiResponse<Object>> getDashboardSupplierInvoiceList(String userId, Integer size);
+
 }
