@@ -1,5 +1,6 @@
 package org.ever._4ever_be_gw.scm.im.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
@@ -17,6 +18,7 @@ import org.springframework.http.MediaType;
 
 import java.util.Map;
 
+@Tag(name = "재고관리(IM)", description = "재고 관리 API")
 @RestController
 @RequestMapping("/scm-pp/iv")
 @RequiredArgsConstructor
@@ -171,128 +173,6 @@ public class ImController {
         return ResponseEntity.ok(result);
     }
 
-    // 입고 완료 목록 조회 (외부 서버)
-    @GetMapping("/purchase-orders/received")
-    public ResponseEntity<Object> getReceivedPurchaseOrders(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
-
-        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-
-        Object result = scmPpWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/purchase-orders/received")
-                        .queryParam("startDate", startDate)
-                        .queryParam("endDate", endDate)
-                        .queryParam("page", page)
-                        .queryParam("size", size)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
-    }
-
-    // 입고 대기 목록 조회 (외부 서버)
-    @GetMapping("/purchase-orders/receiving")
-    public ResponseEntity<Object> getReceivingPurchaseOrders(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-
-        Object result = scmPpWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/purchase-orders/receiving")
-                        .queryParam("page", page)
-                        .queryParam("size", size)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
-    }
-
-    // 생산중 목록 조회 (외부 서버)
-    @GetMapping("/sales-orders/production")
-    public ResponseEntity<Object> getSalesOrdersInProduction(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-
-        Object result = scmPpWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/sales-orders/production")
-                        .queryParam("page", page)
-                        .queryParam("size", size)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
-    }
-
-    // 출고 준비 완료 목록 조회 (외부 서버)
-    @GetMapping("/sales-orders/ready-to-ship")
-    public ResponseEntity<Object> getReadyToShipSalesOrders(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-
-        Object result = scmPpWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/sales-orders/ready-to-ship")
-                        .queryParam("page", page)
-                        .queryParam("size", size)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
-    }
-
-    // 출고 준비 완료 상세 조회 (외부 서버)
-    @GetMapping("/sales-orders/ready-to-ship/{salesOrderId}")
-    public ResponseEntity<Object> getReadyToShipOrder(@PathVariable String salesOrderId) {
-        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-
-        Object result = scmPpWebClient.get()
-                .uri("/scm-pp/iv/sales-orders/ready-to-ship/{salesOrderId}", salesOrderId)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
-    }
-
-    // 생산중 상세 조회 (외부 서버)
-    @GetMapping("/sales-orders/production/{salesOrderId}")
-    public ResponseEntity<Object> getProductionOrder(@PathVariable String salesOrderId) {
-        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-
-        Object result = scmPpWebClient.get()
-                .uri("/scm-pp/iv/sales-orders/production/{salesOrderId}", salesOrderId)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
-    }
-
     // 재고 이동 목록 조회 (외부 서버)
     @GetMapping("/stock-transfers")
     public ResponseEntity<Object> getStockTransfers() {
@@ -371,6 +251,21 @@ public class ImController {
         return ResponseEntity.ok(result);
     }
 
+    // 재고 관리 부서 명단 반환
+    @GetMapping("/employees")
+    public ResponseEntity<Object> getInventoryEmployees() {
+        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+        Object result = scmPpWebClient.get()
+                .uri("/hrm/departments/inventory/employees")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
     // 창고 추가 생성 (외부 서버)
     @PostMapping("/warehouses")
     public ResponseEntity<Object> createWarehouse(
@@ -419,7 +314,7 @@ public class ImController {
 
         Object result = scmPpWebClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/warehouses/dropdown")
+                        .path("/scm-pp/iv/warehouses/dropdown")
                         .queryParam("warehouseId", warehouseId)
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
@@ -471,5 +366,4 @@ public class ImController {
 
         return ResponseEntity.ok(result);
     }
-
 }
