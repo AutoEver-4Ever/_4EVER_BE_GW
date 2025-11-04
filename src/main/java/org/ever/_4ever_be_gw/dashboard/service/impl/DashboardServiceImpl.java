@@ -4,6 +4,7 @@ import io.lettuce.core.dynamic.annotation.Param;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.business.service.FcmHttpService;
+import org.ever._4ever_be_gw.business.service.HrmHttpService;
 import org.ever._4ever_be_gw.business.service.SdHttpService;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
@@ -23,6 +24,11 @@ public class DashboardServiceImpl implements DashboardService {
 
     private final SdHttpService sdHttpService;          // 영업관리
     private final FcmHttpService fcmHttpService;        // 재무관리
+    private final MmHttpService mmHttpService;          // 구매관리
+    private final HrmHttpService hrmHttpService;        // 인적자원관리
+    private final ImHttpService imHttpService;          // 재고관리
+    private final PpHttpService ppHttpService;          // 생산관리
+
 
     private static final int DEFAULT_SIZE = 5;
 
@@ -40,8 +46,8 @@ public class DashboardServiceImpl implements DashboardService {
 
         // 공급사 워크 플로우
         if (userType.equalsIgnoreCase("SUPPLIER")) {
-            // 발주서 목록 요청
-            ResponseEntity<ApiResponse<Object>> supplierQuotationResponse = sdHttpService.getDashboardSupplierOrderList(userId, size);
+            // 발주서 목록 요청 (대시보드 전용)
+            ResponseEntity<ApiResponse<Object>> supplierQuotationResponse = sdHttpService.getDashboardSupplierQuotationList(userId, size);
 
             // 매출 전표 요청(공급사 입장에서 매입 전표는 매출 전표)
             ResponseEntity<ApiResponse<Object>> supplierInvoiceResponse = fcmHttpService.getDashboardSupplierInvoiceList(userId, size);
@@ -52,47 +58,35 @@ public class DashboardServiceImpl implements DashboardService {
             // 매입 전표 요청(고객사 입장에서 매출 전표는 매입 전표)
             ResponseEntity<ApiResponse<Object>> customerInvoiceResponse = fcmHttpService.getDashboardCustomerInvoiceList(userId, size);
         } else {
-            // 구매 관리
-            if (userRole.startsWith("MM")) {
-                // 구매 요청서 목록 조회
-                ResponseEntity<ApiResponse<Object>> mmPurchaseRequestResponse = mmHttpService.getDashboardPurchaseRequestList(userId, size);
+            if (userRole.startsWith("MM")) {        // 구매 관리 대시보드
+                // TODO: MM 전용 HttpService 연동 예정
+                ResponseEntity<ApiResponse<Object>> mmPurchaseRequestResponse = null;   // mmHttpService.getDashboardPurchaseRequestList(userId, size)
+                ResponseEntity<ApiResponse<Object>> mmPurchaseOrderResponse   = null;   // mmHttpService.getDashboardPurchaseOrderList(userId, size)
 
-                // 발주서 목록 조회
+            } else if (userRole.startsWith("SD")) { // 영업관리 대시보드
+                // TODO: SD 전용 HttpService 연동 예정
+                ResponseEntity<ApiResponse<Object>> sdCustomerQuotationResponse = null; // sdHttpService.getDashboardCustomerQuotationList(userId, size)
+                ResponseEntity<ApiResponse<Object>> sdSupplierQuotationResponse = null; // sdHttpService.getDashboardSupplierQuotationList(userId, size)
 
-                // 영업관리
-            } else if (userRole.startsWith("SD")) {
+            } else if (userRole.startsWith("FCM")) {   // 재무관리 대시보드
+                // TODO: FCM 전용 HttpService 연동 예정(자사 관점)
+                ResponseEntity<ApiResponse<Object>> fcmArListResponse = null;          // fcmHttpService.getDashboardCompanyArList(userId, size)
+                ResponseEntity<ApiResponse<Object>> fcmApListResponse = null;          // fcmHttpService.getDashboardCompanyApList(userId, size)
 
-                // 고객사가 요청한 견적서 목록 조회
+            } else if (userRole.startsWith("IM")) {     // 재고관리 대시보드
+                // TODO: IM 전용 HttpService 연동 예정
+                ResponseEntity<ApiResponse<Object>> imInboundListResponse  = null;     // imHttpService.getDashboardInboundList(userId, size)
+                ResponseEntity<ApiResponse<Object>> imOutboundListResponse = null;     // imHttpService.getDashboardOutboundList(userId, size)
 
-                // 공급사에게 발행한 발주서 목록 조회
+            } else if (userRole.startsWith("HRM")) {    // 인적자원관리 대시보드
+                // TODO: HRM 전용 HttpService 연동 예정
+                ResponseEntity<ApiResponse<Object>> hrmAttendanceListResponse  = null; // hrmHttpService.getDashboardAttendanceList(userId, size)
+                ResponseEntity<ApiResponse<Object>> hrmLeaveRequestListResponse = null;// hrmHttpService.getDashboardLeaveRequestList(userId, size)
 
-                // 재무관리
-            } else if (userRole.startsWith("FCM")) {
-
-                // 자사 매출 전표 목록 조회
-
-                // 자사 매입 전표 목록 조회
-
-                // 재고관리
-            } else if (userRole.startsWith("IM")) {
-
-                // 입고 목록 조회
-
-                // 출고 목록 조회
-
-                // 인적자원관리
-            } else if (userRole.startsWith("HRM")) {
-
-                // 직원 근태 목록 조회
-
-                // 직원 휴가 요청 목록 조회
-
-                // 생산관리
-            } else {
-                // 영업관리에서 생산이 필요한 견적서가 재고 확인 후 전환된 견적서 목록 조회
-
-                // 현재 생산 중인 목록 조회
-
+            } else {        // 생산관리 대시보드
+                // TODO: PP 전용 HttpService 연동 예정
+                ResponseEntity<ApiResponse<Object>> ppToProductionQuotationResponse = null; // ppHttpService.getDashboardQuotationsToProduction(userId, size)
+                ResponseEntity<ApiResponse<Object>> ppInProgressResponse            = null; // ppHttpService.getDashboardProductionInProgress(userId, size)
             }
         }
 
