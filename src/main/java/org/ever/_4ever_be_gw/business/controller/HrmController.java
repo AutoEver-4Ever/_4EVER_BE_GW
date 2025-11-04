@@ -890,14 +890,8 @@ public class HrmController {
         @AuthenticationPrincipal EverUserPrincipal principal,
         @Valid @RequestBody LeaveRequestDto requestDto
     ) {
-        // JWT 토큰이 있으면 해당 employee의 id로 요청
-        if (principal != null) {
-            // JWT에서 userId를 employeeId로 사용
-            requestDto.setInternelUserId(principal.getUserId());
-        }
-        // JWT가 없으면 requestDto의 employeeId 사용 (목업)
-
-        return hrmHttpService.requestLeave(requestDto);
+        String InternelUserId = principal.getUserId();
+        return hrmHttpService.requestLeave(requestDto,InternelUserId);
     }
 
     @PatchMapping("/leave/request/{requestId}/release")

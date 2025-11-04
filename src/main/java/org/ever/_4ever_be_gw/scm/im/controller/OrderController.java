@@ -142,7 +142,7 @@ public class OrderController {
     }
 
 
-    // 창고 통계 조회
+    // 판매제품
     @GetMapping("/product/item/toggle")
     public ResponseEntity<Object> getItemCategoryProducts() {
         var client = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
