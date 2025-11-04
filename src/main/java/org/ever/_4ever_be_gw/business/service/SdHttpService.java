@@ -108,4 +108,7 @@ public interface SdHttpService {
 
     // 고객사 대시보드 견적 목록 요청
     ResponseEntity<ApiResponse<Object>> getDashboardCustomerQuotationList(String userId, String userType);
+
+    // 공급사 대시보드 발주서(Quotation) 목록 요청
+    ResponseEntity<ApiResponse<Object>> getDashboardSupplierQuotationList(String userId, int size);
 }
