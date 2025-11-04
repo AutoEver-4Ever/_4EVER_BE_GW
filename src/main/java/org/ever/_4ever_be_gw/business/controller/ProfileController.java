@@ -3,6 +3,7 @@ package org.ever._4ever_be_gw.business.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_gw.business.dto.hrm.UpdateProfileRequestDto;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
@@ -125,7 +126,7 @@ public class ProfileController {
     @PostMapping("trainings/request")
     public ResponseEntity<Object> requestTraining(
             @AuthenticationPrincipal EverUserPrincipal user,
-            @RequestParam String programId
+            @RequestParam String trainingId
     ) {
         String internelUserId = user.getUserId();
 
@@ -135,7 +136,7 @@ public class ProfileController {
         Object result = client.post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/hrm/internelUser/program")
-                        .queryParam("programId", programId)
+                        .queryParam("programId", trainingId)
                         .queryParam("internelUserId", internelUserId)
                         .build())
                 .contentType(MediaType.APPLICATION_JSON)
@@ -145,5 +146,28 @@ public class ProfileController {
 
         return ResponseEntity.ok(result);
     }
+
+    @PostMapping("employees/profile/update")
+    public ResponseEntity<Object> updateProfileThroughWebClient(
+            @AuthenticationPrincipal EverUserPrincipal user,
+            @RequestBody UpdateProfileRequestDto requestDto
+    ) {
+        String internelUserId = user.getUserId();
+
+        var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+        Object result = client.patch()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/hrm/employees/profile/{internelUserId}")
+                        .build(internelUserId))  // PathVariable의 값을 전달
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
 
 }
