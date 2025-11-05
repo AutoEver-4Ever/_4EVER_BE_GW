@@ -252,7 +252,7 @@ public class ImController {
     }
 
     // 재고 관리 부서 명단 반환
-    @GetMapping("/iv/warehouses/managers/toggle")
+    @GetMapping("/warehouses/managers/toggle")
     public ResponseEntity<Object> getInventoryEmployees() {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
