@@ -24,15 +24,42 @@ public class ProfileController {
     @GetMapping
     public ResponseEntity<Object> getEmployeeProfile(
             @AuthenticationPrincipal EverUserPrincipal user
-            ) {
-        String internelUserId = user.getUserId();
+    ) {
+        String userId = user.getUserId();
+        String userType = user.getUserType();
         var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-        Object result = client.get()
-                .uri("/hrm/employees/profile/{internelUserId}", internelUserId)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        Object result;
+
+        switch (userType.toLowerCase()) {
+            case "customer":
+                // 1번: 고객사 조회
+                result = client.get()
+                        .uri("/hrm/customers/profile/{customerUserId}", userId)
+                        .retrieve()
+                        .bodyToMono(Object.class)
+                        .block();
+                break;
+
+            case "supplier":
+                // 2번: 공급사 조회
+                result = client.get()
+                        .uri("/hrm/supplier/{userId}/profile", userId)
+                        .retrieve()
+                        .bodyToMono(Object.class)
+                        .block();
+                break;
+
+            case "internal":
+            default:
+                // 3번: 기존 내부 직원 조회
+                result = client.get()
+                        .uri("/hrm/employees/profile/{internelUserId}", userId)
+                        .retrieve()
+                        .bodyToMono(Object.class)
+                        .block();
+                break;
+        }
 
         return ResponseEntity.ok(result);
     }
