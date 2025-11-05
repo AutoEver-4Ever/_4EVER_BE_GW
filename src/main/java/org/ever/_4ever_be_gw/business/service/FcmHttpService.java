@@ -61,4 +61,14 @@ public interface FcmHttpService {
      * 매입 전표 미수 처리 요청 (AP)
      */
     ResponseEntity<ApiResponse<Object>> requestApReceivable(String invoiceId);
+
+    /**
+     * 매출 전표 상태를 RESPONSE_PENDING으로 일괄 변경 (AR)
+     */
+    ResponseEntity<ApiResponse<Object>> updateArInvoicesResponsePending(java.util.List<String> invoiceIds);
+
+    /**
+     * 매입 전표 상태를 RESPONSE_PENDING으로 일괄 변경 (AP)
+     */
+    ResponseEntity<ApiResponse<Object>> updateApInvoicesResponsePending(java.util.List<String> invoiceIds);
 }
