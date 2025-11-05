@@ -33,7 +33,16 @@ public final class EverUserPrincipal implements Principal, Serializable {
         String userId,
         String loginEmail,
         String userRole,
-        String userType,
+        /*
+        *   - **MM_USER / MM_ADMIN** — 구매관리 (Material Management)
+            - **SD_USER / SD_ADMIN** — 영업관리 (Sales & Distribution)
+            - **IM_USER / IM_ADMIN** — 재고관리 (Inventory Management)
+            - **FCM_USER / FCM_ADMIN** — 재무관리 (Financial & Cost Management)
+            - **HRM_USER / HRM_ADMIN** — 인적자원관리 (Human Resource Management)
+            - **PP_USER / PP_ADMIN** — 생산관리 (Production Planning)
+        * */
+
+        String userType, // -> INTERNAL / SUPPLIER / CUSTOMER
         Instant issuedAt,
         Instant expiresAt
     ) {
