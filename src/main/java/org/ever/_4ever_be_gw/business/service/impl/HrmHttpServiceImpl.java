@@ -1442,7 +1442,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             ApiResponse<?> response = businessClient.post()
                     .uri(uriBuilder -> uriBuilder
                             .path("/hrm/leave/request")  // URL 경로 설정
-                            .queryParam("internalUserId", internelUserId)
+                            .queryParam("InternelUserId", internelUserId)
                             .build())  // queryParam 오타 수정
                     .bodyValue(requestDto)
                     .retrieve()
