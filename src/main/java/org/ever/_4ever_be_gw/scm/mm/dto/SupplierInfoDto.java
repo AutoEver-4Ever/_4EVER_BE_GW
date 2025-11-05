@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class SupplierInfoDto {
+    private String businessNumber;          // 사업자 번호
     private String supplierName;            // 공급업체 이름
     private String supplierEmail;           // 공급업체 이메일
     private String supplierPhone;           // 공급업체 전화번호

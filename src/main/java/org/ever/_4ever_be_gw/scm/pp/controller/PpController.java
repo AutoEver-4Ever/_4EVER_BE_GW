@@ -6,6 +6,8 @@ import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.scm.pp.dto.BomCreateRequestDto;
 import org.ever._4ever_be_gw.scm.pp.dto.MrpRunConvertRequestDto;
+import org.ever._4ever_be_gw.scm.pp.dto.QuotationConfirmRequestDto;
+import org.ever._4ever_be_gw.scm.pp.dto.QuotationSimulateRequestDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -275,7 +277,7 @@ public class PpController {
     // 견적 시뮬레이션
     @PostMapping("/quotations/simulate")
     public ResponseEntity<Object> simulateQuotations(
-            @RequestBody Map<String, Object> requestDto,
+            @RequestBody QuotationSimulateRequestDto requestDto,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
@@ -312,12 +314,38 @@ public class PpController {
 
     // 견적 확정
     @PostMapping("/quotations/confirm")
-    public ResponseEntity<Object> confirmQuotations(@RequestBody Map<String, Object> requestDto) {
+    public ResponseEntity<Object> confirmQuotations(@RequestBody QuotationConfirmRequestDto requestDto) {
         Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
                 .uri("/scm-pp/pp/quotations/confirm")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+    // 견적 상태 토글
+    @GetMapping("/status/toggle")
+    public ResponseEntity<Object> getQuotationsStatusToggle() {
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri("/scm-pp/pp/quotations/status/toggle")
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+    // 견적 체크 토글
+    @GetMapping("/available/status/toggle")
+    public ResponseEntity<Object> getQuotationAvailableStatusToggle() {
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri("/scm-pp/pp/quotations/available/status/toggle")
                 .retrieve()
                 .bodyToMono(Object.class)
                 .block();
@@ -370,6 +398,61 @@ public class PpController {
                         .queryParam("availableStatusCode", availableStatusCode)
                         .queryParam("page", page)
                         .queryParam("size", size)
+                        .build())
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Product ID와 이름 맵 조회 (페이징, 외부 API)
+     */
+    @GetMapping("/products")
+    public ResponseEntity<Object> getProductMap() {
+
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/scm-pp/pp/boms/products")
+                        .build())
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Product 상세 정보 조회 (외부 API)
+     */
+    @GetMapping("/products/{productId}")
+    public ResponseEntity<Object> getProductDetail(@PathVariable String productId) {
+
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri("/scm-pp/pp/boms/products/{productId}", productId)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Product ID와 이름 맵 조회 (페이징, 외부 API)
+     */
+    @GetMapping("/operations")
+    public ResponseEntity<Object> getOperationsMap() {
+
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/scm-pp/pp/boms/operations")
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
