@@ -4,9 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.business.dto.fcm.response.FcmStatisticsDto;
 import org.ever._4ever_be_gw.business.service.FcmHttpService;
+import org.ever._4ever_be_gw.common.exception.BusinessException;
+import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -135,8 +139,11 @@ public class FcmHttpServiceImpl implements FcmHttpService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<Object>> getDashboardSupplierInvoiceList(String userId, Integer size) {
-        log.debug("[DEBUG][DASHBOARD][FCM] 공급사 매입 전표 목록 요청 - userId: {}", userId);
+    public ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierInvoiceList(
+            String userId,
+            Integer size
+    ) {
+        log.debug("[DASHBOARD][FCM] 공급사 매출 전표(AR) 목록 요청 - userId: {}, size: {}", userId, size);
 
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.badRequest().body(
@@ -149,25 +156,35 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-            ApiResponse<Object> response = businessClient.get()
+            ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/fcm/invoice/ap/supplier")
                             .queryParam("userId", userId)
                             .queryParam("size", pageSize)
                             .build())
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<DashboardWorkflowItemDto>>>() {})
                     .block();
 
-            log.info("[INFO][DASHBOARD][FCM] 공급사 매입 전표 목록 조회 성공");
-            return ResponseEntity.ok(response);
+            if (body == null) {
+                log.error("[ERROR][DASHBOARD][FCM] 비즈니스 서버 응답이 null");
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "비즈니스 서버 응답이 비어 있습니다.");
+            }
 
+            List<DashboardWorkflowItemDto> data = body.getData();
+            if (data == null) {
+                log.error("[ERROR][DASHBOARD][FCM] 비즈니스 서버 응답에 data 필드가 없음");
+                throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR, "비즈니스 서버 응답 형식이 올바르지 않습니다.");
+            }
+
+            log.info("[INFO][DASHBOARD][FCM] 공급사 매출 전표 목록 조회 성공");
+            return ResponseEntity.ok(ApiResponse.success(data, "공급사 매출 전표 목록 조회 성공", HttpStatus.OK));
         } catch (WebClientResponseException ex) {
-            return handleWebClientError("대시보드 공급사 매입 전표 목록 조회", ex);
+            return handleWebClientError("대시보드 공급사 매출 전표 목록 조회", ex);
         } catch (Exception e) {
-            log.error("[ERROR][DASHBOARD][FCM] 공급사 매입 전표 목록 조회 중 에러 발생");
+            log.error("[ERROR][DASHBOARD][FCM] 공급사 매출 전표 목록 조회 중 에러 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    ApiResponse.fail("대시보드 공급사 매입 전표 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+                    ApiResponse.fail("대시보드 공급사 매출 전표 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }

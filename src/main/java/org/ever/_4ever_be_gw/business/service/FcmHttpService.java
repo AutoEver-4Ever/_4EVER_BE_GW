@@ -2,8 +2,10 @@ package org.ever._4ever_be_gw.business.service;
 
 import org.ever._4ever_be_gw.business.dto.fcm.response.FcmStatisticsDto;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
 import java.util.Map;
 
 public interface FcmHttpService {
@@ -73,6 +75,6 @@ public interface FcmHttpService {
     ResponseEntity<ApiResponse<Object>> updateApInvoicesResponsePending(java.util.List<String> invoiceIds);
 
     // 공급사 매출 전표(매입 전표가 공급사 입장에서는 매출 전표)
-    ResponseEntity<ApiResponse<Object>> getDashboardSupplierInvoiceList(String userId, Integer size);
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierInvoiceList(String userId, Integer size);
 
 }
