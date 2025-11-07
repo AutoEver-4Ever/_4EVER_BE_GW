@@ -158,7 +158,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
 
             ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/fcm/invoice/ap/supplier")
+                            .path("/fcm/dashboard/invoice/ap/supplier")
                             .queryParam("userId", userId)
                             .queryParam("size", pageSize)
                             .build())
@@ -209,7 +209,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
 
             ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/fcm/invoice/ar/supplier")
+                            .path("/fcm/dashboard/invoice/ar/supplier")
                             .queryParam("userId", userId)
                             .queryParam("size", pageSize)
                             .build())

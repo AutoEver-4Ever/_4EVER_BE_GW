@@ -539,7 +539,7 @@ public class SdHttpServiceImpl implements SdHttpService {
             log.info("[INFO][SD] 공급사의 주문서 목록 조회 시작, userId: {}, size: {}", userId, size);
             ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/sd/quotation/supplier")
+                            .path("/sd/dashboard/quotation/supplier")
                             .queryParam("userId", userId)
                             .queryParam("size", size > 0 ? size : 5)
                             .build())
@@ -588,7 +588,7 @@ public class SdHttpServiceImpl implements SdHttpService {
 
             ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/sd/quotation/customer")
+                            .path("/sd/dashboard/quotation/customer")
                             .queryParam("userId", userId)
                             .queryParam("size", pageSize)
                             .build())

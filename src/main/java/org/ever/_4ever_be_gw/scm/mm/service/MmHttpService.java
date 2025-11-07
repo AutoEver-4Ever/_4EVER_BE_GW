@@ -9,4 +9,6 @@ import java.util.List;
 public interface MmHttpService {
 
     ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardPurchaseOrderList(String userId, int size);
+
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardPurchaseRequestList(String userId, int size);
 }
