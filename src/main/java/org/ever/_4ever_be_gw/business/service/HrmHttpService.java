@@ -11,6 +11,7 @@ import org.ever._4ever_be_gw.business.dto.employee.EmployeeUpdateRequestDto;
 import org.ever._4ever_be_gw.business.dto.hrm.UpdateDepartmentRequestDto;
 import org.ever._4ever_be_gw.business.dto.response.*;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 
@@ -170,6 +171,11 @@ public interface HrmHttpService {
      * 출퇴근 상태 목록 조회 (enum 전체)
      */
     ResponseEntity<ApiResponse<List<AttendanceStatusDto>>> getAllAttendanceStatuses();
+
+    /**
+     * 대시보드 근태 목록 조회
+     */
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardAttendanceList(String userId, Integer size);
 
     // ==================== Training ====================
 
