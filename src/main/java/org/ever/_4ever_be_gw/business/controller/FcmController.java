@@ -185,4 +185,32 @@ public class FcmController {
         log.info("매입 전표 미수 처리 요청 API 호출 - invoiceId: {}", invoiceId);
         return fcmHttpService.requestApReceivable(invoiceId);
     }
+
+    // ==================== 매출 전표 상태 일괄 변경 ====================
+
+    @PostMapping("/invoice/ar/customer/response-pending")
+    @Operation(
+        summary = "매출 전표 상태 일괄 변경",
+        description = "매출(AR) 전표들의 상태를 RESPONSE_PENDING으로 일괄 변경합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> updateArInvoicesResponsePending(
+        @Valid @RequestBody org.ever._4ever_be_gw.business.dto.InvoiceIdsRequestDto request
+    ) {
+        log.info("매출 전표 상태 일괄 변경 API 호출 - invoiceIds: {}", request.getInvoiceIds());
+        return fcmHttpService.updateArInvoicesResponsePending(request.getInvoiceIds());
+    }
+
+    // ==================== 매입 전표 상태 일괄 변경 ====================
+
+    @PostMapping("/invoice/ap/supplier/response-pending")
+    @Operation(
+        summary = "매입 전표 상태 일괄 변경",
+        description = "매입(AP) 전표들의 상태를 RESPONSE_PENDING으로 일괄 변경합니다."
+    )
+    public ResponseEntity<ApiResponse<Object>> updateApInvoicesResponsePending(
+        @Valid @RequestBody org.ever._4ever_be_gw.business.dto.InvoiceIdsRequestDto request
+    ) {
+        log.info("매입 전표 상태 일괄 변경 API 호출 - invoiceIds: {}", request.getInvoiceIds());
+        return fcmHttpService.updateApInvoicesResponsePending(request.getInvoiceIds());
+    }
 }

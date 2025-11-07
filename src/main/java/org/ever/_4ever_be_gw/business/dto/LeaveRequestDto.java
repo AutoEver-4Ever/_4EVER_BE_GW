@@ -15,9 +15,6 @@ import lombok.ToString;
 @ToString
 public class LeaveRequestDto {
 
-    @NotBlank(message = "내부 직원 ID는 필수입니다")
-    private String internelUserId;  // UUID String
-
     @NotBlank(message = "휴가 유형은 필수입니다")
     @Pattern(regexp = "^(ANNUAL|SICK)$", message = "휴가 유형은 ANNUAL 또는 SICK이어야 합니다")
     private String leaveType;

@@ -1433,20 +1433,24 @@ public class HrmHttpServiceImpl implements HrmHttpService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<Void>> requestLeave(LeaveRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<Void>> requestLeave(LeaveRequestDto requestDto, String internelUserId) {
         log.debug("휴가 신청 요청 - requestBody: {}", requestDto);
 
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
             ApiResponse<?> response = businessClient.post()
-                    .uri("/hrm/leave/request")
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/hrm/leave/request")  // URL 경로 설정
+                            .queryParam("InternelUserId", internelUserId)
+                            .build())  // queryParam 오타 수정
                     .bodyValue(requestDto)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<ApiResponse<?>>() {})
-                    .block();
+                    .block();  // 동기식 호출
 
-            log.info("휴가 신청 성공 - employeeId: {}", requestDto.getInternelUserId());
+
+            log.info("휴가 신청 성공 - employeeId: {}", internelUserId);
             @SuppressWarnings("unchecked")
             ApiResponse result = (ApiResponse) response;
             return ResponseEntity.ok(result);

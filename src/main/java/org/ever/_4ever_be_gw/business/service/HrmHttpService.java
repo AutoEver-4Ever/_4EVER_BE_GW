@@ -275,7 +275,7 @@ public interface HrmHttpService {
     /**
      * 휴가 신청
      */
-    ResponseEntity<ApiResponse<Void>> requestLeave(LeaveRequestDto requestDto);
+    ResponseEntity<ApiResponse<Void>> requestLeave(LeaveRequestDto requestDto, String internelUserId);
 
     /**
      * 교육 프로그램 목록 조회
