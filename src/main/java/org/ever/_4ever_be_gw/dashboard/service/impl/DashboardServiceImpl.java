@@ -169,10 +169,10 @@ public class DashboardServiceImpl implements DashboardService {
 
             case "IM": {
                 // 재고 관리 부터의 대시보드 워크 플로우
-                // [SCM-PP] 입고 목록 조회
+                // [SCM-PP] 전체 입고 목록 조회
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> imInboundListResponse =
                         imHttpService.getDashboardInboundList(userId, limit);
-                // [SCM-PP] 출고 목록 조회
+                // [SCM-PP] 전체 출고 목록 조회
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> imOutboundListResponse =
                         imHttpService.getDashboardOutboundList(userId, limit);
 
