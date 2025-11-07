@@ -110,11 +110,11 @@ public class DashboardServiceImpl implements DashboardService {
                 return DashboardWorkflowResponseDto.builder()
                         .tabs(List.of(
                                 DashboardWorkflowTabDto.builder()
-                                        .tabCode("PR") // 구매요청(또는 SO와의 매핑 정책에 맞춰 조정)
+                                        .tabCode("PO")
                                         .items(safeItems(mmPurchaseRequestResponse))
                                         .build(),
                                 DashboardWorkflowTabDto.builder()
-                                        .tabCode("PO")
+                                        .tabCode("SO")
                                         .items(safeItems(mmPurchaseOrderResponse))
                                         .build()
                         ))
@@ -146,10 +146,10 @@ public class DashboardServiceImpl implements DashboardService {
 
             case "FCM": {
                 // 재무 관리 부서의 대시보드 워크 플로우
-                // [비즈니스] 매출 전표 목록(AR)
+                // [비즈니스] 기업의 매출 전표 목록(AR)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> fcmArListResponse =
                         fcmHttpService.getDashboardCompanyArList(userId, limit);
-                // [비즈니스] 매입 전표 목록(AP)
+                // [비즈니스] 기업의 매입 전표 목록(AP)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> fcmApListResponse =
                         fcmHttpService.getDashboardCompanyApList(userId, limit);
 
