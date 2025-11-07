@@ -77,4 +77,7 @@ public interface FcmHttpService {
     // 공급사 매출 전표(매입 전표가 공급사 입장에서는 매출 전표)
     ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierInvoiceList(String userId, Integer size);
 
+    // 고객사 매입 전표(기업의 매출 전표가 고객사 입장에서 매입 전표)
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCustomerInvoiceList(String userId, Integer size);
+
 }
