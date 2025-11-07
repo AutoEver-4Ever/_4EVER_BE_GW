@@ -54,9 +54,9 @@ public class DashboardServiceImpl implements DashboardService {
         switch (userRole.split("_")[0]) {
             case "SUPPLIER": {
                 // 공급사 워크 플로우
-                // [비즈니스] 공급사에게 발행된 주문서 목록 조회(SO): 기업으로부터 발행된 주문서
-                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> supplierQuotationResponse =
-                        sdHttpService.getDashboardSupplierOrderList(userId, limit);
+                // [SCM-PP] 공급사에게 발행된 발주서 목록 조회(PO)
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> supplierPurchaseOrderResponse =
+                        mmHttpService.getDashboardPurchaseOrderList(userId, limit);
                 // [비즈니스] 공급사의 매출 전표 조회(AR): 기업의 매입 전표는 공급사 입장에서 매출 전표
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> supplierInvoiceResponse =
                         fcmHttpService.getDashboardSupplierInvoiceList(userId, limit);
@@ -64,8 +64,8 @@ public class DashboardServiceImpl implements DashboardService {
                 return DashboardWorkflowResponseDto.builder()
                         .tabs(List.of(
                                 DashboardWorkflowTabDto.builder()
-                                        .tabCode("SO")
-                                        .items(safeItems(supplierQuotationResponse))
+                                        .tabCode("PO")
+                                        .items(safeItems(supplierPurchaseOrderResponse))
                                         .build(),
                                 DashboardWorkflowTabDto.builder()
                                         .tabCode("AR")
