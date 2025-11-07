@@ -13,4 +13,8 @@ public interface MmHttpService {
     ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCompanyPurchaseOrderList(String userId, int size);
 
     ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardPurchaseRequestList(String userId, int size);
+
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardPurchaseOrdersOverall(int size);
+
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardPurchaseRequestsOverall(int size);
 }

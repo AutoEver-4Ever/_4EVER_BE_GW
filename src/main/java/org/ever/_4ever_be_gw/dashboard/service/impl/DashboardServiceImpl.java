@@ -50,9 +50,12 @@ public class DashboardServiceImpl implements DashboardService {
         final String userRole = principal.getUserRole();
         final int limit = Optional.ofNullable(size).orElse(DEFAULT_SIZE);
 
+        log.info("[INFO][DASHBOARD] 워크플로우 구성 시작 - userId: {}, role: {}, limit: {}", userId, userRole, limit);
+
         // 탭코드는 DashboardWorkflowTabDto 참고
         switch (userRole.split("_")[0]) {
             case "SUPPLIER": {
+                log.info("[INFO][DASHBOARD][SUPPLIER] 공급사 워크플로우 데이터 조회");
                 // 공급사 워크 플로우
                 // [SCM-PP] 공급사에게 발행된 주문서 목록 조회(PO)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> supplierPurchaseOrderResponse =
@@ -76,6 +79,7 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             case "CUSTOMER": {
+                log.info("[INFO][DASHBOARD][CUSTOMER] 고객사 워크플로우 데이터 조회");
                 // 고객사 워크 플로우
                 // [비즈니스] 견적 목록 조회(QT): 고객사가 제품 구매를 위해 작성한 견적서
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> quotationResponse =
@@ -99,13 +103,20 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             case "MM": {
+                log.info("[INFO][DASHBOARD][MM] 구매 관리 워크플로우 데이터 조회 시작 - userId: {}", userId);
                 // 구매 관리 부서의 대시보드 워크 플로우
                 // [SCM] 기업의 발주서 목록 조회(PO)
+                log.info("[INFO][DASHBOARD][MM] [HTTP] 발주서 목록 조회 호출 -> mmHttpService#getDashboardPurchaseOrdersOverall");
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> mmPurchaseOrderResponse =
-                        mmHttpService.getDashboardPurchaseOrderList(userId, limit);
+                        mmHttpService.getDashboardPurchaseOrdersOverall(limit);
+                log.info("[INFO][DASHBOARD][MM] [HTTP] 발주서 목록 조회 응답 수신 - status: {}", 
+                        mmPurchaseOrderResponse != null ? mmPurchaseOrderResponse.getStatusCode() : "null");
                 // [SCM] 주문서 목록 조회(SO)
+                log.info("[INFO][DASHBOARD][MM] [HTTP] 주문서 목록 조회 호출 -> mmHttpService#getDashboardPurchaseRequestsOverall");
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> mmPurchaseRequestResponse =
-                        mmHttpService.getDashboardPurchaseRequestList(userId, limit);
+                        mmHttpService.getDashboardPurchaseRequestsOverall(limit);
+                log.info("[INFO][DASHBOARD][MM] [HTTP] 주문서 목록 조회 응답 수신 - status: {}", 
+                        mmPurchaseRequestResponse != null ? mmPurchaseRequestResponse.getStatusCode() : "null");
 
                 return DashboardWorkflowResponseDto.builder()
                         .tabs(List.of(
@@ -122,6 +133,7 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             case "SD": {
+                log.info("[INFO][DASHBOARD][SD] 영업 관리 워크플로우 데이터 조회");
                 // 영업 관리 부서의 대시보드 워크 플로우
                 // [비즈니스] 전체 견적서 목록 조회(QT)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> sdCustomerQuotationResponse =
@@ -145,6 +157,7 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             case "FCM": {
+                log.info("[INFO][DASHBOARD][FCM] 재무 관리 워크플로우 데이터 조회");
                 // 재무 관리 부서의 대시보드 워크 플로우
                 // [비즈니스] 기업의 전체 매출 전표 목록(AR)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> fcmArListResponse =
@@ -157,6 +170,7 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             case "IM": {
+                log.info("[INFO][DASHBOARD][IM] 재고 관리 워크플로우 데이터 조회");
                 // 재고 관리 부터의 대시보드 워크 플로우
                 // [SCM-PP] 전체 입고 목록 조회
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> imInboundListResponse =
@@ -180,6 +194,7 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             case "HRM": {
+                log.info("[INFO][DASHBOARD][HRM] 인사 워크플로우 데이터 조회");
                 // 인적 자원 관리 부서의 대시보드 워크 플로우
                 // [비즈니스] 근태 목록 조회(ATT)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> hrmAttendanceListResponse =
@@ -203,6 +218,7 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             case "PP": {
+                log.info("[INFO][DASHBOARD][PP] 생산 관리 워크플로우 데이터 조회");
                 // 생산 관리 부서의 대시보드 워크 플로우
                 // [SCM-PP] 생산관리로 전환된 견적서 목록 조회(QT)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> ppToProductionQuotationResponse =
@@ -226,6 +242,7 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             default: {
+                log.info("[INFO][DASHBOARD][ADMIN] 기본 워크플로우(재무 기준) 데이터 조회");
                 // 관리자는 재무관리와 동일한 전표 현황을 확인
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> fcmArListResponse =
                         fcmHttpService.getDashboardCompanyArList(userId, limit);
