@@ -4,9 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.business.dto.analytics.SalesAnalyticsResponseDto;
 import org.ever._4ever_be_gw.business.service.SdHttpService;
+import org.ever._4ever_be_gw.common.exception.BusinessException;
+import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -523,7 +527,7 @@ public class SdHttpServiceImpl implements SdHttpService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<Object>> getDashboardSupplierOrderList(String userId, int size) {
+    public ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierOrderList(String userId, int size) {
         log.debug("[DEBUG][DASHBOARD][SD] 공급사가 주문한 주문 목록 요청 - userId: {}", userId);
 
         try {
@@ -541,7 +545,7 @@ public class SdHttpServiceImpl implements SdHttpService {
                     .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
                     .block();
             log.info("[INFO][DASHBOARD][SD] 공급사 주문서 목록 조회 성공");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success(data, "공급사 발주서 목록 조회 성공", HttpStatus.OK));
         } catch (WebClientResponseException ex) {
             return handleWebClientError("대시보드 공급사 주문서 목록 조회", ex);
         } catch (Exception e) {
@@ -553,24 +557,40 @@ public class SdHttpServiceImpl implements SdHttpService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<Object>> getDashboardSupplierQuotationList(String userId, int size) {
-        log.debug("[DASHBOARD][SD] 공급사 발주서(Quotation) 목록 요청 - userId: {}, size: {}", userId, size);
+    public ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierQuotationList(
+            String userId,
+            int size
+    ) {
+        log.debug("[DASHBOARD][SD] 공급사 주문서(SO) 목록 조회 - userId: {}, size: {}", userId, size);
 
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-            ApiResponse<Object> response = businessClient.get()
+            log.info("[INFO][SD] 공급사의 주문서 목록 조회 시작, userId: {}, size: {}", userId, size);
+            ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/sd/quotation/supplier")
                             .queryParam("userId", userId)
                             .queryParam("size", size > 0 ? size : 5)
                             .build())
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<DashboardWorkflowItemDto>>>() {})
                     .block();
 
+            // 서버 응답에 따른 에러
+            if (body == null) {
+                log.error("[ERROR][DASHBOARD][SD] 비즈니스 서버 응답이 null");
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "비즈니스 서버 응답이 비어 있습니다.");
+            }
+
+            List<DashboardWorkflowItemDto> data = body.getData();
+            if (data == null) {
+                log.error("[ERROR][DASHBOARD][SD] 비즈니스 서버 응답에 data 필드가 존재하지 않음");
+                throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR, "비즈니스 서버 응답 형식이 올바르지 않습니다.");
+            }
+
             log.info("[INFO][DASHBOARD][SD] 공급사 발주서(Quotation) 목록 조회 성공");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success(data, "공급사 발주서 목록 조회 성공", HttpStatus.OK));
         } catch (WebClientResponseException ex) {
             return handleWebClientError("대시보드 공급사 발주서 목록 조회", ex);
         } catch (Exception e) {
@@ -589,14 +609,15 @@ public class SdHttpServiceImpl implements SdHttpService {
     /**
      * WebClient 오류를 처리하고 로깅하는 공통 메서드
      */
-    private ResponseEntity<ApiResponse<Object>> handleWebClientError(String operation, WebClientResponseException ex) {
-        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+    private <T> ResponseEntity<ApiResponse<T>> handleWebClientError(String operation, WebClientResponseException ex) {
+        var sc = ex.getStatusCode();                // HttpStatusCode
+        var http = HttpStatus.valueOf(sc.value());  // ApiResponse.fail 에 HttpStatus가 필요하면 변환
+
         String errorBody = ex.getResponseBodyAsString();
+        log.error("[WEBCLIENT][ERROR] {} 실패 - status={}, body={}", operation, sc, errorBody, ex);
 
-        log.error("{} 실패 - Status: {}, Body: {}", operation, ex.getStatusCode(), errorBody);
-
-        return ResponseEntity.status(status).body(
-                ApiResponse.fail(operation + " 중 오류가 발생했습니다.", status, null)
+        return ResponseEntity.status(sc).body(
+                ApiResponse.fail(operation + " 중 오류가 발생했습니다.", http, null)
         );
     }
 }

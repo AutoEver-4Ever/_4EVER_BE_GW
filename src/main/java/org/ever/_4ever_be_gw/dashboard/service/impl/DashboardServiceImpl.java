@@ -1,6 +1,5 @@
 package org.ever._4ever_be_gw.dashboard.service.impl;
 
-import io.lettuce.core.dynamic.annotation.Param;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.business.service.FcmHttpService;
@@ -11,11 +10,23 @@ import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.dashboard.service.DashboardService;
+import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowResponseDto;
+import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowTabDto;
+import org.ever._4ever_be_gw.scm.im.service.ImHttpService;
+import org.ever._4ever_be_gw.scm.mm.service.MmHttpService;
+import org.ever._4ever_be_gw.scm.pp.PpHttpService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -29,67 +40,238 @@ public class DashboardServiceImpl implements DashboardService {
     private final ImHttpService imHttpService;          // 재고관리
     private final PpHttpService ppHttpService;          // 생산관리
 
-
     private static final int DEFAULT_SIZE = 5;
 
     @Override
     public DashboardWorkflowResponseDto getDashboardWorkflow(
-            @AuthenticationPrincipal  EverUserPrincipal principal,
+            @AuthenticationPrincipal EverUserPrincipal principal,
             @RequestParam(defaultValue = "5", required = false) Integer size
     ) {
         if (principal == null) throw new BusinessException(ErrorCode.AUTH_TOKEN_REQUIRED);
 
         // 사용자 정보 추출
-        String userId = principal.getUserId();
-        String userType = principal.getUserType();
-        String userRole = principal.getUserRole();
+        final String userId = principal.getUserId();
+        final String userRole = principal.getUserRole();
+        final int limit = Optional.ofNullable(size).orElse(DEFAULT_SIZE);
 
-        // 공급사 워크 플로우
-        if (userType.equalsIgnoreCase("SUPPLIER")) {
-            // 발주서 목록 요청 (대시보드 전용)
-            ResponseEntity<ApiResponse<Object>> supplierQuotationResponse = sdHttpService.getDashboardSupplierQuotationList(userId, size);
+        // 탭코드는 DashboardWorkflowTabDto 참고
+        switch (userRole.split("_")[0]) {
+            case "SUPPLIER": {
+                // 공급사 워크 플로우
+                // [비즈니스] 공급사에게 발행된 주문서 목록 조회(SO): 기업으로부터 발행된 주문서
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> supplierQuotationResponse =
+                        sdHttpService.getDashboardSupplierQuotationList(userId, limit);
+                // [비즈니스] 공급사의 매출 전표 조회(AR): 기업의 매입 전표는 공급사 입장에서 매출 전표
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> supplierInvoiceResponse =
+                        fcmHttpService.getDashboardSupplierInvoiceList(userId, limit);
 
-            // 매출 전표 요청(공급사 입장에서 매입 전표는 매출 전표)
-            ResponseEntity<ApiResponse<Object>> supplierInvoiceResponse = fcmHttpService.getDashboardSupplierInvoiceList(userId, size);
-        } else if (userType.equalsIgnoreCase("CUSTOMER")) {
-            // 견적 목록 요청
-            ResponseEntity<ApiResponse<Object>> quotationResponse = sdHttpService.getDashboardCustomerQuotationList(userId, size);
+                return DashboardWorkflowResponseDto.builder()
+                        .tabs(List.of(
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("SO")
+                                        .items(safeItems(supplierQuotationResponse))
+                                        .build(),
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("AR")
+                                        .items(safeItems(supplierInvoiceResponse))
+                                        .build()
+                        ))
+                        .build();
+            }
 
-            // 매입 전표 요청(고객사 입장에서 매출 전표는 매입 전표)
-            ResponseEntity<ApiResponse<Object>> customerInvoiceResponse = fcmHttpService.getDashboardCustomerInvoiceList(userId, size);
-        } else {
-            if (userRole.startsWith("MM")) {        // 구매 관리 대시보드
-                // TODO: MM 전용 HttpService 연동 예정
-                ResponseEntity<ApiResponse<Object>> mmPurchaseRequestResponse = null;   // mmHttpService.getDashboardPurchaseRequestList(userId, size)
-                ResponseEntity<ApiResponse<Object>> mmPurchaseOrderResponse   = null;   // mmHttpService.getDashboardPurchaseOrderList(userId, size)
+            case "CUSTOMER": {
+                // 고객사 워크 플로우
+                // [비즈니스] 견적 목록 조회(QT): 고객사가 제품 구매를 위해 작성한 견적서
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> quotationResponse =
+                        sdHttpService.getDashboardCustomerQuotationList(userId, limit);
+                // [비즈니스] 매입 전표 요청(AP): 기업의 매출 전표는 고객사 입장에서 매입 전표
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> customerInvoiceResponse =
+                        fcmHttpService.getDashboardCustomerInvoiceList(userId, limit);
 
-            } else if (userRole.startsWith("SD")) { // 영업관리 대시보드
-                // TODO: SD 전용 HttpService 연동 예정
-                ResponseEntity<ApiResponse<Object>> sdCustomerQuotationResponse = null; // sdHttpService.getDashboardCustomerQuotationList(userId, size)
-                ResponseEntity<ApiResponse<Object>> sdSupplierQuotationResponse = null; // sdHttpService.getDashboardSupplierQuotationList(userId, size)
+                return DashboardWorkflowResponseDto.builder()
+                        .tabs(List.of(
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("QT")
+                                        .items(safeItems(quotationResponse))
+                                        .build(),
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("AP")
+                                        .items(safeItems(customerInvoiceResponse))
+                                        .build()
+                        ))
+                        .build();
+            }
 
-            } else if (userRole.startsWith("FCM")) {   // 재무관리 대시보드
-                // TODO: FCM 전용 HttpService 연동 예정(자사 관점)
-                ResponseEntity<ApiResponse<Object>> fcmArListResponse = null;          // fcmHttpService.getDashboardCompanyArList(userId, size)
-                ResponseEntity<ApiResponse<Object>> fcmApListResponse = null;          // fcmHttpService.getDashboardCompanyApList(userId, size)
+            case "MM": {
+                // 구매 관리 부서의 대시보드 워크 플로우
+                // [비즈니스] 발주서 목록 조회(PO)
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> mmPurchaseOrderResponse =
+                        mmHttpService.getDashboardPurchaseOrderList(userId, limit);
+                // [비즈니스] 주문서 목록 조회(SO)
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> mmPurchaseRequestResponse =
+                        mmHttpService.getDashboardPurchaseRequestList(userId, limit);
 
-            } else if (userRole.startsWith("IM")) {     // 재고관리 대시보드
-                // TODO: IM 전용 HttpService 연동 예정
-                ResponseEntity<ApiResponse<Object>> imInboundListResponse  = null;     // imHttpService.getDashboardInboundList(userId, size)
-                ResponseEntity<ApiResponse<Object>> imOutboundListResponse = null;     // imHttpService.getDashboardOutboundList(userId, size)
+                return DashboardWorkflowResponseDto.builder()
+                        .tabs(List.of(
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("PR") // 구매요청(또는 SO와의 매핑 정책에 맞춰 조정)
+                                        .items(safeItems(mmPurchaseRequestResponse))
+                                        .build(),
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("PO")
+                                        .items(safeItems(mmPurchaseOrderResponse))
+                                        .build()
+                        ))
+                        .build();
+            }
 
-            } else if (userRole.startsWith("HRM")) {    // 인적자원관리 대시보드
-                // TODO: HRM 전용 HttpService 연동 예정
-                ResponseEntity<ApiResponse<Object>> hrmAttendanceListResponse  = null; // hrmHttpService.getDashboardAttendanceList(userId, size)
-                ResponseEntity<ApiResponse<Object>> hrmLeaveRequestListResponse = null;// hrmHttpService.getDashboardLeaveRequestList(userId, size)
+            case "SD": {
+                // 영업 관리 부서의 대시보드 워크 플로우
+                // [비즈니스] 견적서 목록 조회(QT)
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> sdCustomerQuotationResponse =
+                        sdHttpService.getDashboardCustomerQuotationList(userId, limit);
+                // [비즈니스] 주문서 목록 조회(SO) -> MM의 주문서 목록 조회랑 동일
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> sdSupplierQuotationResponse =
+                        sdHttpService.getDashboardSupplierQuotationList(userId, limit);
 
-            } else {        // 생산관리 대시보드
-                // TODO: PP 전용 HttpService 연동 예정
-                ResponseEntity<ApiResponse<Object>> ppToProductionQuotationResponse = null; // ppHttpService.getDashboardQuotationsToProduction(userId, size)
-                ResponseEntity<ApiResponse<Object>> ppInProgressResponse            = null; // ppHttpService.getDashboardProductionInProgress(userId, size)
+                return DashboardWorkflowResponseDto.builder()
+                        .tabs(List.of(
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("QT")
+                                        .items(safeItems(sdCustomerQuotationResponse))
+                                        .build(),
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("SO")
+                                        .items(safeItems(sdSupplierQuotationResponse))
+                                        .build()
+                        ))
+                        .build();
+            }
+
+            case "FCM": {
+                // 재무 관리 부서의 대시보드 워크 플로우
+                // [비즈니스] 매출 전표 목록(AR)
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> fcmArListResponse =
+                        fcmHttpService.getDashboardCompanyArList(userId, limit);
+                // [비즈니스] 매입 전표 목록(AP)
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> fcmApListResponse =
+                        fcmHttpService.getDashboardCompanyApList(userId, limit);
+
+                return DashboardWorkflowResponseDto.builder()
+                        .tabs(List.of(
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("AR")
+                                        .items(safeItems(fcmArListResponse))
+                                        .build(),
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("AP")
+                                        .items(safeItems(fcmApListResponse))
+                                        .build()
+                        ))
+                        .build();
+            }
+
+            case "IM": {
+                // 재고 관리 부터의 대시보드 워크 플로우
+                // [SCM-PP] 입고 목록 조회
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> imInboundListResponse =
+                        imHttpService.getDashboardInboundList(userId, limit);
+                // [SCM-PP] 출고 목록 조회
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> imOutboundListResponse =
+                        imHttpService.getDashboardOutboundList(userId, limit);
+
+                return DashboardWorkflowResponseDto.builder()
+                        .tabs(List.of(
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("IN")
+                                        .items(safeItems(imInboundListResponse))
+                                        .build(),
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("OUT")
+                                        .items(safeItems(imOutboundListResponse))
+                                        .build()
+                        ))
+                        .build();
+            }
+
+            case "HRM": {
+                // 인적 자원 관리 부서의 대시보드 워크 플로우
+                // [비즈니스] 근태 목록 조회(ATT)
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> hrmAttendanceListResponse =
+                        hrmHttpService.getDashboardAttendanceList(userId, limit);
+                // [비즈니스] 휴가 신청 목록 조회(LV)
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> hrmLeaveRequestListResponse =
+                        hrmHttpService.getDashboardLeaveRequestList(userId, limit);
+
+                return DashboardWorkflowResponseDto.builder()
+                        .tabs(List.of(
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("ATT")
+                                        .items(safeItems(hrmAttendanceListResponse))
+                                        .build(),
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("LV")
+                                        .items(safeItems(hrmLeaveRequestListResponse))
+                                        .build()
+                        ))
+                        .build();
+            }
+
+            case "PP": {
+                // 생산 관리 부서의 대시보드 워크 플로우
+                // [SCM-PP] 생산관리로 전환된 견적서 목록 조회(QT)
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> ppToProductionQuotationResponse =
+                        ppHttpService.getDashboardQuotationsToProduction(userId, limit);
+                // [SCM-PP] 생산 목록 조회(MES)
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> ppInProgressResponse =
+                        ppHttpService.getDashboardProductionInProgress(userId, limit);
+
+                return DashboardWorkflowResponseDto.builder()
+                        .tabs(List.of(
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("QT")
+                                        .items(safeItems(ppToProductionQuotationResponse))
+                                        .build(),
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("MES")
+                                        .items(safeItems(ppInProgressResponse))
+                                        .build()
+                        ))
+                        .build();
+            }
+
+            default: {
+                // 관리자의 대시보드 워크 플로우
+                // [비즈니스] 매출 전표 목록 조회
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> imInboundListResponse =
+                        imHttpService.getDashboardInboundList(userId, limit);
+                // [비즈니스] 매입 전표 목록 조회
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> imOutboundListResponse =
+                        imHttpService.getDashboardOutboundList(userId, limit);
+
+                return DashboardWorkflowResponseDto.builder()
+                        .tabs(List.of(
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("IN")
+                                        .items(safeItems(imInboundListResponse))
+                                        .build(),
+                                DashboardWorkflowTabDto.builder()
+                                        .tabCode("OUT")
+                                        .items(safeItems(imOutboundListResponse))
+                                        .build()
+                        ))
+                        .build();
             }
         }
+    }
 
-        return null;
+    /**
+     * null-safe로 items 뽑아오기
+     */
+    private static List<DashboardWorkflowItemDto> safeItems(
+            ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> resp
+    ) {
+        if (resp == null || resp.getBody() == null || resp.getBody().getData() == null) return List.of();
+        return resp.getBody().getData();
     }
 }
