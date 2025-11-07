@@ -100,10 +100,10 @@ public class DashboardServiceImpl implements DashboardService {
 
             case "MM": {
                 // 구매 관리 부서의 대시보드 워크 플로우
-                // [비즈니스] 발주서 목록 조회(PO)
+                // [비즈니스] 기업의 발주서 목록 조회(PO) -> 하는 중
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> mmPurchaseOrderResponse =
                         mmHttpService.getDashboardPurchaseOrderList(userId, limit);
-                // [비즈니스] 주문서 목록 조회(SO)
+                // [비즈니스] 주문서 목록 조회(SO) -> 다음에 이거
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> mmPurchaseRequestResponse =
                         mmHttpService.getDashboardPurchaseRequestList(userId, limit);
 
