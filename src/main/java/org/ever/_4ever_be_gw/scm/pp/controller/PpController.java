@@ -107,6 +107,19 @@ public class PpController {
         return ResponseEntity.ok(result);
     }
 
+    // MES 상태 조회
+    @GetMapping("/mes/status/toggle")
+    public ResponseEntity<Object> getMesStatusDetail() {
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri("/scm-pp/pp/mes/status/toggle")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+        return ResponseEntity.ok(result);
+    }
+
     // MES 상세 조회
     @GetMapping("/mes/{mesId}")
     public ResponseEntity<Object> getMesDetail(@PathVariable String mesId) {
@@ -141,7 +154,7 @@ public class PpController {
         Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .put()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/pp/mes/{mesId}/operations/{operationId}/start")
+                        .path("/scm-pp/pp/mes/{mesId}/operations/{logId}/start")
                         .queryParam("managerId", managerId)
                         .build(mesId, operationId))
                 .retrieve()
@@ -157,7 +170,7 @@ public class PpController {
             @PathVariable String operationId) {
         Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .put()
-                .uri("/scm-pp/pp/mes/{mesId}/operations/{operationId}/complete", mesId, operationId)
+                .uri("/scm-pp/pp/mes/{mesId}/operations/{logId}/complete", mesId, operationId)
                 .retrieve()
                 .bodyToMono(Object.class)
                 .block();
@@ -194,6 +207,7 @@ public class PpController {
     @GetMapping("/mrp/runs")
     public ResponseEntity<Object> getMrpRunList(
             @RequestParam(defaultValue = "ALL") String status,
+            @RequestParam(required = false) String quotationId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
@@ -201,6 +215,7 @@ public class PpController {
                 .uri(uriBuilder -> uriBuilder
                         .path("/scm-pp/pp/mrp/runs")
                         .queryParam("status", status)
+                        .queryParam("quotationId", quotationId)
                         .queryParam("page", page)
                         .queryParam("size", size)
                         .build())
@@ -251,6 +266,7 @@ public class PpController {
     @GetMapping("/quotations")
     public ResponseEntity<Object> getQuotationList(
             @RequestParam(defaultValue = "ALL") String statusCode,
+            @RequestParam(defaultValue = "ALL") String availableStatusCode,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page,
@@ -260,6 +276,7 @@ public class PpController {
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/scm-pp/pp/quotations")
+                        .queryParam("availableStatus", availableStatusCode)
                         .queryParam("statusCode", statusCode)
                         .queryParam("startDate", startDate)
                         .queryParam("endDate", endDate)
@@ -340,6 +357,20 @@ public class PpController {
         return ResponseEntity.ok(result);
     }
 
+    // 견적 상태 토글
+    @GetMapping("mrp/available/status/toggle")
+    public ResponseEntity<Object> getMrpStatusToggle() {
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri("/scm-pp/pp/quotations/mrp/available/status/toggle")
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+
     // 견적 체크 토글
     @GetMapping("/available/status/toggle")
     public ResponseEntity<Object> getQuotationAvailableStatusToggle() {
@@ -373,6 +404,59 @@ public class PpController {
                         .queryParam("size", size)
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+    // 견적 체크 토글
+    @GetMapping("/mps/boms/toggle")
+    public ResponseEntity<Object> getMpsBomToggle() {
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri("/scm-pp/pp/quotations/boms/toggle")
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+    //MRP 견적 목록 조회 토글
+    @GetMapping("/mrp/quotations/toggle")
+    public ResponseEntity<Object> getMpsQuotationToggle() {
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri("/scm-pp/pp/quotations/mrp/quotations/toggle")
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+
+    //MRP 계획주문 상태 조회
+    @GetMapping("/mrp/runs/status/toggle")
+    public ResponseEntity<Object> getMpsRunsToggle() {
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri("/scm-pp/pp/mrp/runs/status/toggle")
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+    //MRP 계획주문 상태 조회
+    @GetMapping("/mrp/runs/quotations/toggle")
+    public ResponseEntity<Object> getMpsRunsQuotationsToggle() {
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri("/scm-pp/pp/mrp/runs/quotations/toggle")
                 .retrieve()
                 .bodyToMono(Object.class)
                 .block();
