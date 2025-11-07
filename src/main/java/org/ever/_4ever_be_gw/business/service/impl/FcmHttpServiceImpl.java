@@ -321,6 +321,64 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         }
     }
 
+    @Override
+    public ResponseEntity<ApiResponse<Object>> updateArInvoicesResponsePending(java.util.List<String> invoiceIds) {
+        log.debug("매출 전표 상태 일괄 변경 요청 - invoiceIds: {}", invoiceIds);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            Map<String, Object> requestBody = Map.of("invoiceIds", invoiceIds);
+
+            ApiResponse<Object> response = businessClient.post()
+                    .uri("/fcm/invoice/ar/customer/response-pending")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("매출 전표 상태 일괄 변경 성공 - invoiceIds: {}", invoiceIds);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("매출 전표 상태 일괄 변경", ex);
+        } catch (Exception e) {
+            log.error("매출 전표 상태 일괄 변경 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("매출 전표 상태 일괄 변경 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> updateApInvoicesResponsePending(java.util.List<String> invoiceIds) {
+        log.debug("매입 전표 상태 일괄 변경 요청 - invoiceIds: {}", invoiceIds);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            Map<String, Object> requestBody = Map.of("invoiceIds", invoiceIds);
+
+            ApiResponse<Object> response = businessClient.post()
+                    .uri("/fcm/invoice/ap/supplier/response-pending")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("매입 전표 상태 일괄 변경 성공 - invoiceIds: {}", invoiceIds);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("매입 전표 상태 일괄 변경", ex);
+        } catch (Exception e) {
+            log.error("매입 전표 상태 일괄 변경 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("매입 전표 상태 일괄 변경 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
     /**
      * WebClient 오류를 처리하고 로깅하는 공통 메서드
      */
