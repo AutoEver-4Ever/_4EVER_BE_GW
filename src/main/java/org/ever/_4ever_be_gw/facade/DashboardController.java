@@ -37,7 +37,7 @@ public class DashboardController {
             summary = "대시보드 워크플로우 조회",
             description = "사용자 역할 별로 2개의 탭과 n(기본 5개)개의 항목을 제공합니다."
     )
-    public ResponseEntity<ApiResponse<UserInfoResponse>> getWorkflows(
+    public ResponseEntity<ApiResponse<Object>> getWorkflows(
             @AuthenticationPrincipal EverUserPrincipal principal
 
     ) {
@@ -48,10 +48,7 @@ public class DashboardController {
         String userRole = principal.getUserRole();
         log.info("[INFO][DASHBOARD] 대시보드 사용자 정보 조회, 사용자 유형(userType): {}, 사용자 역할(userRole): {}", userType, userRole);
 
-        DashboardWorkflowItemDto data = dashboardHttpService.getWorkflows(principal, userType, userRole);
-
-
-        return null;
+        return dashboardHttpService.getWorkflows(principal, userType, userRole);
     }
 
     @GetMapping("/statistics")
