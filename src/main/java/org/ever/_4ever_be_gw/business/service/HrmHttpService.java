@@ -177,6 +177,11 @@ public interface HrmHttpService {
      */
     ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardAttendanceList(String userId, Integer size);
 
+    /**
+     * 대시보드 휴가 신청 목록 조회
+     */
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardLeaveRequestList(String userId, Integer size);
+
     // ==================== Training ====================
 
     /**
