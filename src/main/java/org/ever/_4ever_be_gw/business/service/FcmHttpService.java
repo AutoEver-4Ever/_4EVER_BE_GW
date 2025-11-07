@@ -83,4 +83,7 @@ public interface FcmHttpService {
     // 기업 매출 전표(AR) 목록
     ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCompanyArList(String userId, Integer size);
 
+    // 기업 매입 전표(AP) 목록
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCompanyApList(String userId, Integer size);
+
 }
