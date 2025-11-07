@@ -153,18 +153,7 @@ public class DashboardServiceImpl implements DashboardService {
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> fcmApListResponse =
                         fcmHttpService.getDashboardCompanyApList(userId, limit);
 
-                return DashboardWorkflowResponseDto.builder()
-                        .tabs(List.of(
-                                DashboardWorkflowTabDto.builder()
-                                        .tabCode("AR")
-                                        .items(safeItems(fcmArListResponse))
-                                        .build(),
-                                DashboardWorkflowTabDto.builder()
-                                        .tabCode("AP")
-                                        .items(safeItems(fcmApListResponse))
-                                        .build()
-                        ))
-                        .build();
+                return buildFcmWorkflowResponse(fcmArListResponse, fcmApListResponse);
             }
 
             case "IM": {
@@ -237,28 +226,33 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             default: {
-                // 관리자의 대시보드 워크 플로우
-                // [비즈니스] 기업의 매출 전표 목록(AR)
+                // 관리자는 재무관리와 동일한 전표 현황을 확인
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> fcmArListResponse =
                         fcmHttpService.getDashboardCompanyArList(userId, limit);
-                // [비즈니스] 기업의 매입 전표 목록(AP)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> fcmApListResponse =
                         fcmHttpService.getDashboardCompanyApList(userId, limit);
 
-                return DashboardWorkflowResponseDto.builder()
-                        .tabs(List.of(
-                                DashboardWorkflowTabDto.builder()
-                                        .tabCode("AR")
-                                        .items(safeItems(fcmArListResponse))
-                                        .build(),
-                                DashboardWorkflowTabDto.builder()
-                                        .tabCode("AP")
-                                        .items(safeItems(fcmApListResponse))
-                                        .build()
-                        ))
-                        .build();
+                return buildFcmWorkflowResponse(fcmArListResponse, fcmApListResponse);
             }
         }
+    }
+
+    private DashboardWorkflowResponseDto buildFcmWorkflowResponse(
+            ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> arResponse,
+            ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> apResponse
+    ) {
+        return DashboardWorkflowResponseDto.builder()
+                .tabs(List.of(
+                        DashboardWorkflowTabDto.builder()
+                                .tabCode("AR")
+                                .items(safeItems(arResponse))
+                                .build(),
+                        DashboardWorkflowTabDto.builder()
+                                .tabCode("AP")
+                                .items(safeItems(apResponse))
+                                .build()
+                ))
+                .build();
     }
 
     /**
