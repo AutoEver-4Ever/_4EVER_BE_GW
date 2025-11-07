@@ -105,8 +105,6 @@ public interface SdHttpService {
      */
     ResponseEntity<ApiResponse<Object>> checkInventory(Map<String, Object> requestBody);
 
-    // 공급사 대시보드 주문 목록 요청
-    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierOrderList(String userId, int size);
 
     // 고객사 대시보드 견적 목록 요청
     ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCustomerQuotationList(String userId, int size);
