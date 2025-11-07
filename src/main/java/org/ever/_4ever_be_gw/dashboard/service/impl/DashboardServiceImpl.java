@@ -54,7 +54,7 @@ public class DashboardServiceImpl implements DashboardService {
         switch (userRole.split("_")[0]) {
             case "SUPPLIER": {
                 // 공급사 워크 플로우
-                // [SCM-PP] 공급사에게 발행된 발주서 목록 조회(PO)
+                // [SCM-PP] 공급사에게 발행된 주문서 목록 조회(PO)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> supplierPurchaseOrderResponse =
                         mmHttpService.getDashboardPurchaseOrderList(userId, limit);
                 // [비즈니스] 공급사의 매출 전표 조회(AR): 기업의 매입 전표는 공급사 입장에서 매출 전표
@@ -100,10 +100,10 @@ public class DashboardServiceImpl implements DashboardService {
 
             case "MM": {
                 // 구매 관리 부서의 대시보드 워크 플로우
-                // [비즈니스] 기업의 발주서 목록 조회(PO) -> 하는 중
+                // [SCM] 기업의 발주서 목록 조회(PO)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> mmPurchaseOrderResponse =
                         mmHttpService.getDashboardPurchaseOrderList(userId, limit);
-                // [비즈니스] 주문서 목록 조회(SO) -> 다음에 이거
+                // [SCM] 주문서 목록 조회(SO)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> mmPurchaseRequestResponse =
                         mmHttpService.getDashboardPurchaseRequestList(userId, limit);
 
@@ -123,10 +123,10 @@ public class DashboardServiceImpl implements DashboardService {
 
             case "SD": {
                 // 영업 관리 부서의 대시보드 워크 플로우
-                // [비즈니스] 견적서 목록 조회(QT)
+                // [비즈니스] 전체 견적서 목록 조회(QT)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> sdCustomerQuotationResponse =
-                        sdHttpService.getDashboardCustomerQuotationList(userId, limit);
-                // [비즈니스] 주문서 목록 조회(SO) -> MM의 주문서 목록 조회랑 동일
+                        sdHttpService.getDashboardInternalQuotationList(limit);
+                // [비즈니스] 전체 주문서 목록 조회(SO) -> MM의 주문서 목록 조회랑 동일
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> sdSupplierQuotationResponse =
                         sdHttpService.getDashboardSupplierOrderList(userId, limit);
 
