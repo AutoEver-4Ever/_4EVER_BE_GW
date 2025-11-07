@@ -38,11 +38,11 @@ public class MmHttpServiceImpl implements MmHttpService {
         final int pageSize = size > 0 ? size : 5;
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            WebClient scmClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-            ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
+            ApiResponse<List<DashboardWorkflowItemDto>> body = scmClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/mm/dashboard/orders/purchase")
+                            .path("/scm-pp/dashboard/purchase-orders/supplier")
                             .queryParam("userId", userId)
                             .queryParam("size", pageSize)
                             .build())
@@ -86,11 +86,11 @@ public class MmHttpServiceImpl implements MmHttpService {
         final int pageSize = size > 0 ? size : 5;
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            WebClient scmClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-            ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
+            ApiResponse<List<DashboardWorkflowItemDto>> body = scmClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/mm/dashboard/orders/request")
+                            .path("/scm-pp/dashboard/purchase-requests")
                             .queryParam("userId", userId)
                             .queryParam("size", pageSize)
                             .build())
