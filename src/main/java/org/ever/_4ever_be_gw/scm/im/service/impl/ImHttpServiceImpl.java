@@ -73,6 +73,54 @@ public class ImHttpServiceImpl implements ImHttpService {
         }
     }
 
+    @Override
+    public ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardOutboundList(String userId, Integer size) {
+        log.debug("[DASHBOARD][IM] 출고 목록 요청 - userId: {}, size: {}", userId, size);
+
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.badRequest().body(
+                    ApiResponse.fail("inventory userId is required", HttpStatus.BAD_REQUEST, null)
+            );
+        }
+
+        final int pageSize = (size != null && size > 0) ? size : 5;
+
+        try {
+            WebClient scmClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
+
+            ApiResponse<List<DashboardWorkflowItemDto>> body = scmClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/dashboard/outbound")
+                            .queryParam("userId", userId)
+                            .queryParam("size", pageSize)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<DashboardWorkflowItemDto>>>() {})
+                    .block();
+
+            if (body == null) {
+                log.error("[ERROR][DASHBOARD][IM] SCM 서버 응답이 null");
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "SCM 서버 응답이 비어 있습니다.");
+            }
+
+            List<DashboardWorkflowItemDto> data = body.getData();
+            if (data == null) {
+                log.error("[ERROR][DASHBOARD][IM] SCM 서버 응답에 data 필드가 없음");
+                throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR, "SCM 서버 응답 형식이 올바르지 않습니다.");
+            }
+
+            log.info("[INFO][DASHBOARD][IM] 출고 목록 조회 성공");
+            return ResponseEntity.ok(ApiResponse.success(data, "출고 목록 조회 성공", HttpStatus.OK));
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("대시보드 출고 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("[ERROR][DASHBOARD][IM] 출고 목록 조회 중 에러 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("대시보드 출고 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
     private <T> ResponseEntity<ApiResponse<T>> handleWebClientError(String operation, WebClientResponseException ex) {
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
         String errorBody = ex.getResponseBodyAsString();

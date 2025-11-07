@@ -9,4 +9,6 @@ import java.util.List;
 public interface ImHttpService {
 
     ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardInboundList(String userId, Integer size);
+
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardOutboundList(String userId, Integer size);
 }
