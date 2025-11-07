@@ -126,9 +126,9 @@ public class DashboardServiceImpl implements DashboardService {
                 // [비즈니스] 전체 견적서 목록 조회(QT)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> sdCustomerQuotationResponse =
                         sdHttpService.getDashboardInternalQuotationList(limit);
-                // [비즈니스] 전체 주문서 목록 조회(SO) -> MM의 주문서 목록 조회랑 동일
-                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> sdSupplierQuotationResponse =
-                        sdHttpService.getDashboardSupplierOrderList(userId, limit);
+                // [비즈니스] 전체 주문서 목록 조회(SO)
+                ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> sdOrderListResponse =
+                        sdHttpService.getDashboardInternalOrderList(limit);
 
                 return DashboardWorkflowResponseDto.builder()
                         .tabs(List.of(
@@ -138,7 +138,7 @@ public class DashboardServiceImpl implements DashboardService {
                                         .build(),
                                 DashboardWorkflowTabDto.builder()
                                         .tabCode("SO")
-                                        .items(safeItems(sdSupplierQuotationResponse))
+                                        .items(safeItems(sdOrderListResponse))
                                         .build()
                         ))
                         .build();
@@ -146,10 +146,10 @@ public class DashboardServiceImpl implements DashboardService {
 
             case "FCM": {
                 // 재무 관리 부서의 대시보드 워크 플로우
-                // [비즈니스] 기업의 매출 전표 목록(AR)
+                // [비즈니스] 기업의 전체 매출 전표 목록(AR)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> fcmArListResponse =
                         fcmHttpService.getDashboardCompanyArList(userId, limit);
-                // [비즈니스] 기업의 매입 전표 목록(AP)
+                // [비즈니스] 기업의 전체 매입 전표 목록(AP)
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> fcmApListResponse =
                         fcmHttpService.getDashboardCompanyApList(userId, limit);
 

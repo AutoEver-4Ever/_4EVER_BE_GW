@@ -244,12 +244,6 @@ public class FcmHttpServiceImpl implements FcmHttpService {
     public ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCompanyArList(String userId, Integer size) {
         log.debug("[DASHBOARD][FCM] 기업 매출 전표(AR) 목록 요청 - userId: {}, size: {}", userId, size);
 
-        if (userId == null || userId.isBlank()) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail("company userId is required", HttpStatus.BAD_REQUEST, null)
-            );
-        }
-
         final int pageSize = (size != null && size > 0) ? size : 5;
 
         try {
@@ -258,7 +252,6 @@ public class FcmHttpServiceImpl implements FcmHttpService {
             ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/fcm/dashboard/invoice/ar")
-                            .queryParam("userId", userId)
                             .queryParam("size", pageSize)
                             .build())
                     .retrieve()
