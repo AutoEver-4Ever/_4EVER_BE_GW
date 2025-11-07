@@ -283,13 +283,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
 
     @Override
     public ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCompanyApList(String userId, Integer size) {
-        log.debug("[DASHBOARD][FCM] 기업 매입 전표(AP) 목록 요청 - userId: {}, size: {}", userId, size);
-
-        if (userId == null || userId.isBlank()) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail("company userId is required", HttpStatus.BAD_REQUEST, null)
-            );
-        }
+        log.debug("[DASHBOARD][FCM] 기업 매입 전표(AP) 목록 요청 - size: {}", size);
 
         final int pageSize = (size != null && size > 0) ? size : 5;
 
@@ -299,7 +293,6 @@ public class FcmHttpServiceImpl implements FcmHttpService {
             ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/fcm/dashboard/invoice/ap")
-                            .queryParam("userId", userId)
                             .queryParam("size", pageSize)
                             .build())
                     .retrieve()
