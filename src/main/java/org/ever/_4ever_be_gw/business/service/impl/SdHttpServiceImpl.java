@@ -557,7 +557,7 @@ public class SdHttpServiceImpl implements SdHttpService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierQuotationList(
+    public ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierOrderList(
             String userId,
             int size
     ) {

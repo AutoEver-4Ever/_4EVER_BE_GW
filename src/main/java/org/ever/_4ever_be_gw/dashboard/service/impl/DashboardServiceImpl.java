@@ -16,17 +16,13 @@ import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowTabDto;
 import org.ever._4ever_be_gw.scm.im.service.ImHttpService;
 import org.ever._4ever_be_gw.scm.mm.service.MmHttpService;
 import org.ever._4ever_be_gw.scm.pp.PpHttpService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -60,7 +56,7 @@ public class DashboardServiceImpl implements DashboardService {
                 // 공급사 워크 플로우
                 // [비즈니스] 공급사에게 발행된 주문서 목록 조회(SO): 기업으로부터 발행된 주문서
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> supplierQuotationResponse =
-                        sdHttpService.getDashboardSupplierQuotationList(userId, limit);
+                        sdHttpService.getDashboardSupplierOrderList(userId, limit);
                 // [비즈니스] 공급사의 매출 전표 조회(AR): 기업의 매입 전표는 공급사 입장에서 매출 전표
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> supplierInvoiceResponse =
                         fcmHttpService.getDashboardSupplierInvoiceList(userId, limit);
@@ -132,7 +128,7 @@ public class DashboardServiceImpl implements DashboardService {
                         sdHttpService.getDashboardCustomerQuotationList(userId, limit);
                 // [비즈니스] 주문서 목록 조회(SO) -> MM의 주문서 목록 조회랑 동일
                 ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> sdSupplierQuotationResponse =
-                        sdHttpService.getDashboardSupplierQuotationList(userId, limit);
+                        sdHttpService.getDashboardSupplierOrderList(userId, limit);
 
                 return DashboardWorkflowResponseDto.builder()
                         .tabs(List.of(

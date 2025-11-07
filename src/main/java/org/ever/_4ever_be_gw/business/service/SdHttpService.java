@@ -112,5 +112,5 @@ public interface SdHttpService {
     ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCustomerQuotationList(String userId, int size);
 
     // 공급사 대시보드 발주서(Quotation) 목록 요청
-    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierQuotationList(String userId, int size);
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierOrderList(String userId, int size);
 }
