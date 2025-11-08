@@ -13,9 +13,12 @@ import org.ever._4ever_be_gw.business.dto.employee.EmployeeUpdateRequestDto;
 import org.ever._4ever_be_gw.business.dto.hrm.UpdateDepartmentRequestDto;
 import org.ever._4ever_be_gw.business.dto.response.*;
 import org.ever._4ever_be_gw.business.service.HrmHttpService;
+import org.ever._4ever_be_gw.common.exception.BusinessException;
+import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -1010,6 +1013,102 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             log.error("교육 카테고리 목록 조회 중 예기치 않은 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     ApiResponse.fail("교육 카테고리 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardAttendanceList(String userId, Integer size) {
+        log.debug("[DASHBOARD][HRM] 근태 목록 요청 - userId: {}, size: {}", userId, size);
+
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.badRequest().body(
+                    ApiResponse.fail("hrm userId is required", HttpStatus.BAD_REQUEST, null)
+            );
+        }
+
+        final int pageSize = (size != null && size > 0) ? size : 5;
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/hrm/dashboard/attendance")
+                            .queryParam("userId", userId)
+                            .queryParam("size", pageSize)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<DashboardWorkflowItemDto>>>() {})
+                    .block();
+
+            if (body == null) {
+                log.error("[ERROR][DASHBOARD][HRM] 비즈니스 서버 응답이 null");
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "비즈니스 서버 응답이 비어 있습니다.");
+            }
+
+            List<DashboardWorkflowItemDto> data = body.getData();
+            if (data == null) {
+                log.error("[ERROR][DASHBOARD][HRM] 비즈니스 서버 응답에 data 필드가 없음");
+                throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR, "비즈니스 서버 응답 형식이 올바르지 않습니다.");
+            }
+
+            log.info("[INFO][DASHBOARD][HRM] 근태 목록 조회 성공");
+            return ResponseEntity.ok(ApiResponse.success(data, "근태 목록 조회 성공", HttpStatus.OK));
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("대시보드 근태 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("[ERROR][DASHBOARD][HRM] 근태 목록 조회 중 에러 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("대시보드 근태 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardLeaveRequestList(String userId, Integer size) {
+        log.debug("[DASHBOARD][HRM] 휴가 신청 목록 요청 - userId: {}, size: {}", userId, size);
+
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.badRequest().body(
+                    ApiResponse.fail("hrm userId is required", HttpStatus.BAD_REQUEST, null)
+            );
+        }
+
+        final int pageSize = (size != null && size > 0) ? size : 5;
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<List<DashboardWorkflowItemDto>> body = businessClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/hrm/dashboard/leave-requests")
+                            .queryParam("userId", userId)
+                            .queryParam("size", pageSize)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<DashboardWorkflowItemDto>>>() {})
+                    .block();
+
+            if (body == null) {
+                log.error("[ERROR][DASHBOARD][HRM] 비즈니스 서버 응답이 null");
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "비즈니스 서버 응답이 비어 있습니다.");
+            }
+
+            List<DashboardWorkflowItemDto> data = body.getData();
+            if (data == null) {
+                log.error("[ERROR][DASHBOARD][HRM] 비즈니스 서버 응답에 data 필드가 없음");
+                throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR, "비즈니스 서버 응답 형식이 올바르지 않습니다.");
+            }
+
+            log.info("[INFO][DASHBOARD][HRM] 휴가 신청 목록 조회 성공");
+            return ResponseEntity.ok(ApiResponse.success(data, "휴가 신청 목록 조회 성공", HttpStatus.OK));
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("대시보드 휴가 신청 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("[ERROR][DASHBOARD][HRM] 휴가 신청 목록 조회 중 에러 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("대시보드 휴가 신청 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }

@@ -40,7 +40,8 @@ public class LoggingFilter extends OncePerRequestFilter {
         ContentCachingRequestWrapper wrappedReq = new ContentCachingRequestWrapper(req);
         ContentCachingResponseWrapper wrappedRes = new ContentCachingResponseWrapper(res);
 
-        String response = "";
+        String response = "응답 본문: (empty)";
+        int status = 0;
 
         try {
             filterChain.doFilter(wrappedReq, wrappedRes);
@@ -55,6 +56,7 @@ public class LoggingFilter extends OncePerRequestFilter {
                 log.info(">>> 요청 본문: {}", requestBody);
             }
 
+            status = wrappedRes.getStatus();
             byte[] contentAsByteArray = wrappedRes.getContentAsByteArray();
             if (contentAsByteArray.length > 0) {
                 String responseBody = new String(contentAsByteArray, StandardCharsets.UTF_8).trim();
@@ -66,12 +68,15 @@ public class LoggingFilter extends OncePerRequestFilter {
                     response = "응답 본문: " + responseBody;
                 }
                 wrappedRes.copyBodyToResponse(); // 캐시된 응답 본문을 실제 응답에 복사
+            } else {
+                wrappedRes.copyBodyToResponse();
             }
         }
 
         log.info("\n"
-                + "HTTP 메서드: [ {} ] 엔드포인트: [ {} ] Content-Type: [ {} ] Authorization: [ {} ] User-agent: [ {} ] Host: [ {} ] Content-length: [ {} ] 응답 본문: [ {} ]"
+                + "HTTP 메서드: [ {} ] 엔드포인트: [ {} ] Status: {} Content-Type: [ {} ] Authorization: [ {} ] User-agent: [ {} ] Host: [ {} ] Content-length: [ {} ] 응답 본문: [ {} ]"
             , req.getMethod(), req.getRequestURI(),
+            status,
             req.getHeader("content-type"),
             req.getHeader("authorization"),
             req.getHeader("member-agent"),
