@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
@@ -150,10 +151,16 @@ public class MmController {
     @io.swagger.v3.oas.annotations.Operation(
             summary = "재고성 구매 요청 등록"
     )
-    public ResponseEntity<Object> createStockPurchaseRequest(@RequestBody StockPurchaseRequestDto requestDto) {
+    public ResponseEntity<Object> createStockPurchaseRequest(
+            @RequestBody StockPurchaseRequestDto requestDto,
+            @RequestParam String requesterId
+    ) {
         Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
-                .uri("/scm-pp/mm/stock-purchase-requisitions")
+                .uri(uriBuilder -> uriBuilder
+                        .path("/scm-pp/mm/stock-purchase-requisitions")
+                        .queryParam("requesterId", requesterId)
+                        .build())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .retrieve()

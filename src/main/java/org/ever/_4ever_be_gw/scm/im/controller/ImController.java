@@ -9,6 +9,7 @@ import org.ever._4ever_be_gw.scm.im.dto.AddInventoryItemRequest;
 import org.ever._4ever_be_gw.scm.im.dto.StockTransferRequestDto;
 import org.ever._4ever_be_gw.scm.im.dto.WarehouseCreateRequestDto;
 import org.ever._4ever_be_gw.scm.im.dto.WarehouseUpdateRequestDto;
+import org.ever._4ever_be_gw.scm.mm.dto.ItemInfoRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -280,6 +281,23 @@ public class ImController {
                 .retrieve()
                 .bodyToMono(Object.class)
                 .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+    //재고성 구매요청을 위한 item 정보 get
+    @PostMapping("/items/info")
+    public ResponseEntity<Object> getItemInfoList(@RequestBody ItemInfoRequest request) {
+
+        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
+        // WebClient 호출 (SCM 서비스 등 외부 서비스)
+        Object result = scmPpWebClient.post()
+                .uri("/scm-pp/iv/items/info") // 호출할 외부 API 경로
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)          // 요청 본문 전달
+                .retrieve()
+                .bodyToMono(Object.class)    // 결과 객체 매핑
+                .block();                    // 동기 호출
 
         return ResponseEntity.ok(result);
     }
