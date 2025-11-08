@@ -2,8 +2,10 @@ package org.ever._4ever_be_gw.business.service;
 
 import org.ever._4ever_be_gw.business.dto.analytics.SalesAnalyticsResponseDto;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -102,4 +104,17 @@ public interface SdHttpService {
      * 재고 확인
      */
     ResponseEntity<ApiResponse<Object>> checkInventory(Map<String, Object> requestBody);
+
+
+    // 고객사 대시보드 견적 목록 요청
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCustomerQuotationList(String userId, int size);
+
+    // 내부 사용자 대시보드 견적 목록 요청
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardInternalQuotationList(int size);
+
+    // 내부 사용자 대시보드 주문서 목록 요청
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardInternalOrderList(int size);
+
+    // 공급사 대시보드 발주서(Quotation) 목록 요청
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierOrderList(String userId, int size);
 }

@@ -2,8 +2,10 @@ package org.ever._4ever_be_gw.business.service;
 
 import org.ever._4ever_be_gw.business.dto.fcm.response.FcmStatisticsDto;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
 import java.util.Map;
 
 public interface FcmHttpService {
@@ -71,4 +73,17 @@ public interface FcmHttpService {
      * 매입 전표 상태를 RESPONSE_PENDING으로 일괄 변경 (AP)
      */
     ResponseEntity<ApiResponse<Object>> updateApInvoicesResponsePending(java.util.List<String> invoiceIds);
+
+    // 공급사 매출 전표(매입 전표가 공급사 입장에서는 매출 전표)
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardSupplierInvoiceList(String userId, Integer size);
+
+    // 고객사 매입 전표(기업의 매출 전표가 고객사 입장에서 매입 전표)
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCustomerInvoiceList(String userId, Integer size);
+
+    // 기업 매출 전표(AR) 목록
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCompanyArList(String userId, Integer size);
+
+    // 기업 매입 전표(AP) 목록
+    ResponseEntity<ApiResponse<List<DashboardWorkflowItemDto>>> getDashboardCompanyApList(String userId, Integer size);
+
 }

@@ -110,7 +110,8 @@ public enum ErrorCode {
     // Business Logic Errors (6000~6999)
     BUSINESS_LOGIC_ERROR(6000, HttpStatus.BAD_REQUEST, "비즈니스 로직 처리 중 오류가 발생했습니다."),
     DUPLICATE_REQUEST(6001, HttpStatus.CONFLICT, "중복된 요청입니다."),
-    INVALID_STATE_TRANSITION(6002, HttpStatus.BAD_REQUEST, "유효하지 않은 상태 전환입니다.");
+    INVALID_STATE_TRANSITION(6002, HttpStatus.BAD_REQUEST, "유효하지 않은 상태 전환입니다."),
+    EXTERNAL_API_ERROR(6003, HttpStatus.BAD_REQUEST , "비즈니스 서버 응답 형식이 올바르지 않습니다.");
 
     private final int code;
     private final HttpStatus httpStatus;
