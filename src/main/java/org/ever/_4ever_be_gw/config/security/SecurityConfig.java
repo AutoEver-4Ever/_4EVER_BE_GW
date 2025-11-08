@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2Res
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -45,6 +46,7 @@ public class SecurityConfig {
             .sessionManagement(
                 session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/api/**").authenticated()
@@ -62,14 +64,12 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
             "https://api.everp.co.kr",
+            "https://everp.co.kr",
+            "https://4-ever-fe.vercel.app",
             "http://localhost:8080",
             "http://127.0.0.1:8080",
             "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "https://4-ever-fe.vercel.app/**",
-            "https://4-ever-fe.vercel.app/",
-            "https://everp.co.kr/**",
-            "https://everp.co.kr/"
+            "http://127.0.0.1:3000"
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
