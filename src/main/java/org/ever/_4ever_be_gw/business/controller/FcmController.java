@@ -11,9 +11,15 @@ import org.ever._4ever_be_gw.business.dto.fcm.response.FcmStatisticsDto;
 import org.ever._4ever_be_gw.business.service.FcmHttpService;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
+import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
+import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.scm.mm.dto.ItemInfoRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +32,7 @@ import java.util.Map;
 public class FcmController {
 
 	private final FcmHttpService fcmHttpService;
+    private final WebClientProvider webClientProvider;
 
 	// ==================== 재무 관리 통계 ====================
 
@@ -212,5 +219,49 @@ public class FcmController {
     ) {
         log.info("매입 전표 상태 일괄 변경 API 호출 - invoiceIds: {}", request.getInvoiceIds());
         return fcmHttpService.updateApInvoicesResponsePending(request.getInvoiceIds());
+    }
+
+    @Operation(
+            summary = "공급사 매출 전표 통계"
+    )
+    @GetMapping("/statistics/supplier/{supplierUserId}/total-sales")
+    public ResponseEntity<Object> getTotalPurchaseAmountBySupplierUserId(
+            @AuthenticationPrincipal EverUserPrincipal everUserPrincipal
+    ) {
+        String supplierUserId = everUserPrincipal.getUserId();
+
+        WebClient businessWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+        // WebClient 호출 (비지니스 서비스 등 외부 서비스)
+        Object result = businessWebClient.get()
+                .uri("/fcm/statistics/supplier/{supplierUserId}/total-sales",supplierUserId)// 호출할 외부 API 경로
+                .accept(MediaType.APPLICATION_JSON)// 요청 본문 전달
+                .retrieve()
+                .bodyToMono(Object.class)    // 결과 객체 매핑
+                .block();                    // 동기 호출
+
+        return ResponseEntity.ok(result);
+    }
+
+    @Operation(
+            summary = "고객사 매입 전표 통계"
+    )
+    @GetMapping("/statistics/customer/{customerUserId}/total-purchases")
+    public ResponseEntity<Object> getTotalSalesAmountByCustomerUserId(
+            @AuthenticationPrincipal EverUserPrincipal everUserPrincipal
+    ) {
+        String customerUserId = everUserPrincipal.getUserId();
+
+        WebClient businessWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+        // WebClient 호출 (비지니스 서비스 등 외부 서비스)
+        Object result = businessWebClient.get()
+                .uri("/fcm/statistics/customer/{customerUserId}/total-purchases",customerUserId)// 호출할 외부 API 경로
+                .accept(MediaType.APPLICATION_JSON)// 요청 본문 전달
+                .retrieve()
+                .bodyToMono(Object.class)    // 결과 객체 매핑
+                .block();                    // 동기 호출
+
+        return ResponseEntity.ok(result);
     }
 }

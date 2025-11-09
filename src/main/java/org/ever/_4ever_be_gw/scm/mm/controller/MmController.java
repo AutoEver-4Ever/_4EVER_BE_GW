@@ -153,8 +153,11 @@ public class MmController {
     )
     public ResponseEntity<Object> createStockPurchaseRequest(
             @RequestBody StockPurchaseRequestDto requestDto,
-            @RequestParam String requesterId
+            @AuthenticationPrincipal EverUserPrincipal requester
     ) {
+
+        String requesterId = requester.getUserId();
+
         Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
                 .uri(uriBuilder -> uriBuilder
@@ -428,6 +431,31 @@ public class MmController {
 
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/supplier/orders/statistics")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "공급사 발주서 통계"
+    )    public ResponseEntity<Object> getSupplierStatistics(
+            @AuthenticationPrincipal EverUserPrincipal principal
+    ) {
+
+        String supplierId = principal.getUserId();
+
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/scm-pp/mm/supplier/orders/statistics")
+                        .queryParam("userId",supplierId)
+                        .build()
+                )
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
 
     // 구매요청서 상태 토글
     @GetMapping("/purchase-requisition/status/toggle")
