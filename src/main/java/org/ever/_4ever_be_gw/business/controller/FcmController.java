@@ -54,36 +54,9 @@ public class FcmController {
 	@GetMapping("/invoice/ap")
 	@Operation(
 		summary = "매입 전표 목록 조회",
-		description = "매입(AP) 전표 목록을 조회합니다. JWT 토큰이 있고 userType이 CUSTOMER인 경우 매출(AR) 전표를 조회합니다."
+		description = "매입(AP) 전표 목록을 조회합니다. JWT 토큰이 있고 userType이 SUPPLIER인 경우 해당 공급사의 매입(AP) 전표를 조회합니다."
 	)
 	public ResponseEntity<ApiResponse<Object>> getApInvoices(
-		@AuthenticationPrincipal EverUserPrincipal principal,
-		@Parameter(description = "거래처 명") @RequestParam(name = "company", required = false) String company,
-		@Parameter(description = "시작일(yyyy-MM-dd)") @RequestParam(name = "startDate", required = false) String startDate,
-		@Parameter(description = "종료일(yyyy-MM-dd)") @RequestParam(name = "endDate", required = false) String endDate,
-		@Parameter(description = "페이지") @RequestParam(name = "page", required = false) Integer page,
-		@Parameter(description = "사이즈") @RequestParam(name = "size", required = false) Integer size
-	) {
-		// JWT 토큰이 있고 userType이 CUSTOMER인 경우, 해당 고객의 매출(AR) 전표 조회
-		if (principal != null && "CUSTOMER".equals(principal.getUserType())) {
-			String customerId = principal.getUserId();
-			log.info("CUSTOMER 사용자의 매출 전표 목록 조회 API 호출 - customerId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
-					customerId, startDate, endDate, page, size);
-			return fcmHttpService.getArInvoices(customerId, startDate, endDate, page, size);
-		}
-
-		// JWT 토큰이 없거나 EMPLOYEE인 경우, 매입(AP) 전표 조회
-		log.info("매입 전표 목록 조회 API 호출 - company: {}, startDate: {}, endDate: {}, page: {}, size: {}",
-				company, startDate, endDate, page, size);
-		return fcmHttpService.getApInvoices(company, startDate, endDate, page, size);
-	}
-
-    @GetMapping("/invoice/ar")
-	@Operation(
-		summary = "매출 전표 목록 조회",
-		description = "매출(AR) 전표 목록을 조회합니다. JWT 토큰이 있고 userType이 SUPPLIER인 경우 매입(AP) 전표를 조회합니다."
-	)
-	public ResponseEntity<ApiResponse<Object>> getArInvoices(
 		@AuthenticationPrincipal EverUserPrincipal principal,
 		@Parameter(description = "거래처 명") @RequestParam(name = "company", required = false) String company,
 		@Parameter(description = "시작일(yyyy-MM-dd)") @RequestParam(name = "startDate", required = false) String startDate,
@@ -99,7 +72,34 @@ public class FcmController {
 			return fcmHttpService.getApInvoicesBySupplierUserId(supplierUserId, startDate, endDate, page, size);
 		}
 
-		// JWT 토큰이 없거나 INTERNEL(EMPLOYEE)인 경우, 매출(AR) 전표 조회
+		// JWT 토큰이 없거나 EMPLOYEE인 경우, 매입(AP) 전표 조회
+		log.info("매입 전표 목록 조회 API 호출 - company: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+				company, startDate, endDate, page, size);
+		return fcmHttpService.getApInvoices(company, startDate, endDate, page, size);
+	}
+
+    @GetMapping("/invoice/ar")
+	@Operation(
+		summary = "매출 전표 목록 조회",
+		description = "매출(AR) 전표 목록을 조회합니다. JWT 토큰이 있고 userType이 CUSTOMER인 경우 해당 고객사의 매출(AR) 전표를 조회합니다."
+	)
+	public ResponseEntity<ApiResponse<Object>> getArInvoices(
+		@AuthenticationPrincipal EverUserPrincipal principal,
+		@Parameter(description = "거래처 명") @RequestParam(name = "company", required = false) String company,
+		@Parameter(description = "시작일(yyyy-MM-dd)") @RequestParam(name = "startDate", required = false) String startDate,
+		@Parameter(description = "종료일(yyyy-MM-dd)") @RequestParam(name = "endDate", required = false) String endDate,
+		@Parameter(description = "페이지") @RequestParam(name = "page", required = false) Integer page,
+		@Parameter(description = "사이즈") @RequestParam(name = "size", required = false) Integer size
+	) {
+		// JWT 토큰이 있고 userType이 CUSTOMER인 경우, 해당 고객사의 매출(AR) 전표 조회
+		if (principal != null && "CUSTOMER".equals(principal.getUserType())) {
+			String customerUserId = principal.getUserId();
+			log.info("CUSTOMER 사용자의 매출 전표 목록 조회 API 호출 - customerUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+					customerUserId, startDate, endDate, page, size);
+			return fcmHttpService.getArInvoicesByCustomerUserId(customerUserId, startDate, endDate, page, size);
+		}
+
+		// JWT 토큰이 없거나 EMPLOYEE인 경우, 매출(AR) 전표 조회
 		log.info("매출 전표 목록 조회 API 호출 - company: {}, startDate: {}, endDate: {}, page: {}, size: {}",
 				company, startDate, endDate, page, size);
 		return fcmHttpService.getArInvoices(company, startDate, endDate, page, size);
@@ -224,7 +224,7 @@ public class FcmController {
     @Operation(
             summary = "공급사 매출 전표 통계"
     )
-    @GetMapping("/statistics/supplier/{supplierUserId}/total-sales")
+    @GetMapping("/statistics/supplier/total-sales")
     public ResponseEntity<Object> getTotalPurchaseAmountBySupplierUserId(
             @AuthenticationPrincipal EverUserPrincipal everUserPrincipal
     ) {
@@ -246,7 +246,7 @@ public class FcmController {
     @Operation(
             summary = "고객사 매입 전표 통계"
     )
-    @GetMapping("/statistics/customer/{customerUserId}/total-purchases")
+    @GetMapping("/statistics/customer/total-purchases")
     public ResponseEntity<Object> getTotalSalesAmountByCustomerUserId(
             @AuthenticationPrincipal EverUserPrincipal everUserPrincipal
     ) {

@@ -2,14 +2,17 @@ package org.ever._4ever_be_gw.scm.pp.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.scm.pp.dto.BomCreateRequestDto;
 import org.ever._4ever_be_gw.scm.pp.dto.MrpRunConvertRequestDto;
 import org.ever._4ever_be_gw.scm.pp.dto.QuotationConfirmRequestDto;
 import org.ever._4ever_be_gw.scm.pp.dto.QuotationSimulateRequestDto;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
@@ -150,7 +153,10 @@ public class PpController {
     public ResponseEntity<Object> startOperation(
             @PathVariable String mesId,
             @PathVariable String operationId,
-            @RequestParam(required = false) String managerId) {
+            @AuthenticationPrincipal EverUserPrincipal everUserPrincipal) {
+
+        String managerId = everUserPrincipal.getUserId();
+
         Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .put()
                 .uri(uriBuilder -> uriBuilder
@@ -537,6 +543,26 @@ public class PpController {
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/scm-pp/pp/boms/operations")
+                        .build())
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/statistic")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "PP 통계 조회",
+            description = "생산관리의 통계를 반환합니다. 생산중인 품목, 완료된 생산, 완제품 개수 포함"
+    )
+    public ResponseEntity<Object> getPpStatistic() {
+
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/scm-pp/pp/statistic")
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()

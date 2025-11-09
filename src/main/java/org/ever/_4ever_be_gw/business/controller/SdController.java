@@ -399,7 +399,7 @@ public class SdController {
         return sdHttpService.approveQuotation(quotationId, requestBody);
     }
 
-    @GetMapping("/quotations/customer/{customerUserId}/count")
+    @GetMapping("/quotations/customer/count")
     public ResponseEntity<Object> getQuotationCountByCustomerUserId(
             @AuthenticationPrincipal EverUserPrincipal everUserPrincipal
     ) {

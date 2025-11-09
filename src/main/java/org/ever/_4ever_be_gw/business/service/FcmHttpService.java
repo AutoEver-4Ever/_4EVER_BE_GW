@@ -35,6 +35,13 @@ public interface FcmHttpService {
             String company, String startDate, String endDate, Integer page, Integer size);
 
     /**
+     * 고객사 사용자 ID로 매출 전표 목록 조회 (AR)
+     * Business 서비스에서 CustomerUser 기반으로 조회
+     */
+    ResponseEntity<ApiResponse<Object>> getArInvoicesByCustomerUserId(
+            String customerUserId, String startDate, String endDate, Integer page, Integer size);
+
+    /**
      * 매입 전표 상세 조회 (AP)
      */
     ResponseEntity<ApiResponse<Object>> getApInvoiceDetail(String invoiceId);

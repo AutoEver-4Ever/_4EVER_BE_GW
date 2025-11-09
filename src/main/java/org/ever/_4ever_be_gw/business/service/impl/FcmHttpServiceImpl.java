@@ -108,19 +108,18 @@ public class FcmHttpServiceImpl implements FcmHttpService {
                 supplierUserId, startDate, endDate, page, size);
 
         try {
+
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-            // supplierUserId를 requestBody에 담아서 Business 서비스로 전송
-            Map<String, Object> requestBody = new LinkedHashMap<>();
-            requestBody.put("supplierUserId", supplierUserId);
-            if (startDate != null) requestBody.put("startDate", startDate);
-            if (endDate != null) requestBody.put("endDate", endDate);
-            requestBody.put("page", page != null ? page : 0);
-            requestBody.put("size", size != null ? size : 10);
-
-            ApiResponse<Object> response = businessClient.post()
-                    .uri("/fcm/statement/ap/by-supplier")
-                    .bodyValue(requestBody)
+            ApiResponse<Object> response = businessClient.get()
+                    .uri(uriBuilder -> {
+                        var builder = uriBuilder.path("/fcm/invoice/ap/supplier/{supplierUserId}");
+                        if (startDate != null) builder.queryParam("startDate", startDate);
+                        if (endDate != null) builder.queryParam("endDate", endDate);
+                        builder.queryParam("page", page != null ? page : 0);
+                        builder.queryParam("size", size != null ? size : 10);
+                        return builder.build(supplierUserId);
+                    })
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
                     .block();
@@ -354,6 +353,41 @@ public class FcmHttpServiceImpl implements FcmHttpService {
             log.error("AR 전표 목록 조회 중 예기치 않은 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     ApiResponse.fail("AR 전표 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getArInvoicesByCustomerUserId(
+            String customerUserId, String startDate, String endDate, Integer page, Integer size) {
+        log.debug("고객사 사용자 ID로 AR 전표 목록 조회 요청 - customerUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                customerUserId, startDate, endDate, page, size);
+
+        try {
+            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+            ApiResponse<Object> response = businessClient.get()
+                    .uri(uriBuilder -> {
+                        var builder = uriBuilder.path("/fcm/invoice/ar/customer/{customerUserId}");
+                        if (startDate != null) builder.queryParam("startDate", startDate);
+                        if (endDate != null) builder.queryParam("endDate", endDate);
+                        builder.queryParam("page", page != null ? page : 0);
+                        builder.queryParam("size", size != null ? size : 10);
+                        return builder.build(customerUserId);
+                    })
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                    .block();
+
+            log.info("고객사 사용자 ID로 AR 전표 목록 조회 성공 - customerUserId: {}", customerUserId);
+            return ResponseEntity.ok(response);
+
+        } catch (WebClientResponseException ex) {
+            return handleWebClientError("고객사 AR 전표 목록 조회", ex);
+        } catch (Exception e) {
+            log.error("고객사 AR 전표 목록 조회 중 예기치 않은 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ApiResponse.fail("고객사 AR 전표 목록 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }
