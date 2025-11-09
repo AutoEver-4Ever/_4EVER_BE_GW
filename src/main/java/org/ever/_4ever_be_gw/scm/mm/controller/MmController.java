@@ -257,7 +257,7 @@ public class MmController {
     }
 
     // 구매요청서 승인
-    @PostMapping("/purchase-requisitions/{purchaseRequisitionId}/approve")
+    @PostMapping("/purchase-requisitions/{purchaseRequisitionId}/release")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "구매요청 승인"
     )
