@@ -270,13 +270,13 @@ public class SdController {
             @Parameter(description = "검색 타입: customerNumber, customerName, managerName", example = "customerName")
             @RequestParam(name = "type", required = false) String type,
             @Parameter(description = "검색어")
-            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "keyword", required = false) String keyword,
             @Parameter(description = "페이지 번호(0-base)")
             @RequestParam(name = "page", required = false) Integer page,
             @Parameter(description = "페이지 크기(최대 200)")
             @RequestParam(name = "size", required = false) Integer size
     ) {
-        return sdHttpService.getCustomerList(status, type, search, page, size);
+        return sdHttpService.getCustomerList(status, type, keyword, page, size);
     }
 
     @GetMapping("/customers/{customerId}")
@@ -332,7 +332,7 @@ public class SdController {
             @Parameter(description = "검색 종료일(YYYY-MM-DD)")
             @RequestParam(name = "endDate", required = false) String endDate,
             @Parameter(description = "검색어")
-            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "keyword", required = false) String keyword,
             @Parameter(description = "검색 타입: salesOrderNumber, customerName, managerName", example = "salesOrderNumber")
             @RequestParam(name = "type", required = false) String type,
             @Parameter(description = "상태: ALL, MATERIAL_PREPARATION, IN_PRODUCTION, READY_FOR_SHIPMENT, DELIVERING, DELIVERED")
@@ -363,7 +363,7 @@ public class SdController {
             }
         }
 
-        return sdHttpService.getOrderList(customerId, employeeId, startDate, endDate, search, type, status, page, size);
+        return sdHttpService.getOrderList(customerId, employeeId, startDate, endDate, keyword, type, status, page, size);
     }
 
     // -------- Sales Order Detail (R) --------
