@@ -12,6 +12,7 @@ import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -384,6 +385,7 @@ public class SdHttpServiceImpl implements SdHttpService {
 
             ApiResponse<Object> response = businessClient.post()
                     .uri("/sd/quotations")
+                    .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(enrichedBody)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})

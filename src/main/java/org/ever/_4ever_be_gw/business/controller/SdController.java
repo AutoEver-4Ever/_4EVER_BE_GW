@@ -101,7 +101,7 @@ public class SdController {
             @Parameter(description = "검색 타입: quotationNumber(견적번호), customerName(고객사명), managerName(담당자명)", example = "quotationNumber")
             @RequestParam(name = "type", required = false) String type,
             @Parameter(description = "검색어")
-            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "keyword", required = false) String keyword,
             @Parameter(description = "정렬 필드,정렬방향")
             @RequestParam(name = "sort", required = false) String sort,
             @Parameter(description = "페이지 번호(0-base)")
@@ -126,7 +126,7 @@ public class SdController {
             }
         }
 
-        return sdHttpService.getQuotationList(customerId, startDate, endDate, status, type, search, sort, page, size);
+        return sdHttpService.getQuotationList(customerId, startDate, endDate, status, type, keyword, sort, page, size);
     }
 
     @GetMapping("/quotations/{quotationId}")
@@ -160,7 +160,6 @@ public class SdController {
             requestBody.put("userId", principal.getUserId());
         }
         // JWT 토큰이 없으면 목업 데이터로 요청 (기존 로직 유지)
-
         return sdHttpService.createQuotation(requestBody);
     }
 
