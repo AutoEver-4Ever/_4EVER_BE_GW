@@ -11,6 +11,7 @@ import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.scm.mm.dto.*;
 import org.ever._4ever_be_gw.scm.mm.service.MmService;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -455,6 +456,53 @@ public class MmController {
 
         return ResponseEntity.ok(result);
     }
+
+    // 배송 시작
+    @PostMapping("/{purchaseOrderId}/start-delivery")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "배송 시작"
+    )
+    public ResponseEntity<Object> startDelivery(
+            @PathVariable String purchaseOrderId
+    ) {
+
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/start-delivery")
+                        .queryParam("requesterId", purchaseOrderId)
+                        .build(purchaseOrderId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
+    // 입고 시작
+    @PostMapping("/{purchaseOrderId}/complete-delivery")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "입고 완료"
+    )
+    public ResponseEntity<Object> completeDelivery(
+            @PathVariable String purchaseOrderId
+    ) {
+
+        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                .post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/complete-delivery")
+                        .queryParam("requesterId", purchaseOrderId)
+                        .build(purchaseOrderId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+
+        return ResponseEntity.ok(result);
+    }
+
 
 
     // 구매요청서 상태 토글
