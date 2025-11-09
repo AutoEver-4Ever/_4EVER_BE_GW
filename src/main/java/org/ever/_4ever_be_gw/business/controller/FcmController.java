@@ -224,7 +224,7 @@ public class FcmController {
     @Operation(
             summary = "공급사 매출 전표 통계"
     )
-    @GetMapping("/statistics/supplier/{supplierUserId}/total-sales")
+    @GetMapping("/statistics/supplier/total-sales")
     public ResponseEntity<Object> getTotalPurchaseAmountBySupplierUserId(
             @AuthenticationPrincipal EverUserPrincipal everUserPrincipal
     ) {
@@ -246,7 +246,7 @@ public class FcmController {
     @Operation(
             summary = "고객사 매입 전표 통계"
     )
-    @GetMapping("/statistics/customer/{customerUserId}/total-purchases")
+    @GetMapping("/statistics/customer/total-purchases")
     public ResponseEntity<Object> getTotalSalesAmountByCustomerUserId(
             @AuthenticationPrincipal EverUserPrincipal everUserPrincipal
     ) {
