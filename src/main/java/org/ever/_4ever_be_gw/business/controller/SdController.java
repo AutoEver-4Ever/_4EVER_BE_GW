@@ -15,10 +15,14 @@ import org.ever._4ever_be_gw.business.service.SdService;
 import org.ever._4ever_be_gw.common.exception.RemoteApiException;
 import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
+import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
+import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -28,10 +32,12 @@ public class SdController {
 
     private final SdHttpService sdHttpService;
     private final SdService sdService;
+    private final WebClientProvider webClientProvider;
 
-    public SdController(SdHttpService sdHttpService, SdService sdService) {
+    public SdController(SdHttpService sdHttpService, SdService sdService,  WebClientProvider webClientProvider) {
         this.sdHttpService = sdHttpService;
         this.sdService = sdService;
+        this.webClientProvider = webClientProvider;
     }
 
     // SD 통계 조회
@@ -145,13 +151,13 @@ public class SdController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(name = "request", value = "{\n  \"dueDate\": \"2025-11-01\",\n  \"items\": [\n    {\n      \"itemId\": \"018f2c1a-3bfa-7e21-8a3c-7f9d5e2a1c44\",\n      \"quantity\": 10,\n      \"unitPrice\": 500000\n    },\n    {\n      \"itemId\": \"018f2c1a-3bfb-7e21-9b3c-1a2b3c4d5e6f\",\n      \"quantity\": 5,\n      \"unitPrice\": 200000\n    }\n  ],\n  \"note\": \"긴급 납품 요청\"\n}"))
+                            examples = @ExampleObject(name = "request", value = "{\n  \"items\": [\n    {\n      \"itemId\": \"018f2c1a-3bfa-7e21-8a3c-7f9d5e2a1c44\",\n      \"quantity\": 10,\n      \"unitPrice\": 500000\n    },\n    {\n      \"itemId\": \"018f2c1a-3bfb-7e21-9b3c-1a2b3c4d5e6f\",\n      \"quantity\": 5,\n      \"unitPrice\": 200000\n    }\n  ],\n  \"note\": \"긴급 납품 요청\"\n}"))
             )
             @RequestBody Map<String, Object> requestBody
     ) {
         // JWT 토큰이 있으면 CUSTOMER 전용, customerId를 requestBody에 설정
         if (principal != null) {
-            requestBody.put("customerId", principal.getUserId());
+            requestBody.put("userId", principal.getUserId());
         }
         // JWT 토큰이 없으면 목업 데이터로 요청 (기존 로직 유지)
 
@@ -391,5 +397,25 @@ public class SdController {
             @org.springframework.web.bind.annotation.RequestBody(required = false) Map<String, Object> requestBody
     ) {
         return sdHttpService.approveQuotation(quotationId, requestBody);
+    }
+
+    @GetMapping("/quotations/customer/{customerUserId}/count")
+    public ResponseEntity<Object> getQuotationCountByCustomerUserId(
+            @AuthenticationPrincipal EverUserPrincipal everUserPrincipal
+    ) {
+
+        String customerUserId = everUserPrincipal.getUserId();
+
+        WebClient businessWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+        // WebClient 호출 (비지니스 서비스 등 외부 서비스)
+        Object result = businessWebClient.get()
+                .uri("/sd/quotations/customer/{customerUserId}/count",customerUserId)// 호출할 외부 API 경로
+                .accept(MediaType.APPLICATION_JSON)// 요청 본문 전달
+                .retrieve()
+                .bodyToMono(Object.class)    // 결과 객체 매핑
+                .block();                    // 동기 호출
+
+        return ResponseEntity.ok(result);
     }
 }

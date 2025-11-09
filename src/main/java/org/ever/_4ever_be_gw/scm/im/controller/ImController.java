@@ -29,6 +29,9 @@ public class ImController {
 
     // 재고 목록 조회 (외부 서버)
     @GetMapping("/inventory-items")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "재고 목록 조회"
+    )
     public ResponseEntity<Object> getInventoryItems(
             @io.swagger.v3.oas.annotations.Parameter(description = "검색 타입: WAREHOUSE_NAME 또는 ITEM_NAME")
             @RequestParam(name = "type", required = false) String type,
@@ -62,6 +65,9 @@ public class ImController {
 
     // 재고 추가 (외부 서버)
     @PostMapping("/items")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "원자재 추가 (재고관리에서 사용) "
+    )
     public ResponseEntity<Object> addInventoryItem(@RequestBody AddInventoryItemRequest request) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
@@ -78,6 +84,9 @@ public class ImController {
 
     // 안전재고 수정 (외부 서버)
     @PatchMapping("/items/{itemId}/safety-stock")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "안전재고 수정"
+    )
     public ResponseEntity<Object> updateSafetyStock(
             @PathVariable String itemId,
             @RequestParam Integer safetyStock
@@ -98,6 +107,9 @@ public class ImController {
 
     // 재고 상세 정보 조회 (외부 서버)
     @GetMapping("/items/{itemId}")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "재고 상세 조회"
+    )
     public ResponseEntity<Object> getInventoryItemDetail(@PathVariable String itemId) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
@@ -113,6 +125,9 @@ public class ImController {
 
     // 부족 재고 목록 조회 (외부 서버)
     @GetMapping("/shortage")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "부족 재고 목록 조회"
+    )
     public ResponseEntity<Object> getShortageItems(
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
@@ -137,6 +152,9 @@ public class ImController {
 
     // 부족 재고 간단 정보 조회 (외부 서버)
     @GetMapping("/shortage/preview")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "부족 재고 간단 조회"
+    )
     public ResponseEntity<Object> getShortageItemsPreview() {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
@@ -176,6 +194,9 @@ public class ImController {
 
     // 재고 이동 목록 조회 (외부 서버)
     @GetMapping("/stock-transfers")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "재고 이동 목록 조회 (상위 5개)"
+    )
     public ResponseEntity<Object> getStockTransfers() {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
@@ -193,6 +214,9 @@ public class ImController {
 
     // 창고간 재고 이동 생성 (외부 서버)
     @PostMapping("/stock-transfers")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "창고간 재고 이동"
+    )
     public ResponseEntity<Object> createStockTransfer(
             @RequestBody StockTransferRequestDto request,
             @AuthenticationPrincipal EverUserPrincipal principal
@@ -218,6 +242,9 @@ public class ImController {
 
     // 창고 목록 조회 (외부 서버)
     @GetMapping("/warehouses")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "창고 목록 조회"
+    )
     public ResponseEntity<Object> getWarehouses(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -239,6 +266,9 @@ public class ImController {
 
     // 창고 상세 정보 조회 (외부 서버)
     @GetMapping("/warehouses/{warehouseId}")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "창고 상세 조회"
+    )
     public ResponseEntity<Object> getWarehouseDetail(@PathVariable String warehouseId) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
@@ -269,6 +299,9 @@ public class ImController {
 
     // 창고 추가 생성 (외부 서버)
     @PostMapping("/warehouses")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "창고 추가"
+    )
     public ResponseEntity<Object> createWarehouse(
             @RequestBody WarehouseCreateRequestDto request
     ) {
@@ -287,6 +320,9 @@ public class ImController {
 
     //재고성 구매요청을 위한 item 정보 get
     @PostMapping("/items/info")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "재고성 구매요청을 위한 item 정보 get"
+    )
     public ResponseEntity<Object> getItemInfoList(@RequestBody ItemInfoRequest request) {
 
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
@@ -304,6 +340,9 @@ public class ImController {
 
     // 창고 정보 수정 수정 (외부 서버)
     @PutMapping("warehouses/{warehouseId}")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "창고 정보 수정"
+    )
     public ResponseEntity<Object> updateWarehouse(
             @PathVariable String warehouseId,
             @RequestBody WarehouseUpdateRequestDto request

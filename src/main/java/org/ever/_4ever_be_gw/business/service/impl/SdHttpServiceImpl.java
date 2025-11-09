@@ -379,13 +379,8 @@ public class SdHttpServiceImpl implements SdHttpService {
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-            // TODO: JWT 구현 후 토큰에서 userId 추출
             // 임시로 하드코딩된 userId 사용 (Business DB 실제 목 데이터)
             Map<String, Object> enrichedBody = new LinkedHashMap<>(requestBody);
-            if (!enrichedBody.containsKey("userId")) {
-                enrichedBody.put("userId", "customer1"); // 임시: Business DB의 실제 customer_user ID
-                log.debug("임시 userId 추가: {}", enrichedBody.get("userId"));
-            }
 
             ApiResponse<Object> response = businessClient.post()
                     .uri("/sd/quotations")
