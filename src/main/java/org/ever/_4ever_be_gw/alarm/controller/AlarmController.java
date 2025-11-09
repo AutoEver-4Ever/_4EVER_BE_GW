@@ -134,21 +134,26 @@ public class AlarmController {
     }
 
     // ===== 알림 구독 요청 =====
-    @GetMapping("/subscribe")
+    @GetMapping("/subscribe/{userId}")
     @Operation(summary = "알림 구독 요청", description = "SSE를 통해 실시간 알림을 구독합니다.")
     public SseEmitter subscribe(
-        @AuthenticationPrincipal EverUserPrincipal principal,
-        EverJwtAuthenticationToken authentication,
+        @PathVariable("userId")
+        @ValidUuidV7
+        String userid,
+//        @AuthenticationPrincipal EverUserPrincipal principal,
+//        EverJwtAuthenticationToken authentication,
         HttpServletRequest request
     ) {
-        final String token = (authentication != null && authentication.getToken() != null)
-            ? authentication.getToken().getTokenValue()
-            : null;
+//        final String token = (authentication != null && authentication.getToken() != null)
+//            ? authentication.getToken().getTokenValue()
+//            : null;
+//
+//        log.info("[FCM][USER] 사용자 정보 조회 요청 수신: principalPresent={}, tokenPresent={}",
+//            principal != null, token != null);
 
-        log.info("[FCM][USER] 사용자 정보 조회 요청 수신: principalPresent={}, tokenPresent={}",
-            principal != null, token != null);
+//        UUID userId = UUID.fromString(principal.getUserId());
 
-        UUID userId = UUID.fromString(principal.getUserId());
+        UUID userId = UUID.fromString(userid);
 
         log.info("[SSE][SUBSCRIBE-REQUEST] userId={}, remoteAddr={}",
             userId, request.getRemoteAddr());
