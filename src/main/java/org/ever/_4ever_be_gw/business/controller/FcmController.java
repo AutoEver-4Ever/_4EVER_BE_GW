@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,7 +62,7 @@ public class FcmController {
 		@Parameter(description = "거래처 명") @RequestParam(name = "company", required = false) String company,
 		@Parameter(description = "시작일(yyyy-MM-dd)") @RequestParam(name = "startDate", required = false) String startDate,
 		@Parameter(description = "종료일(yyyy-MM-dd)") @RequestParam(name = "endDate", required = false) String endDate,
-        @RequestParam String status,
+        @RequestParam(required = false) String status,
 		@Parameter(description = "페이지") @RequestParam(name = "page", required = false) Integer page,
 		@Parameter(description = "사이즈") @RequestParam(name = "size", required = false) Integer size
 	) {
@@ -89,7 +90,7 @@ public class FcmController {
 		@Parameter(description = "거래처 명") @RequestParam(name = "company", required = false) String company,
 		@Parameter(description = "시작일(yyyy-MM-dd)") @RequestParam(name = "startDate", required = false) String startDate,
 		@Parameter(description = "종료일(yyyy-MM-dd)") @RequestParam(name = "endDate", required = false) String endDate,
-		@RequestParam String status,
+		@RequestParam(required = false) String status,
         @Parameter(description = "페이지") @RequestParam(name = "page", required = false) Integer page,
 		@Parameter(description = "사이즈") @RequestParam(name = "size", required = false) Integer size
 	) {
@@ -182,6 +183,36 @@ public class FcmController {
         log.info("미수 처리 완료 API 호출 - invoiceId: {}", invoiceId);
         return fcmHttpService.completeReceivable(invoiceId);
     }
+
+    @PostMapping("/business/fcm/invoice/ap/{invoiceId}/payable/complete")
+    @Operation(
+            summary = "매출 전표 미수 처리 완료",
+            description = "미납/확인요청 상태의 매출(AR) 전표에 대해 미수 처리를 완료합니다."
+    )
+    public ResponseEntity<Object> completeAR(
+            @Parameter(description = "매출 전표 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
+            @PathVariable("invoiceId") String invoiceId
+    ) {
+        WebClient financialWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+
+        try {
+            ResponseEntity<Object> result = financialWebClient.post()
+                    .uri("/business/fcm/invoice/ap/{invoiceId}/payable/complete", invoiceId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> response.bodyToMono(String.class)
+                            .map(body -> ResponseEntity.status(response.statusCode())
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .body((Object) body)))
+                    .block();
+
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
+    }
+
 
     // ==================== 매입 전표 미수 처리 요청 ====================
 
