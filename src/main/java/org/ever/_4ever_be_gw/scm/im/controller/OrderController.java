@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
+import org.ever._4ever_be_gw.scm.im.dto.SalesOrderStatusChangeRequestDto;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -239,6 +240,7 @@ public class OrderController {
     )
     public ResponseEntity<Object> updateOrderStatus(
             @PathVariable String salesOrderId,
+            @RequestBody SalesOrderStatusChangeRequestDto requestDto,
             @AuthenticationPrincipal EverUserPrincipal principal
     ) {
         String requesterId = principal.getUserId();
@@ -249,7 +251,9 @@ public class OrderController {
                     .uri(uriBuilder -> uriBuilder
                             .path("/scm-pp/sales-orders/{salesOrderId}/status")
                             .queryParam("requesterId", requesterId)
+
                             .build(salesOrderId))
+                    .bodyValue(requestDto)
                     .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
                                 .map(body -> ResponseEntity.status(response.statusCode())
