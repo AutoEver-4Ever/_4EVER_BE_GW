@@ -525,7 +525,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-            Map<String, Object> requestBody = Map.of("voucherId", invoiceId, "statusCode", "REQUESTED");
+            Map<String, Object> requestBody = Map.of("voucherId", invoiceId, "statusCode", "PENDING");
 
             ApiResponse<Object> response = businessClient.post()
                     .uri("/fcm/invoice/ap/receivable/request")
