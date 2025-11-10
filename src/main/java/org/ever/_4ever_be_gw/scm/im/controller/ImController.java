@@ -129,7 +129,7 @@ public class ImController {
             summary = "부족 재고 목록 조회"
     )
     public ResponseEntity<Object> getShortageItems(
-            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String statusCode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
@@ -138,7 +138,7 @@ public class ImController {
         Object result = scmPpWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/scm-pp/iv/shortage")
-                        .queryParam("status", status)
+                        .queryParam("status", statusCode)
                         .queryParam("page", page)
                         .queryParam("size", size)
                         .build())

@@ -64,13 +64,12 @@ public class FcmController {
 		@Parameter(description = "페이지") @RequestParam(name = "page", required = false) Integer page,
 		@Parameter(description = "사이즈") @RequestParam(name = "size", required = false) Integer size
 	) {
-
-        // JWT 토큰이 있고 userType이 SUPPLIER인 경우, 해당 공급사의 매입(AP) 전표 조회
-        if (principal != null && "SUPPLIER".equals(principal.getUserType())) {
-            String supplierUserId = principal.getUserId();
-            log.info("SUPPLIER 사용자의 매입 전표 목록 조회 API 호출 - supplierUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
-                    supplierUserId, startDate, endDate, page, size);
-            return fcmHttpService.getApInvoicesBySupplierUserId(supplierUserId, startDate, endDate, page, size);
+        // JWT 토큰이 있고 userType이 CUSTOMER인 경우, 해당 고객사의 매출(AR) 전표 조회
+        if (principal != null && "CUSTOMER".equals(principal.getUserType())) {
+            String customerUserId = principal.getUserId();
+            log.info("CUSTOMER 사용자의 매출 전표 목록 조회 API 호출 - customerUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                    customerUserId, startDate, endDate, page, size);
+            return fcmHttpService.getArInvoicesByCustomerUserId(customerUserId, startDate, endDate, page, size);
         }
 
 		// JWT 토큰이 없거나 EMPLOYEE인 경우, 매입(AP) 전표 조회
@@ -93,13 +92,14 @@ public class FcmController {
 		@Parameter(description = "사이즈") @RequestParam(name = "size", required = false) Integer size
 	) {
 
-        // JWT 토큰이 있고 userType이 CUSTOMER인 경우, 해당 고객사의 매출(AR) 전표 조회
-        if (principal != null && "CUSTOMER".equals(principal.getUserType())) {
-            String customerUserId = principal.getUserId();
-            log.info("CUSTOMER 사용자의 매출 전표 목록 조회 API 호출 - customerUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
-                    customerUserId, startDate, endDate, page, size);
-            return fcmHttpService.getArInvoicesByCustomerUserId(customerUserId, startDate, endDate, page, size);
+        // JWT 토큰이 있고 userType이 SUPPLIER인 경우, 해당 공급사의 매입(AP) 전표 조회
+        if (principal != null && "SUPPLIER".equals(principal.getUserType())) {
+            String supplierUserId = principal.getUserId();
+            log.info("SUPPLIER 사용자의 매입 전표 목록 조회 API 호출 - supplierUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                    supplierUserId, startDate, endDate, page, size);
+            return fcmHttpService.getApInvoicesBySupplierUserId(supplierUserId, startDate, endDate, page, size);
         }
+
 
         // JWT 토큰이 없거나 EMPLOYEE인 경우, 매출(AR) 전표 조회
 		log.info("매출 전표 목록 조회 API 호출 - company: {}, startDate: {}, endDate: {}, page: {}, size: {}",
