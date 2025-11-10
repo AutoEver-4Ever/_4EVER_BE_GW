@@ -184,7 +184,7 @@ public class FcmController {
         return fcmHttpService.completeReceivable(invoiceId);
     }
 
-    @PostMapping("/business/fcm/invoice/ap/{invoiceId}/payable/complete")
+    @PostMapping("/invoice/ap/{invoiceId}/payable/complete")
     @Operation(
             summary = "매출 전표 미수 처리 완료",
             description = "미납/확인요청 상태의 매출(AR) 전표에 대해 미수 처리를 완료합니다."
@@ -197,7 +197,7 @@ public class FcmController {
 
         try {
             ResponseEntity<Object> result = financialWebClient.post()
-                    .uri("/business/fcm/invoice/ap/{invoiceId}/payable/complete", invoiceId)
+                    .uri("/fcm/invoice/ap/{invoiceId}/payable/complete", invoiceId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .exchangeToMono(response -> response.bodyToMono(String.class)
                             .map(body -> ResponseEntity.status(response.statusCode())
