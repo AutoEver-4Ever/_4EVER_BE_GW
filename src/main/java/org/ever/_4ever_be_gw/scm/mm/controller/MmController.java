@@ -406,47 +406,53 @@ public class MmController {
             summary = "발주서 목록 조회"
     )
     public ResponseEntity<Object> getPurchaseOrderList(
-            @io.swagger.v3.oas.annotations.Parameter(
-                    description = "상태 코드 (ALL: 전체, APPROVAL: 승인, PENDING: 대기, REJECTED: 반려, DELIVERING: 배송중, DELIVERED: 배송완료)"
-            )
             @RequestParam(defaultValue = "ALL") String statusCode,
-            @io.swagger.v3.oas.annotations.Parameter(description = "검색 타입 (SupplierCompanyName, PurchaseOrderNumber)")
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal EverUserPrincipal principal
+    ) {
+
+        String userId = principal.getUserId();
+        String userType = principal.getUserType();
+
+        // 최종 URI 결정 (람다에서 사용 가능하도록 final 로 유지)
+        final String path = ("SUPPLIER".equalsIgnoreCase(userType))
+                ? "/scm-pp/mm/purchase-orders/supplier/" + userId
+                : "/scm-pp/mm/purchase-orders";
 
         try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/purchase-orders")
-                        .queryParam("statusCode", statusCode)
-                        .queryParam("type", type)
-                        .queryParam("keyword", keyword)
-                        .queryParam("startDate", startDate)
-                        .queryParam("endDate", endDate)
-                        .queryParam("page", page)
-                        .queryParam("size", size)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
+            return webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path(path)
+                            .queryParam("statusCode", statusCode)
+                            .queryParam("type", type)
+                            .queryParam("keyword", keyword)
+                            .queryParam("startDate", startDate)
+                            .queryParam("endDate", endDate)
+                            .queryParam("page", page)
+                            .queryParam("size", size)
+                            .build())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response ->
+                            response.bodyToMono(String.class)
+                                    .map(body -> ResponseEntity.status(response.statusCode())
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .body((Object) body))
+                    )
                     .block();
 
-            return result;
         } catch (WebClientResponseException ex) {
             return ResponseEntity.status(ex.getStatusCode())
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(ex.getResponseBodyAsString());
         }
     }
+
 
     // 발주서 상세 조회
     @GetMapping("/purchase-orders/{purchaseOrderId}")
