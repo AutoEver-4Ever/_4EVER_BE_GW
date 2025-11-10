@@ -54,7 +54,6 @@ public class AlarmServerRequestDto {
     public static class NotificationMarkReadOneRequest {
 
         private UUID userId;
-        private String notificationId;
     }
 
     @Data

@@ -210,14 +210,13 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
         AlarmServerRequestDto.NotificationMarkReadOneRequest request =
             NotificationMarkReadOneRequest.builder()
                 .userId(UUID.fromString(userId))
-                .notificationId(notificationId)
                 .build();
 
         try {
             WebClient alarmWebClient = webClientProvider.getWebClient(ApiClientKey.ALARM);
 
             Object serverResponse = alarmWebClient.patch()
-                .uri("/notifications/{notificationId}/read", request.getNotificationId())
+                .uri("/notifications/{notificationId}/read", notificationId)
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(Object.class)
