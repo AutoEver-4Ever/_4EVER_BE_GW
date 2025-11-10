@@ -61,6 +61,7 @@ public class FcmController {
 		@Parameter(description = "거래처 명") @RequestParam(name = "company", required = false) String company,
 		@Parameter(description = "시작일(yyyy-MM-dd)") @RequestParam(name = "startDate", required = false) String startDate,
 		@Parameter(description = "종료일(yyyy-MM-dd)") @RequestParam(name = "endDate", required = false) String endDate,
+        @RequestParam String status,
 		@Parameter(description = "페이지") @RequestParam(name = "page", required = false) Integer page,
 		@Parameter(description = "사이즈") @RequestParam(name = "size", required = false) Integer size
 	) {
@@ -69,13 +70,13 @@ public class FcmController {
             String customerUserId = principal.getUserId();
             log.info("CUSTOMER 사용자의 매출 전표 목록 조회 API 호출 - customerUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
                     customerUserId, startDate, endDate, page, size);
-            return fcmHttpService.getArInvoicesByCustomerUserId(customerUserId, startDate, endDate, page, size);
+            return fcmHttpService.getArInvoicesByCustomerUserId(customerUserId, status, startDate, endDate, page, size);
         }
 
 		// JWT 토큰이 없거나 EMPLOYEE인 경우, 매입(AP) 전표 조회
 		log.info("매입 전표 목록 조회 API 호출 - company: {}, startDate: {}, endDate: {}, page: {}, size: {}",
 				company, startDate, endDate, page, size);
-		return fcmHttpService.getApInvoices(company, startDate, endDate, page, size);
+		return fcmHttpService.getApInvoices(company, status, startDate, endDate, page, size);
 	}
 
     @GetMapping("/invoice/ar")
@@ -88,7 +89,8 @@ public class FcmController {
 		@Parameter(description = "거래처 명") @RequestParam(name = "company", required = false) String company,
 		@Parameter(description = "시작일(yyyy-MM-dd)") @RequestParam(name = "startDate", required = false) String startDate,
 		@Parameter(description = "종료일(yyyy-MM-dd)") @RequestParam(name = "endDate", required = false) String endDate,
-		@Parameter(description = "페이지") @RequestParam(name = "page", required = false) Integer page,
+		@RequestParam String status,
+        @Parameter(description = "페이지") @RequestParam(name = "page", required = false) Integer page,
 		@Parameter(description = "사이즈") @RequestParam(name = "size", required = false) Integer size
 	) {
 
@@ -97,14 +99,14 @@ public class FcmController {
             String supplierUserId = principal.getUserId();
             log.info("SUPPLIER 사용자의 매입 전표 목록 조회 API 호출 - supplierUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
                     supplierUserId, startDate, endDate, page, size);
-            return fcmHttpService.getApInvoicesBySupplierUserId(supplierUserId, startDate, endDate, page, size);
+            return fcmHttpService.getApInvoicesBySupplierUserId(supplierUserId, status, startDate, endDate, page, size);
         }
 
 
         // JWT 토큰이 없거나 EMPLOYEE인 경우, 매출(AR) 전표 조회
 		log.info("매출 전표 목록 조회 API 호출 - company: {}, startDate: {}, endDate: {}, page: {}, size: {}",
 				company, startDate, endDate, page, size);
-		return fcmHttpService.getArInvoices(company, startDate, endDate, page, size);
+		return fcmHttpService.getArInvoices(company, status, startDate, endDate, page, size);
 	}
 
 	// ==================== 전표 상세 조회 ====================
