@@ -44,7 +44,7 @@ public class ProfileController {
 
             case "supplier":
                 // 2번: 공급사 조회
-                result = client.get()
+                result = scmClient.get()
                         .uri("scm-pp/mm/supplier/{userId}/profile", userId)
                         .retrieve()
                         .bodyToMono(Object.class)
@@ -54,7 +54,7 @@ public class ProfileController {
             case "internal":
             default:
                 // 3번: 기존 내부 직원 조회
-                result = scmClient.get()
+                result = client.get()
                         .uri("/hrm/employees/profile/{internelUserId}", userId)
                         .retrieve()
                         .bodyToMono(Object.class)
