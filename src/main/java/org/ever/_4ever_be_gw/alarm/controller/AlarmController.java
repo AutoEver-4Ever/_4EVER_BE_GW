@@ -6,22 +6,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import java.util.Collections;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_gw.alarm.dto.request.AlarmServerRequestDto;
 import org.ever._4ever_be_gw.alarm.dto.request.NotificationMarkReadRequestDto;
-import org.ever._4ever_be_gw.alarm.dto.response.NotificationCountResponseDto;
-import org.ever._4ever_be_gw.alarm.dto.response.NotificationListResponseDto;
-import org.ever._4ever_be_gw.alarm.dto.response.NotificationReadResponseDto;
 import org.ever._4ever_be_gw.alarm.service.AlarmHttpService;
 import org.ever._4ever_be_gw.alarm.service.AlarmSendService;
-import org.ever._4ever_be_gw.alarm.util.AlarmDtoConverter;
-import org.ever._4ever_be_gw.common.dto.pagable.PageResponseDto;
 import org.ever._4ever_be_gw.common.dto.validation.AllowedValues;
 import org.ever._4ever_be_gw.common.dto.validation.ValidUuidV7;
-import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.security.principal.EverJwtAuthenticationToken;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.springframework.http.ResponseEntity;
@@ -54,7 +46,7 @@ public class AlarmController {
     // ===== 알림 목록 조회 =====
     @GetMapping("/list")
     @Operation(summary = "알림 목록 조회", description = "알림 목록을 페이징/정렬/필터와 함께 조회합니다.")
-    public ResponseEntity<ApiResponse<PageResponseDto<NotificationListResponseDto>>> getNotificationList(
+    public ResponseEntity<Object> getNotificationList(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication,
 
@@ -94,20 +86,21 @@ public class AlarmController {
         log.info("[FCM][USER] 사용자 정보 조회 요청 수신: principalPresent={}, tokenPresent={}",
             principal != null, token != null);
 
-        UUID userId = UUID.fromString(principal.getUserId());
-
-        AlarmServerRequestDto.NotificationListRequest request = AlarmDtoConverter.toServerRequest(
-            userId, sortBy, order, source, page, size
-        );
-
         // Service가 ResponseEntity를 반환하므로 그대로 반환
-        return alarmHttpService.getNotificationList(request);
+        return alarmHttpService.getNotificationList(
+            principal.getUserId(),
+            sortBy,
+            order,
+            source,
+            page,
+            size
+        );
     }
 
     // ===== 알림 갯수 조회 =====
     @GetMapping("/count")
     @Operation(summary = "알림 갯수 조회", description = "상태별(READ/UNREAD) 알림 갯수를 조회합니다.")
-    public ResponseEntity<ApiResponse<NotificationCountResponseDto>> getNotificationCount(
+    public ResponseEntity<Object> getNotificationCount(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication,
 
@@ -123,37 +116,29 @@ public class AlarmController {
         log.info("[FCM][USER] 사용자 정보 조회 요청 수신: principalPresent={}, tokenPresent={}",
             principal != null, token != null);
 
-        UUID userId = UUID.fromString(principal.getUserId());
-
-        AlarmServerRequestDto.NotificationCountRequest request = AlarmDtoConverter.toCountServerRequest(
-            userId, status
-        );
-
         // Service가 ResponseEntity를 반환하므로 그대로 반환
-        return alarmHttpService.getNotificationCount(request);
+        return alarmHttpService.getNotificationCount(
+            principal.getUserId(),
+            status
+        );
     }
 
     // ===== 알림 구독 요청 =====
-    @GetMapping("/subscribe/{userId}")
+    @GetMapping("/subscribe")
     @Operation(summary = "알림 구독 요청", description = "SSE를 통해 실시간 알림을 구독합니다.")
     public SseEmitter subscribe(
-        @PathVariable("userId")
-        @ValidUuidV7
-        String userid,
-//        @AuthenticationPrincipal EverUserPrincipal principal,
-//        EverJwtAuthenticationToken authentication,
+        @AuthenticationPrincipal EverUserPrincipal principal,
+        EverJwtAuthenticationToken authentication,
         HttpServletRequest request
     ) {
-//        final String token = (authentication != null && authentication.getToken() != null)
-//            ? authentication.getToken().getTokenValue()
-//            : null;
-//
-//        log.info("[FCM][USER] 사용자 정보 조회 요청 수신: principalPresent={}, tokenPresent={}",
-//            principal != null, token != null);
+        final String token = (authentication != null && authentication.getToken() != null)
+            ? authentication.getToken().getTokenValue()
+            : null;
 
-//        UUID userId = UUID.fromString(principal.getUserId());
+        log.info("[FCM][USER] 사용자 정보 조회 요청 수신: principalPresent={}, tokenPresent={}",
+            principal != null, token != null);
 
-        UUID userId = UUID.fromString(userid);
+        UUID userId = UUID.fromString(principal.getUserId());
 
         log.info("[SSE][SUBSCRIBE-REQUEST] userId={}, remoteAddr={}",
             userId, request.getRemoteAddr());
@@ -170,7 +155,7 @@ public class AlarmController {
     // ===== 알림 읽음 처리 (목록) =====
     @PatchMapping("/list/read")
     @Operation(summary = "알림 읽음 처리(목록)", description = "주어진 알림 ID 목록을 읽음 처리합니다.")
-    public ResponseEntity<ApiResponse<NotificationReadResponseDto>> markReadList(
+    public ResponseEntity<Object> markReadList(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication,
 
@@ -185,21 +170,17 @@ public class AlarmController {
         log.info("[FCM][USER] 사용자 정보 조회 요청 수신: principalPresent={}, tokenPresent={}",
             principal != null, token != null);
 
-        UUID userId = UUID.fromString(principal.getUserId());
-
-        AlarmServerRequestDto.NotificationMarkReadRequest request = AlarmDtoConverter.toMarkReadServerRequest(
-            userId,
-            notificationMarkReadRequestDto.getNotificationId()
-        );
-
         // Service가 ResponseEntity를 반환하므로 그대로 반환
-        return alarmHttpService.markReadList(request);
+        return alarmHttpService.markReadList(
+            principal.getUserId(),
+            notificationMarkReadRequestDto
+        );
     }
 
     // ===== 알림 읽음 처리 (전체) =====
     @PatchMapping("/all/read")
     @Operation(summary = "알림 읽음 처리(전체)", description = "모든 알림을 읽음 처리합니다.")
-    public ResponseEntity<ApiResponse<NotificationReadResponseDto>> markReadAll(
+    public ResponseEntity<Object> markReadAll(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication
     ) {
@@ -210,23 +191,16 @@ public class AlarmController {
         log.info("[FCM][USER] 사용자 정보 조회 요청 수신: principalPresent={}, tokenPresent={}",
             principal != null, token != null);
 
-        UUID userId = UUID.fromString(principal.getUserId());
-
-        AlarmServerRequestDto.NotificationMarkReadRequest request = AlarmDtoConverter.toMarkReadServerRequest(
-            userId,
-            Collections.emptyList()
-        );
-
         // Service가 ResponseEntity를 반환하므로 그대로 반환
         return alarmHttpService.markReadAll(
-            request
+            principal.getUserId()
         );
     }
 
     // ===== 알림 읽음 처리 (단일) =====
     @PatchMapping("/{notificationId}/read")
     @Operation(summary = "알림 읽음 처리(단일)", description = "특정 알림을 읽음 처리합니다.")
-    public ResponseEntity<ApiResponse<Void>> markReadOne(
+    public ResponseEntity<Object> markReadOne(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication,
 
@@ -241,14 +215,10 @@ public class AlarmController {
         log.info("[FCM][USER] 사용자 정보 조회 요청 수신: principalPresent={}, tokenPresent={}",
             principal != null, token != null);
 
-        UUID userId = UUID.fromString(principal.getUserId());
-
-        AlarmServerRequestDto.NotificationMarkReadOneRequest request =
-            AlarmDtoConverter
-                .toMarkReadOneServerRequest(userId, notificationId);
-
-        // Service가 ResponseEntity를 반환하므로 그대로 반환
-        return alarmHttpService.markReadOne(request);
+        return alarmHttpService.markReadOne(
+            principal.getUserId(),
+            notificationId
+        );
     }
 
 }
