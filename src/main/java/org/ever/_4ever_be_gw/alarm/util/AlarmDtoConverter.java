@@ -71,7 +71,6 @@ public class AlarmDtoConverter {
     ) {
         return AlarmServerRequestDto.NotificationMarkReadOneRequest.builder()
             .userId(userId)
-            .notificationId(notificationId)
             .build();
     }
 
