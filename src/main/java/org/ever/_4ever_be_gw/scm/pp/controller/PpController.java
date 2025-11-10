@@ -138,10 +138,17 @@ public class PpController {
 
     // MES 시작
     @PutMapping("/mes/{mesId}/start")
-    public ResponseEntity<Object> startMes(@PathVariable String mesId) {
+    public ResponseEntity<Object> startMes(
+            @PathVariable String mesId,
+            @AuthenticationPrincipal EverUserPrincipal principal
+    ) {
+        String requesterId = principal.getUserId();
         Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .put()
-                .uri("/scm-pp/pp/mes/{mesId}/start", mesId)
+                .uri(uriBuilder -> uriBuilder
+                        .path("/scm-pp/pp/mes/{mesId}/start")
+                        .queryParam("requesterId", requesterId)
+                        .build(mesId))
                 .retrieve()
                 .bodyToMono(Object.class)
                 .block();
@@ -185,10 +192,18 @@ public class PpController {
 
     // MES 완료
     @PutMapping("/mes/{mesId}/complete")
-    public ResponseEntity<Object> completeMes(@PathVariable String mesId) {
+    public ResponseEntity<Object> completeMes(
+            @PathVariable String mesId,
+            @AuthenticationPrincipal EverUserPrincipal principal
+            ) {
+        String requesterId = principal.getUserId();
+
         Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .put()
-                .uri("/scm-pp/pp/mes/{mesId}/complete", mesId)
+                .uri(uriBuilder -> uriBuilder
+                        .path("/scm-pp/pp/mes/{mesId}/complete")
+                        .queryParam("requesterId", requesterId)
+                        .build(mesId))
                 .retrieve()
                 .bodyToMono(Object.class)
                 .block();
