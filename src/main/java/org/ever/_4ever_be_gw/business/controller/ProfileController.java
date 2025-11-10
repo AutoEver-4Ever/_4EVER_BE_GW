@@ -45,7 +45,7 @@ public class ProfileController {
             case "supplier":
                 // 2번: 공급사 조회
                 result = scmClient.get()
-                        .uri("/api/scm-pp/mm/supplier/{userId}/profile", userId)
+                        .uri("/api/scm-pp/mm/users/supplier/{userId}/profile", userId)
                         .retrieve()
                         .bodyToMono(Object.class)
                         .block();
