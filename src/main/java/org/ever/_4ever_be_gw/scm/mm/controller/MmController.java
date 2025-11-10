@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
@@ -48,23 +49,33 @@ public class MmController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/supplier")
-                        .queryParam("statusCode", statusCode)
-                        .queryParam("category", category)
-                        .queryParam("type", type)
-                        .queryParam("keyword", keyword)
-                        .queryParam("page", page)
-                        .queryParam("size", size)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/mm/supplier")
+                            .queryParam("statusCode", statusCode)
+                            .queryParam("category", category)
+                            .queryParam("type", type)
+                            .queryParam("keyword", keyword)
+                            .queryParam("page", page)
+                            .queryParam("size", size)
+                            .build())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 공급업체 상세 조회
@@ -73,15 +84,25 @@ public class MmController {
             summary = "공급업체 상세 조회"
     )
     public ResponseEntity<Object> getSupplierDetail(@PathVariable String supplierId) {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri("/scm-pp/mm/supplier/{supplierId}", supplierId)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                    .get()
+                    .uri("/scm-pp/mm/supplier/{supplierId}", supplierId)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 공급업체 등록 (SAGA)
@@ -132,18 +153,28 @@ public class MmController {
             @PathVariable String supplierId,
             @RequestBody SupplierUpdateRequestDto requestDto
     ) {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP) // 또는 SCM_PP, 실제 대상 서비스에 맞게
-                .patch()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/supplier/{supplierId}")
-                        .build(supplierId))
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestDto)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                    .patch()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/mm/supplier/{supplierId}")
+                            .build(supplierId))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(requestDto)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
 
@@ -159,19 +190,29 @@ public class MmController {
 
         String requesterId = requester.getUserId();
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/stock-purchase-requisitions")
-                        .queryParam("requesterId", requesterId)
-                        .build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestDto)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                    .post()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/mm/stock-purchase-requisitions")
+                            .queryParam("requesterId", requesterId)
+                            .build())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(requestDto)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 구매요청서 목록 조회
@@ -192,24 +233,34 @@ public class MmController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/purchase-requisitions")
-                        .queryParam("statusCode", statusCode)
-                        .queryParam("type", type)
-                        .queryParam("keyword", keyword)
-                        .queryParam("startDate", startDate)
-                        .queryParam("endDate", endDate)
-                        .queryParam("page", page)
-                        .queryParam("size", size)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/mm/purchase-requisitions")
+                            .queryParam("statusCode", statusCode)
+                            .queryParam("type", type)
+                            .queryParam("keyword", keyword)
+                            .queryParam("startDate", startDate)
+                            .queryParam("endDate", endDate)
+                            .queryParam("page", page)
+                            .queryParam("size", size)
+                            .build())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 구매요청서 상세 조회
@@ -218,15 +269,25 @@ public class MmController {
             summary = "구매요청 상세 조회"
     )
     public ResponseEntity<Object> getPurchaseRequisitionDetail(@PathVariable String purchaseRequisitionId) {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri("/scm-pp/mm/purchase-requisitions/{purchaseRequisitionId}", purchaseRequisitionId)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                    .get()
+                    .uri("/scm-pp/mm/purchase-requisitions/{purchaseRequisitionId}", purchaseRequisitionId)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 구매요청서 생성
@@ -241,19 +302,29 @@ public class MmController {
 
         String requestId = principal.getUserId();
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/purchase-requisitions")
-                        .queryParam("requestId", requestId)
-                        .build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestDto)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                    .post()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/mm/purchase-requisitions")
+                            .queryParam("requestId", requestId)
+                            .build())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(requestDto)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 구매요청서 승인
@@ -267,17 +338,27 @@ public class MmController {
     ) {
         String requesterId = principal.getUserId();
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/purchase-requisitions/{purchaseRequisitionId}/approve")
-                        .queryParam("requesterId", requesterId)
-                        .build(purchaseRequisitionId))
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                    .post()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/mm/purchase-requisitions/{purchaseRequisitionId}/approve")
+                            .queryParam("requesterId", requesterId)
+                            .build(purchaseRequisitionId))
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
 
@@ -293,19 +374,29 @@ public class MmController {
     ) {
         String requesterId = principal.getUserId();
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/purchase-requisitions/{purchaseRequisitionId}/reject")
-                        .queryParam("requesterId", requesterId)
-                        .build(purchaseRequisitionId))
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestDto)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+                    .post()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/mm/purchase-requisitions/{purchaseRequisitionId}/reject")
+                            .queryParam("requesterId", requesterId)
+                            .build(purchaseRequisitionId))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(requestDto)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
 
@@ -327,7 +418,8 @@ public class MmController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/scm-pp/mm/purchase-orders")
@@ -340,11 +432,20 @@ public class MmController {
                         .queryParam("size", size)
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 발주서 상세 조회
@@ -353,15 +454,25 @@ public class MmController {
             summary = "발주서 상세 조회"
     )
     public ResponseEntity<Object> getPurchaseOrderDetail(@PathVariable String purchaseOrderId) {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri("/scm-pp/mm/purchase-orders/{purchaseOrderId}", purchaseOrderId)
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 발주서 승인
@@ -375,17 +486,27 @@ public class MmController {
             ) {
         String requesterId = principal.getUserId();
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/approve")
                         .queryParam("requesterId", requesterId)
                         .build(purchaseOrderId))
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 발주서 반려
@@ -400,7 +521,8 @@ public class MmController {
     ) {
         String requesterId = principal.getUserId();
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/reject")
@@ -408,11 +530,20 @@ public class MmController {
                         .build(purchaseOrderId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
 
@@ -422,15 +553,25 @@ public class MmController {
             summary = "MM 통계 조회"
     )
     public ResponseEntity<Object> getMMStatistics() {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri("/scm-pp/mm/statistics")
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     @GetMapping("/supplier/orders/statistics")
@@ -442,7 +583,8 @@ public class MmController {
 
         String supplierId = principal.getUserId();
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/scm-pp/mm/supplier/orders/statistics")
@@ -450,11 +592,20 @@ public class MmController {
                         .build()
                 )
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 배송 시작
@@ -466,18 +617,28 @@ public class MmController {
             @PathVariable String purchaseOrderId
     ) {
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/start-delivery")
                         .queryParam("requesterId", purchaseOrderId)
                         .build(purchaseOrderId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 입고 시작
@@ -489,18 +650,28 @@ public class MmController {
             @PathVariable String purchaseOrderId
     ) {
 
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/complete-delivery")
                         .queryParam("requesterId", purchaseOrderId)
                         .build(purchaseOrderId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
 
@@ -511,15 +682,25 @@ public class MmController {
             summary = "구매요청서 상태 토글"
     )
     public ResponseEntity<Object> getPurchaseRequisitionStatusToggle() {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri("/scm-pp/mm/purchase-requisition/status/toggle")
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 발주서 상태 토글
@@ -528,15 +709,25 @@ public class MmController {
             summary = "발주서 상태 토글"
     )
     public ResponseEntity<Object> getPurchaseOrderStatusToggle() {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri("/scm-pp/mm/purchase-orders/status/toggle")
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 공급업체 상태 토글
@@ -545,15 +736,25 @@ public class MmController {
             summary = "공급업체 상태 토글"
     )
     public ResponseEntity<Object> getSupplierStatusToggle() {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri("/scm-pp/mm/supplier/status/toggle")
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 공급업체 카테고리 토글
@@ -562,15 +763,25 @@ public class MmController {
             summary = "공급업체 카테고리 토글"
     )
     public ResponseEntity<Object> getSupplierCategoryToggle() {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri("/scm-pp/mm/supplier/category/toggle")
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 구매 요청 검색 타입 토글
@@ -579,15 +790,25 @@ public class MmController {
             summary = "구매 요청 검색 타입 토글"
     )
     public ResponseEntity<Object> getPurchaseRequisitionSearchTypeToggle() {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri("/scm-pp/mm/purchase-requisition/search-type/toggle")
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 발주서 검색 타입 토글
@@ -596,15 +817,25 @@ public class MmController {
             summary = "발주서 검색 타입 토글"
     )
     public ResponseEntity<Object> getPurchaseOrderSearchTypeToggle() {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri("/scm-pp/mm/purchase-orders/search-type/toggle")
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 공급업체 검색 타입 토글
@@ -613,15 +844,25 @@ public class MmController {
             summary = "공급업체 검색 타입 토글"
     )
     public ResponseEntity<Object> getSupplierSearchTypeToggle() {
-        Object result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
+        try {
+            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri("/scm-pp/mm/supplier/search-type/toggle")
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+                .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
 }

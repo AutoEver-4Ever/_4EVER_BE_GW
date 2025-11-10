@@ -11,13 +11,12 @@ import org.ever._4ever_be_gw.scm.im.dto.WarehouseCreateRequestDto;
 import org.ever._4ever_be_gw.scm.im.dto.WarehouseUpdateRequestDto;
 import org.ever._4ever_be_gw.scm.mm.dto.ItemInfoRequest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.Map;
 
 @Tag(name = "재고관리(IM)", description = "재고 관리 API")
 @RestController
@@ -46,21 +45,31 @@ public class ImController {
     ) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/inventory-items")
-                        .queryParam("type", type)
-                        .queryParam("keyword", keyword)
-                        .queryParam("statusCode", statusCode)
-                        .queryParam("page", page)
-                        .queryParam("size", size)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/iv/inventory-items")
+                            .queryParam("type", type)
+                            .queryParam("keyword", keyword)
+                            .queryParam("statusCode", statusCode)
+                            .queryParam("page", page)
+                            .queryParam("size", size)
+                            .build())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object) body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 재고 추가 (외부 서버)
@@ -71,15 +80,25 @@ public class ImController {
     public ResponseEntity<Object> addInventoryItem(@RequestBody AddInventoryItemRequest request) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.post()
-                .uri("/scm-pp/iv/items")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.post()
+                    .uri("/scm-pp/iv/items")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 안전재고 수정 (외부 서버)
@@ -92,17 +111,27 @@ public class ImController {
             @RequestParam Integer safetyStock
     ) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
+        
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.patch()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/iv/items/{itemId}/safety-stock")
+                            .queryParam("safetyStock", safetyStock)
+                            .build(itemId))
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        Object result = scmPpWebClient.patch()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/items/{itemId}/safety-stock")
-                        .queryParam("safetyStock", safetyStock)
-                        .build(itemId))
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 재고 상세 정보 조회 (외부 서버)
@@ -113,14 +142,24 @@ public class ImController {
     public ResponseEntity<Object> getInventoryItemDetail(@PathVariable String itemId) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.get()
-                .uri("/scm-pp/iv/items/{itemId}", itemId)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.get()
+                    .uri("/scm-pp/iv/items/{itemId}", itemId)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 부족 재고 목록 조회 (외부 서버)
@@ -129,25 +168,35 @@ public class ImController {
             summary = "부족 재고 목록 조회"
     )
     public ResponseEntity<Object> getShortageItems(
-            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String statusCode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/shortage")
-                        .queryParam("status", status)
-                        .queryParam("page", page)
-                        .queryParam("size", size)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/iv/shortage")
+                            .queryParam("status", statusCode)
+                            .queryParam("page", page)
+                            .queryParam("size", size)
+                            .build())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 부족 재고 간단 정보 조회 (외부 서버)
@@ -158,18 +207,28 @@ public class ImController {
     public ResponseEntity<Object> getShortageItemsPreview() {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/shortage/preview")
-                        .queryParam("page", 0)
-                        .queryParam("size", 5)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/iv/shortage/preview")
+                            .queryParam("page", 0)
+                            .queryParam("size", 5)
+                            .build())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 재고에 존재하지 않는 자재 품목 목록
@@ -180,16 +239,26 @@ public class ImController {
     public ResponseEntity<Object> getItemToggleList() {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/items/toggle")
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/iv/items/toggle")
+                            .build())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 재고 이동 목록 조회 (외부 서버)
@@ -200,16 +269,26 @@ public class ImController {
     public ResponseEntity<Object> getStockTransfers() {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/stock-transfers")
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/iv/stock-transfers")
+                            .build())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 창고간 재고 이동 생성 (외부 서버)
@@ -226,18 +305,28 @@ public class ImController {
 
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/stock-transfers")
-                        .queryParam("requesterId", requesterId)
-                        .build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.post()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/iv/stock-transfers")
+                            .queryParam("requesterId", requesterId)
+                            .build())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 창고 목록 조회 (외부 서버)
@@ -250,18 +339,28 @@ public class ImController {
             @RequestParam(defaultValue = "20") int size) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/warehouses")
-                        .queryParam("page", page)
-                        .queryParam("size", size)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/iv/warehouses")
+                            .queryParam("page", page)
+                            .queryParam("size", size)
+                            .build())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 창고 상세 정보 조회 (외부 서버)
@@ -272,14 +371,24 @@ public class ImController {
     public ResponseEntity<Object> getWarehouseDetail(@PathVariable String warehouseId) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.get()
-                .uri("/scm-pp/iv/warehouses/{warehouseId}", warehouseId)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.get()
+                    .uri("/scm-pp/iv/warehouses/{warehouseId}", warehouseId)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 재고 관리 부서 명단 반환
@@ -287,14 +396,24 @@ public class ImController {
     public ResponseEntity<Object> getInventoryEmployees() {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-        Object result = scmPpWebClient.get()
-                .uri("/hrm/departments/inventory/employees")
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.get()
+                    .uri("/hrm/departments/inventory/employees")
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 창고 추가 생성 (외부 서버)
@@ -307,15 +426,25 @@ public class ImController {
     ) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.post()
-                .uri("/scm-pp/iv/warehouses")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.post()
+                    .uri("/scm-pp/iv/warehouses")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     //재고성 구매요청을 위한 item 정보 get
@@ -326,16 +455,26 @@ public class ImController {
     public ResponseEntity<Object> getItemInfoList(@RequestBody ItemInfoRequest request) {
 
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-        // WebClient 호출 (SCM 서비스 등 외부 서비스)
-        Object result = scmPpWebClient.post()
-                .uri("/scm-pp/iv/items/info") // 호출할 외부 API 경로
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)          // 요청 본문 전달
-                .retrieve()
-                .bodyToMono(Object.class)    // 결과 객체 매핑
-                .block();                    // 동기 호출
+        
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.post()
+                    .uri("/scm-pp/iv/items/info")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 창고 정보 수정 수정 (외부 서버)
@@ -349,16 +488,26 @@ public class ImController {
     ) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.patch()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/warehouses/{warehouseId}")
-                        .build(warehouseId))
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.patch()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/iv/warehouses/{warehouseId}")
+                            .build(warehouseId))
+                    .bodyValue(request)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 창고 드롭다운 목록 조회
@@ -369,17 +518,27 @@ public class ImController {
     public ResponseEntity<Object> getWarehouseDropdown(@RequestParam(required = false) String warehouseId) {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = scmPpWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/iv/warehouses/dropdown")
-                        .queryParam("warehouseId", warehouseId)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = scmPpWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/scm-pp/iv/warehouses/dropdown")
+                            .queryParam("warehouseId", warehouseId)
+                            .build())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
      // 재고 부족 통계 조회
@@ -387,13 +546,23 @@ public class ImController {
     public ResponseEntity<Object> getShortageStatistic() {
         var client = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = client.get()
-                .uri("/scm-pp/iv/shortage/count/critical/statistic")
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = client.get()
+                    .uri("/scm-pp/iv/shortage/count/critical/statistic")
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // IM 통계 조회
@@ -401,13 +570,23 @@ public class ImController {
     public ResponseEntity<Object> getImStatistic() {
         var client = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = client.get()
-                .uri("/scm-pp/iv/statistic")
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = client.get()
+                    .uri("/scm-pp/iv/statistic")
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 
     // 창고 통계 조회
@@ -415,12 +594,22 @@ public class ImController {
     public ResponseEntity<Object> getWarehouseStatistic() {
         var client = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result = client.get()
-                .uri("/scm-pp/iv/warehouses/statistic")
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
+        try {
+            ResponseEntity<Object> result = client.get()
+                    .uri("/scm-pp/iv/warehouses/statistic")
+                    .exchangeToMono(response -> {
+                        return response.bodyToMono(String.class)
+                                .map(body -> ResponseEntity.status(response.statusCode())
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .body((Object)body));
+                    })
+                    .block();
 
-        return ResponseEntity.ok(result);
+            return result;
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ex.getResponseBodyAsString());
+        }
     }
 }

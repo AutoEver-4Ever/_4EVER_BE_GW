@@ -28,6 +28,7 @@ public class ProfileController {
         String userId = user.getUserId();
         String userType = user.getUserType();
         var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        var scmClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
         Object result;
 
@@ -44,7 +45,7 @@ public class ProfileController {
             case "supplier":
                 // 2번: 공급사 조회
                 result = client.get()
-                        .uri("/hrm/supplier/{userId}/profile", userId)
+                        .uri("scm-pp/mm/supplier/{userId}/profile", userId)
                         .retrieve()
                         .bodyToMono(Object.class)
                         .block();
@@ -53,7 +54,7 @@ public class ProfileController {
             case "internal":
             default:
                 // 3번: 기존 내부 직원 조회
-                result = client.get()
+                result = scmClient.get()
                         .uri("/hrm/employees/profile/{internelUserId}", userId)
                         .retrieve()
                         .bodyToMono(Object.class)
