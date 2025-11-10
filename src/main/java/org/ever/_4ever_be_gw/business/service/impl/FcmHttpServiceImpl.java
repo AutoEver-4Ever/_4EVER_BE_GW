@@ -67,7 +67,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
 
     @Override
     public ResponseEntity<ApiResponse<Object>> getApInvoices(
-            String company, String startDate, String endDate, Integer page, Integer size) {
+            String company,String status, String startDate, String endDate, Integer page, Integer size) {
         log.debug("매입 전표 목록 조회 요청 - company: {}, startDate: {}, endDate: {}, page: {}, size: {}",
                 company, startDate, endDate, page, size);
 
@@ -80,6 +80,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
                         if (company != null) builder.queryParam("company", company);
                         if (startDate != null) builder.queryParam("startDate", startDate);
                         if (endDate != null) builder.queryParam("endDate", endDate);
+                        builder.queryParam("status", status);
                         builder.queryParam("page", page != null ? page : 0);
                         builder.queryParam("size", size != null ? size : 10);
                         return builder.build();
@@ -103,7 +104,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
 
     @Override
     public ResponseEntity<ApiResponse<Object>> getApInvoicesBySupplierUserId(
-            String supplierUserId, String startDate, String endDate, Integer page, Integer size) {
+            String supplierUserId, String status, String startDate, String endDate, Integer page, Integer size) {
         log.debug("공급사 사용자 ID로 매입 전표 목록 조회 요청 - supplierUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
                 supplierUserId, startDate, endDate, page, size);
 
@@ -116,6 +117,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
                         var builder = uriBuilder.path("/fcm/invoice/ap/supplier/{supplierUserId}");
                         if (startDate != null) builder.queryParam("startDate", startDate);
                         if (endDate != null) builder.queryParam("endDate", endDate);
+                        builder.queryParam("status", status);
                         builder.queryParam("page", page != null ? page : 0);
                         builder.queryParam("size", size != null ? size : 10);
                         return builder.build(supplierUserId);
@@ -323,7 +325,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
 
     @Override
     public ResponseEntity<ApiResponse<Object>> getArInvoices(
-            String company, String startDate, String endDate, Integer page, Integer size) {
+            String company,String status, String startDate, String endDate, Integer page, Integer size) {
         log.debug("AR 전표 목록 조회 요청 - company: {}, startDate: {}, endDate: {}, page: {}, size: {}",
                 company, startDate, endDate, page, size);
 
@@ -336,6 +338,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
                         if (company != null) builder.queryParam("company", company);
                         if (startDate != null) builder.queryParam("startDate", startDate);
                         if (endDate != null) builder.queryParam("endDate", endDate);
+                        builder.queryParam("status", status);
                         builder.queryParam("page", page != null ? page : 0);
                         builder.queryParam("size", size != null ? size : 10);
                         return builder.build();
@@ -359,7 +362,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
 
     @Override
     public ResponseEntity<ApiResponse<Object>> getArInvoicesByCustomerUserId(
-            String customerUserId, String startDate, String endDate, Integer page, Integer size) {
+            String customerUserId,String status, String startDate, String endDate, Integer page, Integer size) {
         log.debug("고객사 사용자 ID로 AR 전표 목록 조회 요청 - customerUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
                 customerUserId, startDate, endDate, page, size);
 
@@ -371,6 +374,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
                         var builder = uriBuilder.path("/fcm/invoice/ar/customer/{customerUserId}");
                         if (startDate != null) builder.queryParam("startDate", startDate);
                         if (endDate != null) builder.queryParam("endDate", endDate);
+                        builder.queryParam("status", status);
                         builder.queryParam("page", page != null ? page : 0);
                         builder.queryParam("size", size != null ? size : 10);
                         return builder.build(customerUserId);
