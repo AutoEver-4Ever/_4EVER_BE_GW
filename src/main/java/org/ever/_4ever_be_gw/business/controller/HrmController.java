@@ -381,6 +381,7 @@ public class HrmController {
 
     // 급여 지급 완료 처리
     @PostMapping("/payroll/complete")
+    @PreAuthorize("hasAnyAuthority('HRM_USER', 'HRM_ADMIN', 'ALL_ADMIN')")
     @Operation(
         summary = "급여 지급 완료 처리",
         description = "급여 지급을 완료 처리합니다."
