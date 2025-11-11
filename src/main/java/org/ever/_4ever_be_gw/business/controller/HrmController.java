@@ -293,13 +293,9 @@ public class HrmController {
     )
     public ResponseEntity<ApiResponse<Void>> checkIn(
         @Parameter(description = "InternelUser ID (optional, JWT 구현 전까지)", example = "internel1")
-        @RequestParam(name = "internelUserId", required = false) String internelUserId
+        @AuthenticationPrincipal EverUserPrincipal principal
     ) {
-        // TODO: JWT 구현 후 토큰에서 internelUserId 추출
-        // 임시로 internelUserId가 없으면 하드코딩된 값 사용 (Business DB 실제 목 데이터)
-        String targetInternelUserId = (internelUserId != null && !internelUserId.isBlank())
-            ? internelUserId
-            : "internel1"; // 임시: Business DB의 실제 internelUser ID
+        String targetInternelUserId = principal.getUserId();
 
         return hrmHttpService.checkIn(targetInternelUserId);
     }
@@ -311,13 +307,9 @@ public class HrmController {
     )
     public ResponseEntity<ApiResponse<Void>> checkOut(
         @Parameter(description = "InternelUser ID (optional, JWT 구현 전까지)", example = "internel1")
-        @RequestParam(name = "internelUserId", required = false) String internelUserId
+        @AuthenticationPrincipal EverUserPrincipal everUser
     ) {
-        // TODO: JWT 구현 후 토큰에서 internelUserId 추출
-        // 임시로 internelUserId가 없으면 하드코딩된 값 사용 (Business DB 실제 목 데이터)
-        String targetInternelUserId = (internelUserId != null && !internelUserId.isBlank())
-            ? internelUserId
-            : "internel1"; // 임시: Business DB의 실제 internelUser ID
+        String targetInternelUserId = everUser.getUserId();
 
         return hrmHttpService.checkOut(targetInternelUserId);
     }
