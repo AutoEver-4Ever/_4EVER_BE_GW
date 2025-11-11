@@ -20,6 +20,7 @@ import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -70,6 +71,7 @@ public class SdController {
 
     // 견적 품목 재고 확인
     @PostMapping("/quotations/inventory/check")
+    @PreAuthorize("hasAnyAuthority('SD_USER', 'SD_ADMIN', 'ALL_ADMIN')")
     @Operation(
             summary = "견적 품목 재고 확인",
             description = "요청한 품목들의 현재 재고를 확인하고 부족 여부를 반환합니다."
@@ -164,6 +166,7 @@ public class SdController {
     }
 
     @PostMapping("/quotations/confirm")
+    @PreAuthorize("hasAnyAuthority('SD_USER', 'SD_ADMIN', 'ALL_ADMIN')")
     @Operation(
             summary = "견적 검토 요청",
             description = "선택한 견적들에 대해 검토 요청을 수행합니다."
@@ -180,6 +183,7 @@ public class SdController {
     }
 
     @PostMapping("/quotations/{quotationId}/rejected")
+    @PreAuthorize("hasAnyAuthority('SD_USER', 'SD_ADMIN', 'ALL_ADMIN')")
     @Operation(
             summary = "견적 거부",
             description = "견적서를 거부하고 거부 사유를 기록합니다. 견적 상태가 REJECTED로 변경됩니다."
@@ -198,6 +202,7 @@ public class SdController {
     }
 
     @PostMapping("/customers")
+    @PreAuthorize("hasAnyAuthority('SD_USER', 'SD_ADMIN', 'ALL_ADMIN', 'HRM_USER', 'HRM_ADMIN')")
     @Operation(
             summary = "고객사 등록",
             description = "고객사 정보를 신규 등록하며, 고객사의 담당자 정보를 통해 담당자(사용자)가 생성됩니다."
@@ -381,6 +386,7 @@ public class SdController {
 
 
     @PostMapping("/quotations/{quotationId}/approve-order")
+    @PreAuthorize("hasAnyAuthority('SD_USER', 'SD_ADMIN', 'ALL_ADMIN')")
     @Operation(
             summary = "견적 승인 및 주문 전환",
             description = "재고가 충분한 경우 견적서를 승인(APPROVED)하고 주문서를 출고 준비 완료(READY_FOR_SHIPMENT) 상태로 생성합니다. Request body는 비워두시면 됩니다 (employeeId는 자동으로 주입됩니다)."
