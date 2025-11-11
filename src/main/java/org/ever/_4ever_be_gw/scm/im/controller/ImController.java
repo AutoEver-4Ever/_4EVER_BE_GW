@@ -11,6 +11,7 @@ import org.ever._4ever_be_gw.scm.im.dto.WarehouseCreateRequestDto;
 import org.ever._4ever_be_gw.scm.im.dto.WarehouseUpdateRequestDto;
 import org.ever._4ever_be_gw.scm.mm.dto.ItemInfoRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -293,6 +294,7 @@ public class ImController {
 
     // 창고간 재고 이동 생성 (외부 서버)
     @PostMapping("/stock-transfers")
+    @PreAuthorize("hasAnyAuthority('IM_USER', 'IM_ADMIN', 'ALL_ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "창고간 재고 이동"
     )
@@ -418,6 +420,7 @@ public class ImController {
 
     // 창고 추가 생성 (외부 서버)
     @PostMapping("/warehouses")
+    @PreAuthorize("hasAnyAuthority('IM_USER', 'IM_ADMIN', 'ALL_ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "창고 추가"
     )
@@ -449,6 +452,7 @@ public class ImController {
 
     //재고성 구매요청을 위한 item 정보 get
     @PostMapping("/items/info")
+    @PreAuthorize("hasAnyAuthority('IM_USER', 'IM_ADMIN', 'ALL_ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "재고성 구매요청을 위한 item 정보 get"
     )
