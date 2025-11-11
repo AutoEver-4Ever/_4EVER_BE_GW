@@ -489,7 +489,7 @@ public class ImController {
         WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
         try {
-            ResponseEntity<Object> result = scmPpWebClient.patch()
+            ResponseEntity<Object> result = scmPpWebClient.put()
                     .uri(uriBuilder -> uriBuilder
                             .path("/scm-pp/iv/warehouses/{warehouseId}")
                             .build(warehouseId))
