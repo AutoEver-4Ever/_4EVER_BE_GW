@@ -14,6 +14,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -107,6 +108,7 @@ public class MmController {
 
     // 공급업체 등록 (SAGA)
     @PostMapping("/supplier")
+    @PreAuthorize("hasAnyAuthority('MM_USER', 'MM_ADMIN', 'ALL_ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "공급업체 등록(추가)"
     )
@@ -180,6 +182,7 @@ public class MmController {
 
     // 재고성 구매요청 생성
     @PostMapping("/stock-purchase-requisitions")
+    @PreAuthorize("hasAnyAuthority('MM_USER', 'MM_ADMIN', 'ALL_ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "재고성 구매 요청 등록"
     )
@@ -329,6 +332,7 @@ public class MmController {
 
     // 구매요청서 승인
     @PostMapping("/purchase-requisitions/{purchaseRequisitionId}/release")
+    @PreAuthorize("hasAnyAuthority('MM_USER', 'MM_ADMIN', 'ALL_ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "구매요청 승인"
     )
@@ -364,6 +368,7 @@ public class MmController {
 
     // 구매요청서 반려
     @PostMapping("/purchase-requisitions/{purchaseRequisitionId}/reject")
+    @PreAuthorize("hasAnyAuthority('MM_USER', 'MM_ADMIN', 'ALL_ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "구매요청 반려"
     )
