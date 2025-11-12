@@ -3,22 +3,22 @@ package org.ever._4ever_be_gw.scm.pp.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
+import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.scm.pp.dto.BomCreateRequestDto;
 import org.ever._4ever_be_gw.scm.pp.dto.MrpRunConvertRequestDto;
 import org.ever._4ever_be_gw.scm.pp.dto.QuotationConfirmRequestDto;
 import org.ever._4ever_be_gw.scm.pp.dto.QuotationSimulateRequestDto;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.format.annotation.DateTimeFormat;
+
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 @Tag(name = "생산관리(PP)", description = "생산 관리 API")
 @RestController
@@ -323,6 +323,7 @@ public class PpController {
 
     // MRP → MRP_RUN 계획주문 전환
     @PostMapping("/mrp/convert")
+    @PreAuthorize("hasAnyAuthority('PP_USER', 'PP_ADMIN', 'ALL_ADMIN')")
     public ResponseEntity<Object> convertToMrpRun(@RequestBody MrpRunConvertRequestDto requestDto) {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
@@ -484,6 +485,7 @@ public class PpController {
 
     // 견적 시뮬레이션
     @PostMapping("/quotations/simulate")
+    @PreAuthorize("hasAnyAuthority('PP_USER', 'PP_ADMIN', 'ALL_ADMIN')")
     public ResponseEntity<Object> simulateQuotations(
             @RequestBody QuotationSimulateRequestDto requestDto,
             @RequestParam(defaultValue = "0") int page,
@@ -540,6 +542,7 @@ public class PpController {
 
     // 견적 확정
     @PostMapping("/quotations/confirm")
+    @PreAuthorize("hasAnyAuthority('PP_USER', 'PP_ADMIN', 'ALL_ADMIN')")
     public ResponseEntity<Object> confirmQuotations(@RequestBody QuotationConfirmRequestDto requestDto) {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
